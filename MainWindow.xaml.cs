@@ -13,11 +13,14 @@ public partial class MainWindow : Window
 {
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromMinutes(30);
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private HardwareMonitoringService? _monitor;
     private bool _reading;
     private bool _closing;
     private string _language = "pt";
+    private SensorSnapshot? _lastSnapshot;
+    private int _storageDriveIndex;
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
@@ -54,7 +57,7 @@ public partial class MainWindow : Window
         ["Sensor service ready · polling every 2 seconds"] = "Serviço de sensores pronto · leitura a cada 2 segundos",
         ["Display transmission disabled"] = "Transmissão para o display desativada", ["Sensors unavailable"] = "Sensores indisponíveis",
         ["Storage capacity unavailable"] = "Capacidade do armazenamento indisponível", ["Drive"] = "Unidade",
-        ["used"] = "em uso", ["free"] = "livres", ["Disk"] = "Disco",
+        ["used"] = "em uso", ["used of"] = "em uso de", ["total"] = "Total", ["free"] = "livres", ["Disk"] = "Disco",
         ["Language changed"] = "Idioma alterado",
         ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
         ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
@@ -65,6 +68,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         ApplyLanguage("pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
+        _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -76,6 +80,7 @@ public partial class MainWindow : Window
             StatusText.Text = T("Sensor service ready · polling every 2 seconds", "Serviço de sensores pronto · leitura a cada 2 segundos");
             DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
             _pollTimer.Start();
+            _storageCycleTimer.Start();
             await RefreshSensorsAsync();
         }
         catch (Exception ex)
@@ -105,8 +110,20 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RotateStorageDrive()
+    {
+        if (_lastSnapshot is null) return;
+        var volumes = _lastSnapshot.StorageVolumesSummary.Split("   ·   ", StringSplitOptions.RemoveEmptyEntries);
+        if (volumes.Length < 2) return;
+        _storageDriveIndex = (_storageDriveIndex + 1) % volumes.Length;
+        var current = volumes[_storageDriveIndex].Trim();
+        var separator = current.IndexOf(' ');
+        StorageDriveNameText.Text = separator > 0 ? " " + current[..separator] : " " + current;
+    }
+
     private void Render(SensorSnapshot s)
     {
+        _lastSnapshot = s;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
         CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
         CoolerDisplayTemp.Text = ShortTemp(s.CpuTemperatureC);
@@ -116,7 +133,8 @@ public partial class MainWindow : Window
         if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
         {
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageCapacityText.Text = $"{s.SystemDriveName ?? T("Disk", "Disco")} · {s.StorageUsedGiB.Value:0.0} / {s.StorageTotalGiB.Value:0.0} GB {T("used", "em uso")}" +
+            StorageDriveNameText.Text = " " + (s.SystemDriveName ?? "C:");
+            StorageCapacityText.Text = $"{s.StorageUsedGiB.Value:0.0} GB {T("used of", "em uso de")} {s.StorageTotalGiB.Value:0.0} GB {T("total", "Total")}" +
                 (s.StorageFreeGiB.HasValue ? $" · {s.StorageFreeGiB.Value:0.0} GB {T("free", "livres")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
             StorageVolumesText.Text = s.StorageVolumesSummary;
@@ -124,6 +142,7 @@ public partial class MainWindow : Window
         else
         {
             StorageUsedPercentText.Text = "N/D";
+            StorageDriveNameText.Text = string.Empty;
             StorageCapacityText.Text = T("Storage capacity unavailable", "Capacidade do armazenamento indisponível");
             StorageUsageBar.Value = 0;
             StorageVolumesText.Text = T("No local volumes detected", "Nenhum volume local detectado");
@@ -142,7 +161,7 @@ public partial class MainWindow : Window
             var total = s.MemoryTotalGiB.Value;
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{used:0.0} GB";
-            MemoryPercentText.Text = $"{pct:0}% · {used:0.0} GB {T("used", "em uso")}";
+            MemoryPercentText.Text = $"{pct:0}% {T("used of", "em uso de")} {total:0.0} GB {T("total", "Total")}";
             AnimateProgress(MemoryUsageBar, pct);
             MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
             AnimateProgress(MemoryLoadBar, pct);
@@ -336,6 +355,7 @@ public partial class MainWindow : Window
     {
         _closing = true;
         _pollTimer.Stop();
+        _storageCycleTimer.Stop();
         _monitor?.Dispose();
     }
 }
