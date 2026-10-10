@@ -44,9 +44,10 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         var storage = ReadStorage();
-        return new SensorSnapshot(cpuTemp, cpuLoad, gpuTemp, gpuLoad, usedGiB, totalGiB,
+        return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
+            NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
             driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
-            storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary,
+            storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
             DateTime.Now, "Leitura concluída");
     }
 
@@ -100,7 +101,8 @@ public sealed class HardwareMonitoringService : IDisposable
 
 
     private static (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
-        double? FreeGiB, double? UsedPercent, string VolumesSummary) ReadStorage()
+        double? FreeGiB, double? UsedPercent, string VolumesSummary,
+        IReadOnlyList<StorageVolumeSnapshot> Volumes) ReadStorage()
     {
         const double bytesPerGiB = 1024d * 1024d * 1024d;
         var drives = new List<(DriveInfo Drive, double Total, double Free, double Used)>();
@@ -118,18 +120,41 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         if (drives.Count == 0)
-            return (null, null, null, null, null, "No local volumes detected");
+            return (null, null, null, null, null, "No local volumes detected",
+                Array.Empty<StorageVolumeSnapshot>());
+
+        // Stable ordering prevents the rotating UI from changing drive identity between reads.
+        drives = drives.OrderBy(item => item.Drive.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var volumes = drives.Select(item =>
+        {
+            var used = Math.Clamp(item.Used, 0d, item.Total);
+            var free = Math.Clamp(item.Free, 0d, item.Total);
+            var percent = item.Total <= 0 ? 0d : Math.Clamp(used / item.Total * 100d, 0d, 100d);
+            return new StorageVolumeSnapshot(item.Drive.Name.TrimEnd('\\'), used, item.Total, free, percent);
+        }).ToArray();
 
         var systemRoot = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
-        var selected = drives.FirstOrDefault(item =>
-            string.Equals(item.Drive.Name, systemRoot, StringComparison.OrdinalIgnoreCase));
-        if (selected.Drive is null) selected = drives[0];
-
-        var summary = string.Join("   ·   ", drives.Select(item =>
-            $"{item.Drive.Name.TrimEnd('\\')}  {item.Used:0.0}/{item.Total:0.0} GB"));
-        var percent = selected.Total <= 0 ? 0 : Math.Clamp(selected.Used / selected.Total * 100d, 0d, 100d);
-        return (selected.Drive.Name.TrimEnd('\\'), selected.Used, selected.Total, selected.Free, percent, summary);
+        var selected = volumes.FirstOrDefault(item =>
+            string.Equals(item.Name + Path.DirectorySeparatorChar, systemRoot, StringComparison.OrdinalIgnoreCase))
+            ?? volumes[0];
+        var summary = string.Join("   ·   ", volumes.Select(item =>
+            $"{item.Name}  {item.UsedGiB:0.0}/{item.TotalGiB:0.0} GB"));
+        return (selected.Name, selected.UsedGiB, selected.TotalGiB, selected.FreeGiB,
+            selected.UsedPercent, summary, volumes);
     }
+
+    private static double? NormalizePercent(double? value) =>
+        value.HasValue && double.IsFinite(value.Value) ? Math.Clamp(value.Value, 0d, 100d) : null;
+
+    private static double? NormalizeMemoryUsed(double? used, double? total)
+    {
+        if (!used.HasValue || !total.HasValue || !double.IsFinite(used.Value) ||
+            !double.IsFinite(total.Value) || total.Value <= 0) return null;
+        return Math.Clamp(used.Value, 0d, total.Value);
+    }
+
+    private static double? NormalizeMemoryTotal(double? total) =>
+        total.HasValue && double.IsFinite(total.Value) && total.Value > 0 ? total : null;
 
     private static (double? UsedGiB, double? TotalGiB) ReadPhysicalMemory()
     {
