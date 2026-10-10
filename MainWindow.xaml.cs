@@ -13,7 +13,6 @@ public partial class MainWindow : Window
 {
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromMinutes(30);
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
-    private readonly DispatcherTimer _clockTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Queue<SensorSnapshot> _history = new();
     private HardwareMonitoringService? _monitor;
     private bool _reading;
@@ -67,14 +66,11 @@ public partial class MainWindow : Window
         InitializeComponent();
         ApplyLanguage("pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
-        _clockTimer.Tick += (_, _) => ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
-        ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
-        _clockTimer.Start();
         try
         {
             _monitor = await Task.Run(() => new HardwareMonitoringService());
@@ -95,7 +91,6 @@ public partial class MainWindow : Window
         var monitor = _monitor;
         if (monitor is null || _reading || _closing) return;
         _reading = true;
-        RefreshButton.IsEnabled = false;
         try
         {
             var snapshot = await Task.Run(monitor.Read);
@@ -108,13 +103,7 @@ public partial class MainWindow : Window
         finally
         {
             _reading = false;
-            if (!_closing) RefreshButton.IsEnabled = true;
         }
-    }
-
-    private void RefreshButton_Click(object sender, RoutedEventArgs e)
-    {
-        _ = RefreshSensorsAsync();
     }
 
     private void Render(SensorSnapshot s)
@@ -141,8 +130,8 @@ public partial class MainWindow : Window
             StorageVolumesText.Text = T("No local volumes detected", "Nenhum volume local detectado");
         }
 
-        CpuLoadText.Text = T("Load ", "Carga ") + Percent(s.CpuLoadPercent);
-        GpuLoadText.Text = T("Load ", "Carga ") + Percent(s.GpuLoadPercent);
+        CpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.CpuLoadPercent);
+        GpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.GpuLoadPercent);
         CpuDetailLoad.Text = Percent(s.CpuLoadPercent);
         GpuDetailLoad.Text = Percent(s.GpuLoadPercent);
         AnimateProgress(CpuLoadBar, Clamp(s.CpuLoadPercent));
@@ -154,7 +143,8 @@ public partial class MainWindow : Window
             var total = s.MemoryTotalGiB.Value;
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{used:0.0} GB";
-            MemoryPercentText.Text = _language == "pt" ? $"{pct:0}% · Total {total:0.0} GB" : $"{pct:0}% · Total {total:0.0} GB";
+            MemoryPercentText.Text = $"{pct:0}% · {used:0.0} GB {T("used", "em uso")}";
+            AnimateProgress(MemoryUsageBar, pct);
             MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
             AnimateProgress(MemoryLoadBar, pct);
         }
@@ -162,6 +152,7 @@ public partial class MainWindow : Window
         {
             MemoryText.Text = "N/D";
             MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
+            AnimateProgress(MemoryUsageBar, 0);
             MemoryDetailText.Text = "N/D";
             AnimateProgress(MemoryLoadBar, 0);
         }
