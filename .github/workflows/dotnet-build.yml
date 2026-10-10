@@ -27,3 +27,6 @@ jobs:
 
       - name: Build Release
         run: dotnet build WaterCoolerApp.csproj --configuration Release --no-restore
+
+      - name: Run telemetry tests
+        run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
