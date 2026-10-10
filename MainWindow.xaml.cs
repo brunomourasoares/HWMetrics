@@ -123,11 +123,11 @@ public partial class MainWindow : Window
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
         _selectedStorageDriveName = volume.Name;
-        StorageDriveNameText.Text = " " + volume.Name;
+        StorageDriveNameText.Text = volume.Name;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
-            $"{volume.UsedGiB:0.0} GB {T("used of", "em uso de")} {volume.TotalGiB:0.0} GB {T("total", "Total")} · " +
-            $"{volume.FreeGiB:0.0} GB {T("free", "livres")}";
+            $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
+            $"{FormatCapacity(volume.FreeGiB)} {T("free", "livres")}";
         AnimateProgress(StorageUsageBar, volume.UsedPercent);
     }
 
@@ -166,9 +166,9 @@ public partial class MainWindow : Window
         {
             // Keep a safe fallback for snapshots with legacy aggregate storage data.
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageDriveNameText.Text = " " + (s.SystemDriveName ?? string.Empty);
-            StorageCapacityText.Text = $"{s.StorageUsedGiB.Value:0.0} GB {T("used of", "em uso de")} {s.StorageTotalGiB.Value:0.0} GB {T("total", "Total")}" +
-                (s.StorageFreeGiB.HasValue ? $" · {s.StorageFreeGiB.Value:0.0} GB {T("free", "livres")}" : string.Empty);
+            StorageDriveNameText.Text = s.SystemDriveName ?? string.Empty;
+            StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total", "Total")}" +
+                (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free", "livres")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
             StorageVolumesText.Text = s.StorageVolumesSummary;
         }
@@ -190,13 +190,14 @@ public partial class MainWindow : Window
 
         if (s.MemoryUsedGiB.HasValue && s.MemoryTotalGiB.HasValue && s.MemoryTotalGiB.Value > 0)
         {
-            var used = s.MemoryUsedGiB.Value;
             var total = s.MemoryTotalGiB.Value;
+            var used = Math.Clamp(s.MemoryUsedGiB.Value, 0, total);
+            var free = Math.Max(0, total - used);
             var pct = Math.Clamp(used / total * 100, 0, 100);
-            MemoryText.Text = $"{used:0.0} GB";
-            MemoryPercentText.Text = $"{pct:0}% {T("used of", "em uso de")} {total:0.0} GB {T("total", "Total")}";
+            MemoryText.Text = $"{pct:0}%";
+            MemoryPercentText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)} {T("total", "Total")} - {FormatCapacity(free)} {T("free", "livres")}";
             AnimateProgress(MemoryUsageBar, pct);
-            MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
+            MemoryDetailText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)}";
             AnimateProgress(MemoryLoadBar, pct);
         }
         else
@@ -357,6 +358,14 @@ public partial class MainWindow : Window
 
     private static string ShortTemp(double? value) => value.HasValue ? $"{value.Value:0}°" : "--°";
     private static string FullTemp(double? value) => value.HasValue ? $"{value.Value:0}°C" : "N/D";
+    private static string FormatCapacity(double gib)
+    {
+        if (!double.IsFinite(gib) || gib < 0) return "N/D";
+        return gib >= 1024d
+            ? $"{gib / 1024d:0.0} TB"
+            : $"{gib:0.0} GB";
+    }
+
     private static string Percent(double? value) =>
         value.HasValue && double.IsFinite(value.Value) ? $"{Math.Clamp(value.Value, 0d, 100d):0}%" : "N/D";
     private static double Clamp(double? value) => value.HasValue ? Math.Clamp(value.Value, 0, 100) : 0;
