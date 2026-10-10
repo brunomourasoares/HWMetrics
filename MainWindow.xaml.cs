@@ -117,8 +117,20 @@ public partial class MainWindow : Window
         if (volumes.Length < 2) return;
         _storageDriveIndex = (_storageDriveIndex + 1) % volumes.Length;
         var current = volumes[_storageDriveIndex].Trim();
-        var separator = current.IndexOf(' ');
-        StorageDriveNameText.Text = separator > 0 ? " " + current[..separator] : " " + current;
+        var parts = current.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2) return;
+        var sizes = parts[1].Split('/');
+        if (sizes.Length != 2 ||
+            !double.TryParse(sizes[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var used) ||
+            !double.TryParse(sizes[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var total) ||
+            total <= 0) return;
+
+        var free = Math.Max(0, total - used);
+        var percent = Math.Clamp(used / total * 100, 0, 100);
+        StorageDriveNameText.Text = " " + parts[0];
+        StorageUsedPercentText.Text = $"{percent:0}%";
+        StorageCapacityText.Text = $"{used:0.0} GB {T("used of", "em uso de")} {total:0.0} GB {T("total", "Total")} · {free:0.0} GB {T("free", "livres")}";
+        AnimateProgress(StorageUsageBar, percent);
     }
 
     private void Render(SensorSnapshot s)
