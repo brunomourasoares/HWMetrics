@@ -69,17 +69,30 @@ public sealed class HardwareMonitoringService : IDisposable
                             (cpuTemp is null || name.Contains("package") || name.Contains("tctl")))
                             cpuTemp = value;
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
-                            gpuTemp ??= value;
+                        {
+                            // Prefer the GPU core sensor when available; keep the first valid
+                            // temperature as a fallback for drivers with generic sensor names.
+                            if (gpuTemp is null || (name.Contains("core") && !name.Contains("hot spot") && !name.Contains("hotspot")))
+                                gpuTemp = value;
+                        }
                         else if (hardware.HardwareType == HardwareType.Storage)
                             driveTemp ??= value;
                         break;
 
                     case SensorType.Load:
-                        if (hardware.HardwareType == HardwareType.Cpu &&
-                            (name.Contains("total") || name.Contains("cpu total")))
-                            cpuLoad = value;
+                        if (hardware.HardwareType == HardwareType.Cpu)
+                        {
+                            // Do not leave CPU utilization blank just because a driver does not
+                            // name its aggregate sensor "Total"; replace the fallback if it appears.
+                            if (cpuLoad is null || name.Contains("total"))
+                                cpuLoad = value;
+                        }
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
-                            gpuLoad ??= value;
+                        {
+                            // Prefer core/aggregate GPU load, while retaining a usable fallback.
+                            if (gpuLoad is null || name.Contains("core") || name.Contains("total"))
+                                gpuLoad = value;
+                        }
                         break;
 
                     case SensorType.Data when hardware.HardwareType == HardwareType.Memory:
