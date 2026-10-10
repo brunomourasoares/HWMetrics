@@ -56,7 +56,9 @@ public partial class MainWindow : Window
         ["Display transmission disabled"] = "Transmissão para o display desativada", ["Sensors unavailable"] = "Sensores indisponíveis",
         ["Storage capacity unavailable"] = "Capacidade do armazenamento indisponível", ["Drive"] = "Unidade",
         ["used"] = "em uso", ["free"] = "livres", ["Disk"] = "Disco", ["Last update"] = "Última atualização",
-        ["Language changed"] = "Idioma alterado"
+        ["Language changed"] = "Idioma alterado", ["IN USE"] = "EM USO",
+        ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
+        ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
     };
 
     public MainWindow()
@@ -153,12 +155,14 @@ public partial class MainWindow : Window
             MemoryText.Text = $"{used:0.0} GB";
             MemoryPercentText.Text = _language == "pt" ? $"{pct:0}% · Total {total:0.0} GB" : $"{pct:0}% · Total {total:0.0} GB";
             MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
+            AnimateProgress(MemoryLoadBar, pct);
         }
         else
         {
             MemoryText.Text = "N/D";
             MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
             MemoryDetailText.Text = "N/D";
+            AnimateProgress(MemoryLoadBar, 0);
         }
 
         _history.Enqueue(s);
@@ -168,6 +172,14 @@ public partial class MainWindow : Window
         GpuHistoryPath.Data = BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC));
         GraphCaption.Text = $"CPU {FullTemp(s.CpuTemperatureC)} · GPU {FullTemp(s.GpuTemperatureC)}";
         LastUpdatedText.Text = T("Last update: ", "Última atualização: ") + s.UpdatedAt.ToString("HH:mm:ss");
+
+        var availableThermals = new List<string>();
+        if (s.CpuTemperatureC.HasValue) availableThermals.Add("CPU");
+        if (s.GpuTemperatureC.HasValue) availableThermals.Add("GPU");
+        if (s.StorageTemperatureC.HasValue) availableThermals.Add(T("Storage", "Armazenamento"));
+        ThermalSensorStatusText.Text = availableThermals.Count > 0
+            ? T("Temperature sensors available: ", "Sensores de temperatura disponíveis: ") + string.Join(" · ", availableThermals)
+            : T("No temperature sensors exposed by the current hardware/driver.", "O hardware/driver atual não disponibilizou sensores de temperatura.");
 
         var hasAnyTelemetry = s.CpuTemperatureC.HasValue || s.CpuLoadPercent.HasValue ||
                               s.GpuTemperatureC.HasValue || s.GpuLoadPercent.HasValue ||
