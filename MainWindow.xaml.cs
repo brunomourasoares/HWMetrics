@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Input;
 using System.Windows.Threading;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
@@ -316,6 +317,15 @@ public partial class MainWindow : Window
     private static string FullTemp(double? value) => value.HasValue ? $"{value.Value:0}°C" : "N/D";
     private static string Percent(double? value) => value.HasValue ? $"{value.Value:0}%" : "N/D";
     private static double Clamp(double? value) => value.HasValue ? Math.Clamp(value.Value, 0, 100) : 0;
+
+    private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            try { DragMove(); }
+            catch (InvalidOperationException) { }
+        }
+    }
 
     private void Window_Closed(object? sender, EventArgs e)
     {
