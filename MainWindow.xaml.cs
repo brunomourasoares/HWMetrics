@@ -56,7 +56,7 @@ public partial class MainWindow : Window
         ["Display transmission disabled"] = "Transmissão para o display desativada", ["Sensors unavailable"] = "Sensores indisponíveis",
         ["Storage capacity unavailable"] = "Capacidade do armazenamento indisponível", ["Drive"] = "Unidade",
         ["used"] = "em uso", ["free"] = "livres", ["Disk"] = "Disco", ["Last update"] = "Última atualização",
-        ["Language changed"] = "Idioma alterado", ["IN USE"] = "EM USO",
+        ["Language changed"] = "Idioma alterado",
         ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
         ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
     };
