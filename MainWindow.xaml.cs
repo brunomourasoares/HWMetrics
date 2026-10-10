@@ -318,6 +318,21 @@ public partial class MainWindow : Window
     private static string Percent(double? value) => value.HasValue ? $"{value.Value:0}%" : "N/D";
     private static double Clamp(double? value) => value.HasValue ? Math.Clamp(value.Value, 0, 100) : 0;
 
+    private void MinimizeWindow_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void MaximizeWindow_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+    }
+
+    private void CloseWindow_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+    }
+
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
