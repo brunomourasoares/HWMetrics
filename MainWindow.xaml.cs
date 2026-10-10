@@ -20,7 +20,7 @@ public partial class MainWindow : Window
     private bool _closing;
     private string _language = "pt";
     private SensorSnapshot? _lastSnapshot;
-    private int _storageDriveIndex;
+    private int _storageDriveIndex = -1;
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
@@ -112,25 +112,21 @@ public partial class MainWindow : Window
 
     private void RotateStorageDrive()
     {
-        if (_lastSnapshot is null) return;
-        var volumes = _lastSnapshot.StorageVolumesSummary.Split("   ·   ", StringSplitOptions.RemoveEmptyEntries);
-        if (volumes.Length < 2) return;
-        _storageDriveIndex = (_storageDriveIndex + 1) % volumes.Length;
-        var current = volumes[_storageDriveIndex].Trim();
-        var parts = current.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2) return;
-        var sizes = parts[1].Split('/');
-        if (sizes.Length != 2 ||
-            !double.TryParse(sizes[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var used) ||
-            !double.TryParse(sizes[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var total) ||
-            total <= 0) return;
+        var volumes = _lastSnapshot?.StorageVolumes;
+        if (volumes is null || volumes.Count < 2) return;
 
-        var free = Math.Max(0, total - used);
-        var percent = Math.Clamp(used / total * 100, 0, 100);
-        StorageDriveNameText.Text = " " + parts[0];
-        StorageUsedPercentText.Text = $"{percent:0}%";
-        StorageCapacityText.Text = $"{used:0.0} GB {T("used of", "em uso de")} {total:0.0} GB {T("total", "Total")} · {free:0.0} GB {T("free", "livres")}";
-        AnimateProgress(StorageUsageBar, percent);
+        _storageDriveIndex = (_storageDriveIndex + 1) % volumes.Count;
+        RenderStorageVolume(volumes[_storageDriveIndex]);
+    }
+
+    private void RenderStorageVolume(StorageVolumeSnapshot volume)
+    {
+        StorageDriveNameText.Text = " " + volume.Name;
+        StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
+        StorageCapacityText.Text =
+            $"{volume.UsedGiB:0.0} GB {T("used of", "em uso de")} {volume.TotalGiB:0.0} GB {T("total", "Total")} · " +
+            $"{volume.FreeGiB:0.0} GB {T("free", "livres")}";
+        AnimateProgress(StorageUsageBar, volume.UsedPercent);
     }
 
     private void Render(SensorSnapshot s)
@@ -142,10 +138,24 @@ public partial class MainWindow : Window
         GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
         GpuDetailTemp.Text = FullTemp(s.GpuTemperatureC);
         StorageDetailTemp.Text = FullTemp(s.StorageTemperatureC);
-        if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
+        if (s.StorageVolumes.Count > 0)
         {
+            // Select the Windows system volume on first render; subsequent reads keep the
+            // selected volume stable instead of snapping back to C: every polling cycle.
+            if (_storageDriveIndex < 0 || _storageDriveIndex >= s.StorageVolumes.Count)
+            {
+                var systemIndex = s.StorageVolumes.ToList().FindIndex(volume =>
+                    string.Equals(volume.Name, s.SystemDriveName, StringComparison.OrdinalIgnoreCase));
+                _storageDriveIndex = systemIndex >= 0 ? systemIndex : 0;
+            }
+            RenderStorageVolume(s.StorageVolumes[_storageDriveIndex]);
+            StorageVolumesText.Text = s.StorageVolumesSummary;
+        }
+        else if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
+        {
+            // Keep a safe fallback for snapshots with legacy aggregate storage data.
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageDriveNameText.Text = " " + (s.SystemDriveName ?? "C:");
+            StorageDriveNameText.Text = " " + (s.SystemDriveName ?? string.Empty);
             StorageCapacityText.Text = $"{s.StorageUsedGiB.Value:0.0} GB {T("used of", "em uso de")} {s.StorageTotalGiB.Value:0.0} GB {T("total", "Total")}" +
                 (s.StorageFreeGiB.HasValue ? $" · {s.StorageFreeGiB.Value:0.0} GB {T("free", "livres")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
@@ -336,7 +346,8 @@ public partial class MainWindow : Window
 
     private static string ShortTemp(double? value) => value.HasValue ? $"{value.Value:0}°" : "--°";
     private static string FullTemp(double? value) => value.HasValue ? $"{value.Value:0}°C" : "N/D";
-    private static string Percent(double? value) => value.HasValue ? $"{value.Value:0}%" : "N/D";
+    private static string Percent(double? value) =>
+        value.HasValue && double.IsFinite(value.Value) ? $"{Math.Clamp(value.Value, 0d, 100d):0}%" : "N/D";
     private static double Clamp(double? value) => value.HasValue ? Math.Clamp(value.Value, 0, 100) : 0;
 
     private void MinimizeWindow_Click(object sender, RoutedEventArgs e)
