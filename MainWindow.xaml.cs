@@ -336,7 +336,6 @@ public partial class MainWindow : Window
     {
         _closing = true;
         _pollTimer.Stop();
-        _clockTimer.Stop();
         _monitor?.Dispose();
     }
 }
