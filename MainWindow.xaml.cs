@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private string _language = "pt";
     private SensorSnapshot? _lastSnapshot;
     private int _storageDriveIndex = -1;
+    private string? _selectedStorageDriveName;
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
@@ -121,6 +122,7 @@ public partial class MainWindow : Window
 
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
+        _selectedStorageDriveName = volume.Name;
         StorageDriveNameText.Text = " " + volume.Name;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
@@ -142,7 +144,16 @@ public partial class MainWindow : Window
         {
             // Select the Windows system volume on first render; subsequent reads keep the
             // selected volume stable instead of snapping back to C: every polling cycle.
-            if (_storageDriveIndex < 0 || _storageDriveIndex >= s.StorageVolumes.Count)
+            var selectedIndex = _selectedStorageDriveName is null
+                ? -1
+                : s.StorageVolumes.ToList().FindIndex(volume =>
+                    string.Equals(volume.Name, _selectedStorageDriveName, StringComparison.OrdinalIgnoreCase));
+            if (selectedIndex >= 0)
+            {
+                _storageDriveIndex = selectedIndex;
+            }
+            else if (_storageDriveIndex < 0 || _storageDriveIndex >= s.StorageVolumes.Count ||
+                     _selectedStorageDriveName is not null)
             {
                 var systemIndex = s.StorageVolumes.ToList().FindIndex(volume =>
                     string.Equals(volume.Name, s.SystemDriveName, StringComparison.OrdinalIgnoreCase));
