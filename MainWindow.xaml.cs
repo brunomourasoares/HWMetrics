@@ -29,7 +29,7 @@ public partial class MainWindow : Window
         ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.", ["LIVE TELEMETRY"] = "TELEMETRIA AO VIVO",
-        ["Refresh now"] = "Atualizar agora", ["PROCESSOR"] = "PROCESSADOR", ["Load --%"] = "Carga --%",
+        ["Refresh now"] = "Atualizar agora", ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU", ["IN USE"] = "EM USO", ["Total"] = "Total", ["Load --%"] = "Carga --%",
         ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Capacity unavailable"] = "Capacidade indisponível",
         ["STORAGE"] = "ARMAZENAMENTO", ["Waiting for disk data"] = "Aguardando dados do disco",
         ["Thermal performance"] = "Desempenho térmico", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
@@ -151,7 +151,7 @@ public partial class MainWindow : Window
             var total = s.MemoryTotalGiB.Value;
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{used:0.0} GB";
-            MemoryPercentText.Text = _language == "pt" ? $"{pct:0}% de {total:0.0} GB" : $"{pct:0}% of {total:0.0} GB";
+            MemoryPercentText.Text = _language == "pt" ? $"{pct:0}% · Total {total:0.0} GB" : $"{pct:0}% · Total {total:0.0} GB";
             MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
         }
         else
