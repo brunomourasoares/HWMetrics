@@ -1,5 +1,12 @@
 namespace WaterCoolerApp.Models;
 
+public sealed record StorageVolumeSnapshot(
+    string Name,
+    double UsedGiB,
+    double TotalGiB,
+    double FreeGiB,
+    double UsedPercent);
+
 public sealed record SensorSnapshot(
     double? CpuTemperatureC,
     double? CpuLoadPercent,
@@ -14,5 +21,6 @@ public sealed record SensorSnapshot(
     double? StorageFreeGiB,
     double? StorageUsedPercent,
     string StorageVolumesSummary,
+    IReadOnlyList<StorageVolumeSnapshot> StorageVolumes,
     DateTime UpdatedAt,
     string Status);
