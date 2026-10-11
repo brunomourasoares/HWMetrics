@@ -134,11 +134,36 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyApplicationIcon();
         LoadPreferences();
         ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
         InitializeTrayIcon();
+    }
+
+    private void ApplyApplicationIcon()
+    {
+        try
+        {
+            var bytes = Convert.FromBase64String(TrayIconPngBase64);
+            using var stream = new MemoryStream(bytes);
+            using var bitmap = new System.Drawing.Bitmap(stream);
+            var handle = bitmap.GetHicon();
+            try
+            {
+                Icon = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                    handle, Int32Rect.Empty, System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                DestroyIcon(handle);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HWMetrics] Could not apply window icon: {ex}");
+        }
     }
 
     private void LoadPreferences()
