@@ -6,10 +6,12 @@ namespace WaterCoolerApp;
 public partial class App : System.Windows.Application
 {
     private static Mutex? _instanceMutex;
+    private static bool _ownsMutex;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\\HW-Metrics-SingleInstance", createdNew: out var createdNew);
+        _ownsMutex = createdNew;
         if (!createdNew)
         {
             // Another instance already owns the mutex. Do not initialize a second window,
@@ -35,9 +37,10 @@ public partial class App : System.Windows.Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        _instanceMutex?.ReleaseMutex();
+        if (_ownsMutex) _instanceMutex?.ReleaseMutex();
         _instanceMutex?.Dispose();
         _instanceMutex = null;
+        _ownsMutex = false;
         base.OnExit(e);
     }
 }
