@@ -1,0 +1,32 @@
+name: .NET 10 build
+
+on:
+  push:
+    branches: [ main, feature/dashboard-polish ]
+  pull_request:
+    branches: [ main, feature/dashboard-polish ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore WaterCoolerApp.csproj
+
+      - name: Build Release
+        run: dotnet build WaterCoolerApp.csproj --configuration Release --no-restore
+
+      - name: Run telemetry tests
+        run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
