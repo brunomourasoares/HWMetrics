@@ -44,7 +44,7 @@ public partial class MainWindow : Window
         ["Waiting for sensor data"] = "Aguardando dados dos sensores", ["System utilization"] = "Utilização do sistema",
         ["Current workload by component"] = "Carga atual por componente", ["CPU utilization"] = "Utilização da CPU",
         ["GPU utilization"] = "Utilização da GPU", ["Memory in use"] = "Memória em uso",
-        ["Water cooler"] = "Water cooler", ["Pump display preview"] = "Prévia do display da bomba", ["CPU ONLY"] = "SOMENTE CPU",
+        ["Water cooler"] = "Water Cooler", ["Water Cooler"] = "Water Cooler", ["Temperature"] = "Temperatura", ["Live temperature history"] = "Histórico da temperatura em tempo real", ["Utilization"] = "Utilização", ["Live utilization history"] = "Histórico da utilização em tempo real", ["WATER COOLER MODEL"] = "MODELO DO WATER COOLER", ["Generic LCD Pump"] = "Bomba LCD genérica", ["NZXT Kraken LCD"] = "NZXT Kraken LCD", ["Corsair iCUE LCD"] = "Corsair iCUE LCD", ["ASUS ROG Ryujin LCD"] = "ASUS ROG Ryujin LCD", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["Preferences"] = "Preferências", ["Choose light or dark appearance"] = "Escolha o tema claro ou escuro", ["Sensor polling interval"] = "Intervalo de leitura dos sensores", ["Application display language"] = "Idioma da interface", ["Close"] = "Fechar", ["Pump display preview"] = "Prévia do display da bomba", ["CPU ONLY"] = "SOMENTE CPU",
         ["CPU TEMP"] = "TEMP. CPU", ["CELSIUS"] = "CELSIUS", ["Hardware link not connected"] = "Hardware não conectado",
         ["Preview only · HID transmission disabled"] = "Somente prévia · transmissão HID desativada",
         ["Thermal components"] = "Componentes térmicos", ["Sensor availability on this machine"] = "Sensores disponíveis neste computador",
@@ -325,7 +325,7 @@ public partial class MainWindow : Window
 
     private void HideSettingsPanel()
     {
-        SettingsPanel.Visibility = Visibility.Collapsed;
+        SettingsDialogOverlay.Visibility = Visibility.Collapsed;
     }
 
     private void NavOverview_Click(object sender, RoutedEventArgs e)
@@ -352,9 +352,29 @@ public partial class MainWindow : Window
     private void NavSettings_Click(object sender, RoutedEventArgs e)
     {
         SetActiveNavigation(NavSettingsButton);
-        SettingsPanel.Visibility = Visibility.Visible;
-        ThemeSelector.BringIntoView();
+        SettingsDialogOverlay.Visibility = Visibility.Visible;
         ThemeSelector.Focus();
+    }
+
+    private void CloseSettingsDialog_Click(object sender, RoutedEventArgs e)
+    {
+        HideSettingsPanel();
+    }
+
+    private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
+        var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
+        CoolerModelBadge.Text = model;
+        var accent = CoolerModelSelector.SelectedIndex switch
+        {
+            1 => Color.FromRgb(105, 191, 255),
+            2 => Color.FromRgb(244, 189, 104),
+            3 => Color.FromRgb(189, 163, 255),
+            _ => Color.FromRgb(112, 232, 208)
+        };
+        CoolerDisplayTemp.Foreground = new SolidColorBrush(accent);
+        CoolerModelBadge.Foreground = new SolidColorBrush(accent);
     }
 
     private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
