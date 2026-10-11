@@ -834,6 +834,24 @@ public partial class MainWindow : Window
         SavePreferences();
     }
 
+    internal static string BuildWindowsStartupCommand(string executable, string? assemblyPath)
+    {
+        if (string.IsNullOrWhiteSpace(executable))
+            throw new ArgumentException("An executable path is required.", nameof(executable));
+
+        // When launched through the .NET host, Windows must run dotnet.exe with
+        // the app assembly before passing the application-specific --tray argument.
+        if (string.Equals(Path.GetFileNameWithoutExtension(executable), "dotnet", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(assemblyPath))
+                throw new ArgumentException("An assembly path is required when launching through dotnet.", nameof(assemblyPath));
+
+            return $"\\\"{executable}\\\" \\\"{assemblyPath}\\\" --tray";
+        }
+
+        return $"\\\"{executable}\\\" --tray";
+    }
+
     private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
     {
         if (_loadingPreferences) return;
@@ -849,22 +867,7 @@ public partial class MainWindow : Window
                 if (string.IsNullOrWhiteSpace(executable))
                     throw new InvalidOperationException("Could not determine the current executable path.");
 
-                // When launched through the .NET host, Windows must run dotnet.exe with
-                // the app assembly before passing the application-specific --tray argument.
-                string startupCommand;
-                if (string.Equals(Path.GetFileNameWithoutExtension(executable), "dotnet", StringComparison.OrdinalIgnoreCase))
-                {
-                    var assemblyPath = typeof(App).Assembly.Location;
-                    if (string.IsNullOrWhiteSpace(assemblyPath))
-                        throw new InvalidOperationException("Could not determine the application assembly path.");
-
-                    startupCommand = $"\"{executable}\" \"{assemblyPath}\" --tray";
-                }
-                else
-                {
-                    startupCommand = $"\"{executable}\" --tray";
-                }
-
+                var startupCommand = BuildWindowsStartupCommand(executable, typeof(App).Assembly.Location);
                 key.SetValue("AquaCore", startupCommand);
             }
             else
