@@ -437,6 +437,13 @@ public partial class MainWindow : Window
     private void MaximizeWindow_Click(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        UpdateWindowControlGlyphs();
+    }
+
+    private void UpdateWindowControlGlyphs()
+    {
+        MaximizeGlyph.Visibility = WindowState == WindowState.Maximized ? Visibility.Collapsed : Visibility.Visible;
+        RestoreGlyph.Visibility = WindowState == WindowState.Maximized ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void CloseWindow_Click(object sender, RoutedEventArgs e)
