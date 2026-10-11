@@ -136,7 +136,7 @@ public partial class MainWindow : Window
         _lastSnapshot = s;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
         CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
-        CoolerDisplayTemp.Text = ShortTemp(s.CpuTemperatureC);
+        CoolerDisplayTemp.Text = s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--";
         GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
         GpuDetailTemp.Text = FullTemp(s.GpuTemperatureC);
         StorageDetailTemp.Text = FullTemp(s.StorageTemperatureC);
