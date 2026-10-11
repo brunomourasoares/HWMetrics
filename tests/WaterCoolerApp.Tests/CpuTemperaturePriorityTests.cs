@@ -20,7 +20,16 @@ public sealed class CpuTemperaturePriorityTests
         string sensorName, HardwareType hardwareType, int expectedPriority)
     {
         Assert.Equal(expectedPriority,
-            HardwareMonitoringService.GetCpuTemperaturePriority(sensorName.ToLowerInvariant(), hardwareType));
+            HardwareMonitoringService.GetCpuTemperaturePriority(sensorName, hardwareType));
+    }
+
+    [Theory]
+    [InlineData("CPU PACKAGE", HardwareType.Cpu, 100)]
+    [InlineData("Gpu Core", HardwareType.GpuNvidia, -1)]
+    public void PriorityMatchingIsCaseInsensitive(string sensorName, HardwareType hardwareType, int expectedPriority)
+    {
+        Assert.Equal(expectedPriority,
+            HardwareMonitoringService.GetCpuTemperaturePriority(sensorName, hardwareType));
     }
 
     [Fact]
