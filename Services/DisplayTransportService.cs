@@ -38,7 +38,16 @@ public sealed class DisplayTransportService : IDisposable
             !double.IsFinite(cpuTemperature) || cpuTemperature is < 0 or > 100)
             return DisplayTransportStatus.InvalidTelemetry;
 
-        var payload = DisplayReport.Create(snapshot);
+        byte[] payload;
+        try
+        {
+            payload = DisplayReport.Create(snapshot);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return DisplayTransportStatus.InvalidTelemetry;
+        }
+
         lock (_sync)
         {
             if (_disposed) return DisplayTransportStatus.Error;
@@ -46,21 +55,37 @@ public sealed class DisplayTransportService : IDisposable
             {
                 if (_stream is null)
                 {
-                    var device = DeviceList.Local.GetHidDevices(VendorId, ProductId).FirstOrDefault();
-                    if (device is null) return DisplayTransportStatus.DeviceNotFound;
+                    var devices = DeviceList.Local.GetHidDevices(VendorId, ProductId).ToArray();
+                    if (devices.Length == 0) return DisplayTransportStatus.DeviceNotFound;
 
-                    _outputReportLength = device.GetMaxOutputReportLength();
-                    if (_outputReportLength < MinimumOutputReportLength)
-                        return DisplayTransportStatus.IncompatibleReport;
+                    var foundCompatibleReport = false;
+                    var opened = false;
+                    foreach (var device in devices)
+                    {
+                        var outputLength = device.GetMaxOutputReportLength();
+                        if (outputLength < MinimumOutputReportLength)
+                            continue;
 
-                    if (!device.TryOpen(out var openedStream))
-                        return DisplayTransportStatus.OpenFailed;
+                        foundCompatibleReport = true;
+                        if (!device.TryOpen(out var openedStream))
+                            continue;
 
-                    _stream = openedStream;
+                        _stream = openedStream;
+                        _outputReportLength = outputLength;
+                        opened = true;
+                        break;
+                    }
+
+                    if (!opened)
+                    {
+                        return foundCompatibleReport
+                            ? DisplayTransportStatus.OpenFailed
+                            : DisplayTransportStatus.IncompatibleReport;
+                    }
                 }
 
-                // HID output reports include the Report ID as byte 0. The legacy
-                // sender prepended Report ID 0 to the 11-byte pipe payload.
+                // The legacy HID writer prepended Report ID 0 to the 11-byte pipe payload.
+                // HidSharp's output report buffer includes the Report ID in its first byte.
                 var report = new byte[_outputReportLength];
                 report[0] = 0;
                 Buffer.BlockCopy(payload, 0, report, 1, payload.Length);
