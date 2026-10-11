@@ -39,8 +39,11 @@ public sealed class HardwareMonitoringService : IDisposable
         if (usedGiB is null || totalGiB is null)
         {
             var memory = ReadPhysicalMemory();
-            usedGiB = memory.UsedGiB;
-            totalGiB = memory.TotalGiB;
+
+            // Fill only missing values: keep a valid LibreHardwareMonitor reading
+            // instead of replacing both fields when just one field is unavailable.
+            usedGiB ??= memory.UsedGiB;
+            totalGiB ??= memory.TotalGiB;
         }
 
         var storage = ReadStorage();
