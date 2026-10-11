@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
+    private readonly Queue<SensorSnapshot> _utilizationHistory = new();
     private HardwareMonitoringService? _monitor;
     private bool _reading;
     private bool _closing;
@@ -36,8 +37,8 @@ public partial class MainWindow : Window
         ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
         ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Capacity unavailable"] = "Capacidade indisponível",
         ["STORAGE"] = "ARMAZENAMENTO", ["Waiting for disk data"] = "Aguardando dados do disco",
-        ["Thermal performance"] = "Desempenho térmico", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
-        ["Rolling 30 minutes · data since launch"] = "Últimos 30 minutos · dados desde a inicialização",
+        ["Thermal performance"] = "Desempenho térmico", ["Utilization performance"] = "Desempenho de utilização", ["Live CPU, GPU and memory history · rolling 30 minutes"] = "Histórico ao vivo de CPU, GPU e memória · últimos 30 minutos", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
+        ["Rolling 30 minutes · data since launch"] = "Últimos 30 minutos · dados desde a inicialização", ["100%"] = "100%", ["75%"] = "75%", ["50%"] = "50%", ["25%"] = "25%",
         ["Waiting for sensor data"] = "Aguardando dados dos sensores", ["System utilization"] = "Utilização do sistema",
         ["Current workload by component"] = "Carga atual por componente", ["CPU utilization"] = "Utilização da CPU",
         ["GPU utilization"] = "Utilização da GPU", ["Memory in use"] = "Memória em uso",
@@ -215,6 +216,15 @@ public partial class MainWindow : Window
         CpuHistoryPath.Data = BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC));
         GpuHistoryPath.Data = BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC));
         GraphCaption.Text = $"CPU {FullTemp(s.CpuTemperatureC)} · GPU {FullTemp(s.GpuTemperatureC)}";
+
+        _utilizationHistory.Enqueue(s);
+        while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
+        CpuUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent));
+        GpuUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent));
+        MemoryUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point =>
+            point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
+                ? point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d : null));
+        UtilizationGraphCaption.Text = $"CPU {Percent(s.CpuLoadPercent)} · GPU {Percent(s.GpuLoadPercent)} · RAM {MemoryUsagePercent(s)}";
         LastUpdatedText.Text = T("Last update: ", "Última atualização: ") + s.UpdatedAt.ToString("HH:mm:ss");
 
         var availableThermals = new List<string>();
@@ -231,6 +241,34 @@ public partial class MainWindow : Window
         StatusText.Text = hasAnyTelemetry
             ? T("Monitoring active · unsupported sensors remain N/D", "Monitoramento ativo · sensores não suportados aparecem como N/D")
             : T("No readable sensors detected · try running as administrator", "Nenhum sensor legível · tente executar como administrador");
+    }
+
+    private static string MemoryUsagePercent(SensorSnapshot snapshot) =>
+        snapshot.MemoryUsedGiB.HasValue && snapshot.MemoryTotalGiB is > 0
+            ? $"{Math.Clamp(snapshot.MemoryUsedGiB.Value / snapshot.MemoryTotalGiB.Value * 100d, 0d, 100d):0}%"
+            : "N/D";
+
+    private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source)
+    {
+        var values = source.ToList();
+        var points = new List<Point>();
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (values[i] is not double percent || !double.IsFinite(percent)) continue;
+            var x = values.Count <= 1 ? 0 : i * 900d / (values.Count - 1);
+            var y = 128d - Math.Clamp(percent, 0d, 100d) * 1.2d;
+            points.Add(new Point(x, y));
+        }
+        if (points.Count == 0) return Geometry.Empty;
+        if (points.Count == 1) points.Add(new Point(Math.Min(900, points[0].X + 2), points[0].Y));
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            context.BeginFigure(points[0], isFilled: false, isClosed: false);
+            for (var i = 1; i < points.Count; i++) context.LineTo(points[i], isStroked: true, isSmoothJoin: true);
+        }
+        geometry.Freeze();
+        return geometry;
     }
 
     private static Geometry BuildTemperatureGeometry(IEnumerable<double?> source)
