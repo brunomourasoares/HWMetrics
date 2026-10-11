@@ -216,18 +216,11 @@ public partial class MainWindow : Window
         _history.Enqueue(s);
         var cutoff = s.UpdatedAt - HistoryWindow;
         while (_history.Count > 0 && _history.Peek().UpdatedAt < cutoff) _history.Dequeue();
-        CpuHistoryPath.Data = BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC));
-        GpuHistoryPath.Data = BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC));
-        GraphCaption.Text = $"CPU {FullTemp(s.CpuTemperatureC)} · GPU {FullTemp(s.GpuTemperatureC)}";
+        UpdateTemperatureHistoryChart(s);
 
         _utilizationHistory.Enqueue(s);
         while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
-        CpuUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent));
-        GpuUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent));
-        MemoryUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point =>
-            point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
-                ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null));
-        UtilizationGraphCaption.Text = $"CPU {Percent(s.CpuLoadPercent)} · GPU {Percent(s.GpuLoadPercent)} · RAM {MemoryUsagePercent(s)}";
+        UpdateUtilizationHistoryChart(s);
 
         // Persist at a bounded cadence instead of writing to disk on every sensor poll.
         if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
@@ -237,6 +230,57 @@ public partial class MainWindow : Window
         }
 
 
+    }
+
+    private void HistoryFilter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsInitialized || _lastSnapshot is null) return;
+        UpdateTemperatureHistoryChart(_lastSnapshot);
+        UpdateUtilizationHistoryChart(_lastSnapshot);
+    }
+
+    private void UpdateTemperatureHistoryChart(SensorSnapshot current)
+    {
+        bool showCpu = TemperatureCpuFilter.IsChecked == true;
+        bool showGpu = TemperatureGpuFilter.IsChecked == true;
+        CpuHistoryPath.Visibility = showCpu ? Visibility.Visible : Visibility.Collapsed;
+        GpuHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
+        CpuHistoryPath.Data = showCpu
+            ? BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC))
+            : Geometry.Empty;
+        GpuHistoryPath.Data = showGpu
+            ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC))
+            : Geometry.Empty;
+        var parts = new List<string>();
+        if (showCpu) parts.Add($"CPU {FullTemp(current.CpuTemperatureC)}");
+        if (showGpu) parts.Add($"GPU {FullTemp(current.GpuTemperatureC)}");
+        GraphCaption.Text = parts.Count > 0 ? string.Join(" · ", parts) : "Nenhuma série selecionada";
+    }
+
+    private void UpdateUtilizationHistoryChart(SensorSnapshot current)
+    {
+        bool showCpu = UtilizationCpuFilter.IsChecked == true;
+        bool showGpu = UtilizationGpuFilter.IsChecked == true;
+        bool showRam = UtilizationRamFilter.IsChecked == true;
+        CpuUtilizationHistoryPath.Visibility = showCpu ? Visibility.Visible : Visibility.Collapsed;
+        GpuUtilizationHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
+        MemoryUtilizationHistoryPath.Visibility = showRam ? Visibility.Visible : Visibility.Collapsed;
+        CpuUtilizationHistoryPath.Data = showCpu
+            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent))
+            : Geometry.Empty;
+        GpuUtilizationHistoryPath.Data = showGpu
+            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent))
+            : Geometry.Empty;
+        MemoryUtilizationHistoryPath.Data = showRam
+            ? BuildUtilizationGeometry(_utilizationHistory.Select(point =>
+                point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
+                    ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null))
+            : Geometry.Empty;
+        var parts = new List<string>();
+        if (showCpu) parts.Add($"CPU {Percent(current.CpuLoadPercent)}");
+        if (showGpu) parts.Add($"GPU {Percent(current.GpuLoadPercent)}");
+        if (showRam) parts.Add($"RAM {MemoryUsagePercent(current)}");
+        UtilizationGraphCaption.Text = parts.Count > 0 ? string.Join(" · ", parts) : "Nenhuma série selecionada";
     }
 
     private static string MemoryUsagePercent(SensorSnapshot snapshot) =>
