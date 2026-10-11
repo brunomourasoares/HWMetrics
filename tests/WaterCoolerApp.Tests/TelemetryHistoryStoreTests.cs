@@ -36,6 +36,35 @@ public sealed class TelemetryHistoryStoreTests
     }
 
     [Fact]
+    public void Save_UsesConfiguredRetentionWindow()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "telemetry-history.json");
+        var now = DateTime.Now;
+        var store = new TelemetryHistoryStore(path);
+
+        try
+        {
+            store.Save(new[]
+            {
+                CreateSnapshot(now.AddMinutes(-150)),
+                CreateSnapshot(now.AddMinutes(-90)),
+                CreateSnapshot(now.AddMinutes(-10))
+            }, now, TimeSpan.FromHours(2));
+
+            var loaded = store.Load(now, TimeSpan.FromHours(2));
+
+            Assert.Equal(
+                new[] { now.AddMinutes(-90), now.AddMinutes(-10) },
+                loaded.Select(snapshot => snapshot.UpdatedAt));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Load_OrdersSnapshotsChronologically()
     {
         var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
@@ -86,6 +115,11 @@ public sealed class TelemetryHistoryStoreTests
 
             var loaded = Assert.Single(new TelemetryHistoryStore(path).Load(now));
             Assert.Equal(now.AddMinutes(-5), loaded.UpdatedAt);
+
+            var sanitizedFile = JsonSerializer.Deserialize<SensorSnapshot[]>(File.ReadAllText(path));
+            Assert.NotNull(sanitizedFile);
+            Assert.Single(sanitizedFile);
+            Assert.Equal(now.AddMinutes(-5), sanitizedFile[0].UpdatedAt);
         }
         finally
         {
