@@ -922,7 +922,7 @@ public partial class MainWindow : Window
         SavePreferences();
     }
 
-    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == Key.F5)
         {
