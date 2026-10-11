@@ -25,7 +25,7 @@ public sealed class DisplayTransportService : IDisposable
     public const int ProductId = 0x8666;
 
     // The device currently advertises an 11-byte output report.
-    public const int MinimumOutputReportLength = DisplayReport.PayloadLength;
+    public const int RequiredOutputReportLength = DisplayReport.PayloadLength;
 
     private readonly object _sync = new();
     private HidStream? _stream;
@@ -119,14 +119,14 @@ public sealed class DisplayTransportService : IDisposable
                                 $"PID=0x{device.ProductID:X4}, " +
                                 $"Output={outputLength}, " +
                                 $"Input={inputLength}, " +
-                                $"Required={MinimumOutputReportLength}");
+                                $"Required={RequiredOutputReportLength}");
 
-                            if (outputLength < MinimumOutputReportLength)
+                            if (outputLength != RequiredOutputReportLength)
                             {
                                 WriteHidDiagnostic(
                                     $"Interface skipped: output report length " +
-                                    $"{outputLength} is below the required " +
-                                    $"{MinimumOutputReportLength} bytes.");
+                                    $"{outputLength} does not match the required exact length " +
+                                    $"of {RequiredOutputReportLength} bytes.");
 
                                 continue;
                             }
