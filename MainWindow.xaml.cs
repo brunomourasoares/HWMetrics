@@ -6,7 +6,8 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.IO;
 using System.Text.Json;
-using System.Windows.Forms;
+using NotifyIcon = System.Windows.Forms.NotifyIcon;
+using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
@@ -63,7 +64,9 @@ public partial class MainWindow : Window
         ["HID write failed"] = "Falha ao transmitir por HID", ["Preview only · HID not connected"] = "Somente prévia · HID não conectado",
         ["HID telemetry active · fan/pump control disabled"] = "Telemetria HID ativa · controle de bomba/ventoinha desativado",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
-        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
+        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA",
+        ["Minimize to tray on close"] = "Minimizar para a bandeja ao fechar", ["Keep Aqua Core running in the notification area"] = "Manter o Aqua Core em execução na área de notificação",
+        ["Start with Windows"] = "Iniciar com o Windows", ["Launch automatically in the tray when you sign in"] = "Abrir automaticamente na bandeja ao entrar no Windows", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
         ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
@@ -827,7 +830,7 @@ public partial class MainWindow : Window
         try
         {
             using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\\Microsoft\\Windows\\CurrentVersion\\Run", writable: true)
+                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true)
                 ?? Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
                     @"Software\\Microsoft\\Windows\\CurrentVersion\\Run");
             if (StartWithWindowsCheckBox.IsChecked == true)
