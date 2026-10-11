@@ -15,6 +15,9 @@ public sealed class HardwareMonitoringService : IDisposable
     private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
+    private long? _previousIdleTime;
+    private long? _previousKernelTime;
+    private long? _previousUserTime;
 
     public HardwareMonitoringService()
     {
@@ -47,6 +50,11 @@ public sealed class HardwareMonitoringService : IDisposable
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                     ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                     ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+
+            // Some motherboards expose the CPU thermistor through Super I/O instead of
+            // the CPU hardware node. Visit() accepts those explicitly labelled CPU sensors
+            // as a lower-priority fallback. CPU utilization also has a Windows API fallback.
+            cpuLoad ??= ReadCpuLoadPercent();
 
             if (cpuTemp is null)
                 Debug.WriteLine("[HardwareMonitoring] Nenhum sensor de temperatura da CPU forneceu um valor válido nesta leitura.");
@@ -108,10 +116,11 @@ public sealed class HardwareMonitoringService : IDisposable
                 switch (sensor.SensorType)
                 {
                     case SensorType.Temperature:
-                        if (hardware.HardwareType == HardwareType.Cpu)
+                        var cpuPriority = GetCpuTemperaturePriority(name, hardware.HardwareType);
+                        if (cpuPriority >= 0 && cpuPriority > cpuTempPriority)
                         {
-                            var priority = GetCpuTemperaturePriority(name);
-                            if (priority > cpuTempPriority) { cpuTemp = value; cpuTempPriority = priority; }
+                            cpuTemp = value;
+                            cpuTempPriority = cpuPriority;
                         }
                         else if (IsGpu(hardware.HardwareType))
                         {
@@ -159,16 +168,33 @@ public sealed class HardwareMonitoringService : IDisposable
     private static bool IsGpu(HardwareType type) =>
         type is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
 
-    private static int GetCpuTemperaturePriority(string name)
+    internal static int GetCpuTemperaturePriority(string name, HardwareType hardwareType)
     {
-        if (name.Contains("package")) return 100;
-        if (name.Contains("tdie")) return 95;
-        if (name.Contains("tctl")) return 90;
-        if (name.Contains("core max")) return 85;
-        if (name.Contains("core average") || name.Contains("average")) return 80;
-        if (name.Contains("core")) return 70;
-        if (name.Contains("cpu")) return 60;
-        return 10;
+        // Prefer direct CPU package/die/core sensors whenever available.
+        if (hardwareType == HardwareType.Cpu)
+        {
+            if (name.Contains("package")) return 100;
+            if (name.Contains("tdie")) return 95;
+            if (name.Contains("tctl")) return 90;
+            if (name.Contains("core max")) return 85;
+            if (name.Contains("core average") || name.Contains("average")) return 80;
+            if (name.Contains("core")) return 70;
+            if (name.Contains("cpu")) return 60;
+            return 10;
+        }
+
+        // Some boards expose only a CPU-labelled socket/thermistor under Motherboard
+        // or Super I/O. Do not mistake generic motherboard/VRM temperatures for CPU.
+        if (hardwareType is HardwareType.Motherboard or HardwareType.SuperIO)
+        {
+            if (!name.Contains("cpu") && !name.Contains("processor")) return -1;
+            if (name.Contains("package")) return 55;
+            if (name.Contains("core")) return 50;
+            if (name.Contains("socket")) return 45;
+            return 40;
+        }
+
+        return -1;
     }
 
     private static int GetCpuLoadPriority(string name)
@@ -265,6 +291,37 @@ public sealed class HardwareMonitoringService : IDisposable
 
     private static double? NormalizeMemoryTotal(double? total) =>
         total.HasValue && double.IsFinite(total.Value) && total.Value > 0 ? total : null;
+
+    private double? ReadCpuLoadPercent()
+    {
+        if (!GetSystemTimes(out var idle, out var kernel, out var user))
+            return null;
+
+        // Kernel time includes idle time on Windows.
+        var currentIdle = idle;
+        var currentKernel = kernel;
+        var currentUser = user;
+        var previousIdle = _previousIdleTime;
+        var previousKernel = _previousKernelTime;
+        var previousUser = _previousUserTime;
+        _previousIdleTime = currentIdle;
+        _previousKernelTime = currentKernel;
+        _previousUserTime = currentUser;
+
+        if (!previousIdle.HasValue || !previousKernel.HasValue || !previousUser.HasValue)
+            return null;
+
+        var idleDelta = currentIdle - previousIdle.Value;
+        var totalDelta = (currentKernel - previousKernel.Value) + (currentUser - previousUser.Value);
+        if (idleDelta < 0 || totalDelta <= 0 || idleDelta > totalDelta)
+            return null;
+
+        return Math.Clamp((totalDelta - idleDelta) * 100d / totalDelta, 0d, 100d);
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetSystemTimes(out long idleTime, out long kernelTime, out long userTime);
 
     private static (double? UsedGiB, double? TotalGiB) ReadPhysicalMemory()
     {
