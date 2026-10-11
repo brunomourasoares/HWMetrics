@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
-        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
+        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["Interface theme"] = "Tema da interface", ["APPEARANCE"] = "APARÊNCIA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
         ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
@@ -292,20 +292,28 @@ public partial class MainWindow : Window
         if (_monitor is not null && !_pollTimer.IsEnabled) _pollTimer.Start();
     }
 
+    private void HideSettingsPanel()
+    {
+        SettingsPanel.Visibility = Visibility.Collapsed;
+    }
+
     private void NavOverview_Click(object sender, RoutedEventArgs e)
     {
+        HideSettingsPanel();
         SetActiveNavigation(NavOverviewButton);
         MainScrollViewer.ScrollToTop();
     }
 
     private void NavCooling_Click(object sender, RoutedEventArgs e)
     {
+        HideSettingsPanel();
         SetActiveNavigation(NavCoolingButton);
         CoolerCard.BringIntoView();
     }
 
     private void NavHardware_Click(object sender, RoutedEventArgs e)
     {
+        HideSettingsPanel();
         SetActiveNavigation(NavHardwareButton);
         ThermalComponentsCard.BringIntoView();
     }
@@ -313,6 +321,7 @@ public partial class MainWindow : Window
     private void NavSettings_Click(object sender, RoutedEventArgs e)
     {
         SetActiveNavigation(NavSettingsButton);
+        SettingsPanel.Visibility = Visibility.Visible;
         ThemeSelector.BringIntoView();
         ThemeSelector.Focus();
     }
