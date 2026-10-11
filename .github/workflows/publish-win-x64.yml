@@ -25,12 +25,12 @@ jobs:
         run: dotnet restore WaterCoolerApp.csproj --runtime win-x64
 
       - name: Publish self-contained Windows x64
-        run: dotnet publish WaterCoolerApp.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/WaterCoolerApp-win-x64
+        run: dotnet publish WaterCoolerApp.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/HW-Metrics-win-x64
 
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WaterCoolerApp-win-x64
-          path: artifacts/WaterCoolerApp-win-x64/
+          name: HW-Metrics-win-x64
+          path: artifacts/HW-Metrics-win-x64/
           if-no-files-found: error
           retention-days: 14
