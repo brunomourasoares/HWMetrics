@@ -64,6 +64,11 @@ public partial class MainWindow : Window
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
         ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
+        ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
+        ["Close"] = "Fechar", ["Close settings"] = "Fechar configurações",
+        ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
+        ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
+        ["Utilization --%"] = "Utilização --%",
         ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
         ["Open Aqua Core"] = "Abrir Aqua Core", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
@@ -744,6 +749,15 @@ public partial class MainWindow : Window
         var reverse = Portuguese.GroupBy(pair => pair.Value, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
         TranslateTree(this, language == "pt" ? Portuguese : reverse);
         Title = language == "pt" ? Portuguese["Aqua Core — Hardware Studio"] : "Aqua Core — Hardware Studio";
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Text = T("Aqua Core — Hardware Studio", "Aqua Core — Central de Hardware");
+            if (_trayIcon.ContextMenuStrip?.Items.Count >= 2)
+            {
+                _trayIcon.ContextMenuStrip.Items[0].Text = T("Open Aqua Core", "Abrir Aqua Core");
+                _trayIcon.ContextMenuStrip.Items[1].Text = T("Exit", "Sair");
+            }
+        }
     }
 
     private static void TranslateTree(DependencyObject parent, IReadOnlyDictionary<string, string> dictionary)
@@ -752,6 +766,8 @@ public partial class MainWindow : Window
             textBlock.Text = translatedText;
         if (parent is ContentControl contentControl && contentControl.Content is string content && dictionary.TryGetValue(content, out var translatedContent))
             contentControl.Content = translatedContent;
+        if (parent is FrameworkElement element && element.ToolTip is string toolTip && dictionary.TryGetValue(toolTip, out var translatedToolTip))
+            element.ToolTip = translatedToolTip;
 
         foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>().ToArray())
             TranslateTree(child, dictionary);
