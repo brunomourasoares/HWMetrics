@@ -8,7 +8,8 @@ A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **
 - **CPU and GPU:** temperatures and utilization when exposed by the hardware/driver / temperaturas e utilização quando disponíveis.
 - **RAM:** usage and total capacity via Windows memory API fallback / uso e capacidade total com alternativa pela API do Windows.
 - **Storage:** system drive usage percentage, used/total/free capacity, and a summary of detected fixed volumes. Drive temperature is shown separately only when exposed by the controller / percentual usado, capacidade usada/total/livre e resumo dos volumes detectados. A temperatura do disco é separada e depende do controlador.
-- **Live chart:** CPU/GPU temperature history for up to 30 minutes since app launch / histórico de temperatura da CPU/GPU por até 30 minutos desde a inicialização.
+- **Telemetry history:** local rolling history with a 30-minute default retention, configurable to 1, 6, or 24 hours in Settings. Expired and future-dated snapshots are removed from the local JSON file. Use **Save history / Salvar histórico** to export a separate JSON copy / histórico local com retenção padrão de 30 minutos, configurável para 1, 6 ou 24 horas em Configurações. Registros expirados ou com data futura são removidos do arquivo JSON local. Use **Salvar histórico** para exportar uma cópia JSON separada.
+- **Live charts:** temperature and utilization charts show the latest 30 minutes; longer local retention is available for history export / os gráficos mostram os últimos 30 minutos; retenções locais maiores ficam disponíveis para exportação.
 - Manual refresh and polling intervals of 1, 2, or 5 seconds / atualização manual e intervalos de 1, 2 ou 5 segundos.
 - Dark and light themes / temas claro e escuro.
 - UI-only water cooler display preview. **No USB/HID writes are enabled** / prévia visual do display. **Nenhum comando USB/HID é enviado**.
@@ -38,6 +39,12 @@ dotnet publish .\WaterCoolerApp.csproj -c Release -r win-x64 --self-contained tr
 The Storage card reports filesystem capacity for ready fixed volumes (the Windows system volume is prioritized). This is different from SMART/NVMe drive temperature: temperature is displayed only if LibreHardwareMonitor and the storage controller expose it. If a drive is absent from the summary, confirm that Windows has mounted it and assigned a drive letter.
 
 O cartão Armazenamento mostra a capacidade do sistema de arquivos dos volumes fixos prontos (priorizando a unidade do Windows). Isso é diferente da temperatura SMART/NVMe: a temperatura só aparece quando o LibreHardwareMonitor e o controlador a disponibilizam. Se uma unidade não aparecer no resumo, confirme que ela está montada no Windows e possui uma letra atribuída.
+
+## Telemetry history storage / Armazenamento do histórico de telemetria
+
+The app stores a bounded rolling history at `%LocalAppData%\\AquaCore\\telemetry-history.json`. By default, only the latest 30 minutes are retained; Settings can extend retention to 1, 6, or 24 hours. The file is periodically rewritten with only snapshots inside the selected window, and invalid future-dated or expired records are discarded. This bounds the automatic local history rather than accumulating an unbounded log. **Save history / Salvar histórico** exports a separate JSON copy to a location selected by the user; that exported copy is not automatically pruned by the app.
+
+O aplicativo mantém um histórico local rotativo em `%LocalAppData%\\AquaCore\\telemetry-history.json`. Por padrão, guarda apenas os últimos 30 minutos; em Configurações, a retenção pode ser ampliada para 1, 6 ou 24 horas. O arquivo é regravado periodicamente apenas com os registros dentro do período selecionado, descartando registros expirados ou com data futura. Assim, o histórico automático não cresce indefinidamente. **Salvar histórico** exporta uma cópia JSON separada para o local escolhido pelo usuário; essa cópia exportada não é apagada automaticamente pelo aplicativo.
 
 ## Safety / Segurança
 
