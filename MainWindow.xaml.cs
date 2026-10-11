@@ -18,8 +18,6 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
-    private readonly TelemetryHistoryStore _historyStore = new();
-    private DateTime _lastHistorySaveAt = DateTime.MinValue;
     private HardwareMonitoringService? _monitor;
     private bool _reading;
     private bool _closing;
@@ -145,13 +143,6 @@ public partial class MainWindow : Window
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
         try
         {
-            var persistedHistory = _historyStore.Load(DateTime.Now);
-            foreach (var point in persistedHistory)
-            {
-                _history.Enqueue(point);
-                _utilizationHistory.Enqueue(point);
-            }
-
             var monitor = await Task.Run(() => new HardwareMonitoringService());
             // The window can close while the hardware service is opening on a worker thread.
             // Dispose the newly created service instead of attaching it to a closed window.
@@ -296,14 +287,44 @@ public partial class MainWindow : Window
         while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
         UpdateUtilizationHistoryChart(s);
 
-        // Persist at a bounded cadence instead of writing to disk on every sensor poll.
-        if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
+
+
+    }
+
+    private void SaveHistory_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            _historyStore.Save(_history, s.UpdatedAt);
-            _lastHistorySaveAt = s.UpdatedAt;
+            Title = T("Save telemetry history", "Salvar histórico de telemetria"),
+            Filter = "JSON files (*.json)|*.json",
+            DefaultExt = ".json",
+            AddExtension = true,
+            FileName = $"aqua-core-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
+        };
+
+        if (dialog.ShowDialog(this) != true) return;
+
+        try
+        {
+            var snapshots = _history.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
+            File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(
+                snapshots,
+                new JsonSerializerOptions { WriteIndented = true }));
+            MessageBox.Show(
+                T("Telemetry history saved successfully.", "Histórico de telemetria salvo com sucesso."),
+                T("History saved", "Histórico salvo"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
-
-
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] History export failed: {ex}");
+            MessageBox.Show(
+                T("Could not save telemetry history.", "Não foi possível salvar o histórico de telemetria."),
+                T("Save failed", "Falha ao salvar"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void HistoryFilter_Changed(object sender, RoutedEventArgs e)
@@ -591,7 +612,6 @@ public partial class MainWindow : Window
         _closing = true;
         _pollTimer.Stop();
         _storageCycleTimer.Stop();
-        _historyStore.Save(_history, DateTime.Now);
         _monitor?.Dispose();
     }
 }
