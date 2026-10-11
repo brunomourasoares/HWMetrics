@@ -5,6 +5,9 @@
  Title="HW Metrics — Hardware Studio" Height="900" Width="1480" MinHeight="700" MinWidth="1040" WindowStyle="None" ResizeMode="CanResize" AllowsTransparency="False"
  WindowStartupLocation="CenterScreen" Background="{DynamicResource AppBgBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
  Loaded="Window_Loaded" Closing="Window_Closing" Closed="Window_Closed" PreviewKeyDown="Window_PreviewKeyDown">
+ <shell:WindowChrome.WindowChrome>
+  <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+ </shell:WindowChrome.WindowChrome>
  <Window.Resources>
   <Storyboard x:Key="IntroStoryboard">
    <DoubleAnimation Storyboard.TargetName="MainContent" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.65"/>
