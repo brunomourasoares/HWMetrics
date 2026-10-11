@@ -44,7 +44,7 @@ public partial class MainWindow : Window
         ["Waiting for sensor data"] = "Aguardando dados dos sensores", ["System utilization"] = "Utilização do sistema",
         ["Current workload by component"] = "Carga atual por componente", ["CPU utilization"] = "Utilização da CPU",
         ["GPU utilization"] = "Utilização da GPU", ["Memory in use"] = "Memória em uso",
-        ["Water cooler"] = "Water Cooler", ["Temperature"] = "Temperatura", ["Live temperature history"] = "Histórico da temperatura em tempo real", ["Utilization"] = "Utilização", ["Live utilization history"] = "Histórico da utilização em tempo real", ["WATER COOLER MODEL"] = "MODELO DO WATER COOLER", ["Generic LCD Pump"] = "Bomba LCD genérica", ["NZXT Kraken LCD"] = "NZXT Kraken LCD", ["Corsair iCUE LCD"] = "Corsair iCUE LCD", ["ASUS ROG Ryujin LCD"] = "ASUS ROG Ryujin LCD", ["Preferences"] = "Preferências", ["Choose light or dark appearance"] = "Escolha o tema claro ou escuro", ["Sensor polling interval"] = "Intervalo de leitura dos sensores", ["Application display language"] = "Idioma da interface", ["Close"] = "Fechar", ["Pump display preview"] = "Prévia do display da bomba", ["CPU ONLY"] = "SOMENTE CPU",
+        ["Water cooler"] = "Water Cooler", ["Temperature"] = "Temperatura", ["Live temperature history"] = "Histórico da temperatura em tempo real", ["Utilization"] = "Utilização", ["Live utilization history"] = "Histórico da utilização em tempo real", ["WATER COOLER MODEL"] = "MODELO DO WATER COOLER", ["Preferences"] = "Preferências", ["Choose light or dark appearance"] = "Escolha o tema claro ou escuro", ["Sensor polling interval"] = "Intervalo de leitura dos sensores", ["Application display language"] = "Idioma da interface", ["Close"] = "Fechar", ["Pump display preview"] = "Prévia do display da bomba", ["CPU ONLY"] = "SOMENTE CPU",
         ["CPU TEMP"] = "TEMP. CPU", ["CELSIUS"] = "CELSIUS", ["Hardware link not connected"] = "Hardware não conectado",
         ["Preview only · HID transmission disabled"] = "Somente prévia · transmissão HID desativada",
         ["Thermal components"] = "Componentes térmicos", ["Sensor availability on this machine"] = "Sensores disponíveis neste computador",
@@ -77,6 +77,9 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        // Apply the default model after InitializeComponent has created every named control.
+        CoolerModelSelector_SelectionChanged(CoolerModelSelector, new SelectionChangedEventArgs(
+            Selector.SelectionChangedEvent, new object(), new object()));
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
         try
         {
