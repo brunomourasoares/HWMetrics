@@ -152,7 +152,16 @@ public partial class MainWindow : Window
                 _utilizationHistory.Enqueue(point);
             }
 
-            _monitor = await Task.Run(() => new HardwareMonitoringService());
+            var monitor = await Task.Run(() => new HardwareMonitoringService());
+            // The window can close while the hardware service is opening on a worker thread.
+            // Dispose the newly created service instead of attaching it to a closed window.
+            if (_closing)
+            {
+                monitor.Dispose();
+                return;
+            }
+
+            _monitor = monitor;
             DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
             _pollTimer.Start();
             _storageCycleTimer.Start();
