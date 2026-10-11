@@ -59,27 +59,38 @@ public sealed class DisplayTransportService : IDisposable
                     if (devices.Length == 0) return DisplayTransportStatus.DeviceNotFound;
 
                     var foundCompatibleReport = false;
+                    var inspectionFailed = false;
                     var opened = false;
                     foreach (var device in devices)
                     {
-                        var outputLength = device.GetMaxOutputReportLength();
-                        if (outputLength < MinimumOutputReportLength)
-                            continue;
+                        try
+                        {
+                            var outputLength = device.GetMaxOutputReportLength();
+                            if (outputLength < MinimumOutputReportLength)
+                                continue;
 
-                        foundCompatibleReport = true;
-                        if (!device.TryOpen(out var openedStream))
-                            continue;
+                            foundCompatibleReport = true;
+                            if (!device.TryOpen(out var openedStream))
+                                continue;
 
-                        _stream = openedStream;
-                        _outputReportLength = outputLength;
-                        opened = true;
-                        break;
+                            _stream = openedStream;
+                            _outputReportLength = outputLength;
+                            opened = true;
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            // One inaccessible HID interface must not prevent trying the others.
+                            inspectionFailed = true;
+                            System.Diagnostics.Debug.WriteLine($"[DisplayTransport] HID interface inspection failed: {ex}");
+                        }
                     }
 
                     if (!opened)
                     {
-                        return foundCompatibleReport
-                            ? DisplayTransportStatus.OpenFailed
+                        if (foundCompatibleReport) return DisplayTransportStatus.OpenFailed;
+                        return inspectionFailed
+                            ? DisplayTransportStatus.Error
                             : DisplayTransportStatus.IncompatibleReport;
                     }
                 }
