@@ -832,12 +832,12 @@ public partial class MainWindow : Window
             using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
                 @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true)
                 ?? Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
-                    @"Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+                    @"Software\Microsoft\Windows\CurrentVersion\Run");
             if (StartWithWindowsCheckBox.IsChecked == true)
             {
                 var executable = Environment.ProcessPath;
                 if (!string.IsNullOrWhiteSpace(executable))
-                    key.SetValue("AquaCore", $"\\"{executable}\\" --tray");
+                    key.SetValue("AquaCore", $"\"{executable}\" --tray");
             }
             else
             {
