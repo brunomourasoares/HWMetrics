@@ -16,6 +16,8 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
+    private readonly TelemetryHistoryStore _historyStore = new();
+    private DateTime _lastHistorySaveAt = DateTime.MinValue;
     private HardwareMonitoringService? _monitor;
     private bool _reading;
     private bool _closing;
@@ -78,6 +80,13 @@ public partial class MainWindow : Window
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
         try
         {
+            var persistedHistory = _historyStore.Load(DateTime.Now);
+            foreach (var point in persistedHistory)
+            {
+                _history.Enqueue(point);
+                _utilizationHistory.Enqueue(point);
+            }
+
             _monitor = await Task.Run(() => new HardwareMonitoringService());
             StatusText.Text = T("Sensor service ready · polling every 2 seconds", "Serviço de sensores pronto · leitura a cada 2 segundos");
             DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
@@ -220,6 +229,14 @@ public partial class MainWindow : Window
             point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
                 ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null));
         UtilizationGraphCaption.Text = $"CPU {Percent(s.CpuLoadPercent)} · GPU {Percent(s.GpuLoadPercent)} · RAM {MemoryUsagePercent(s)}";
+
+        // Persist at a bounded cadence instead of writing to disk on every sensor poll.
+        if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
+        {
+            _historyStore.Save(_history, s.UpdatedAt);
+            _lastHistorySaveAt = s.UpdatedAt;
+        }
+
         LastUpdatedText.Text = T("Last update: ", "Última atualização: ") + s.UpdatedAt.ToString("HH:mm:ss");
 
         var availableThermals = new List<string>();
@@ -441,6 +458,7 @@ public partial class MainWindow : Window
         _closing = true;
         _pollTimer.Stop();
         _storageCycleTimer.Stop();
+        _historyStore.Save(_history, DateTime.Now);
         _monitor?.Dispose();
     }
 }
