@@ -80,7 +80,7 @@
    </Grid></ScrollViewer>
   </Grid>
   <Grid Grid.RowSpan="2" x:Name="SettingsDialogOverlay" Visibility="Collapsed" Panel.ZIndex="100" Background="#99060B12">
-   <Border Width="430" MaxWidth="90%" Padding="24" CornerRadius="18" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+   <Border Width="430" MaxWidth="430" Padding="24" CornerRadius="18" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
     <StackPanel>
      <Grid Margin="0,0,0,18"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="SYSTEM SETTINGS" Style="{StaticResource SmallLabel}"/><TextBlock Text="Preferences" FontSize="22" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel><Button Grid.Column="1" Content="✕" Width="30" Height="30" Click="CloseSettingsDialog_Click" Background="Transparent" BorderBrush="{DynamicResource StrokeBrush}"/></Grid>
      <Grid Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center"><TextBlock Text="Interface theme" FontSize="12" FontWeight="SemiBold"/><TextBlock Text="Choose light or dark appearance" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0"/></StackPanel><ComboBox x:Name="ThemeSelector" Grid.Column="1" SelectedIndex="0" SelectionChanged="ThemeSelector_SelectionChanged" Height="32" FontSize="11"><ComboBoxItem Content="Dark"/><ComboBoxItem Content="Light"/></ComboBox></Grid>
