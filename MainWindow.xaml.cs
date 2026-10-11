@@ -18,6 +18,10 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
+    private readonly Queue<SensorSnapshot> _storedHistory = new();
+    private readonly TelemetryHistoryStore _historyStore = new();
+    private DateTime _lastHistorySaveAt = DateTime.MinValue;
+    private TimeSpan _historyRetention = TelemetryHistoryStore.DefaultRetention;
     private HardwareMonitoringService? _monitor;
     private bool _reading;
     private bool _closing;
@@ -34,6 +38,7 @@ public partial class MainWindow : Window
         public int PollIntervalIndex { get; set; } = 1;
         public int LanguageIndex { get; set; } = 1;
         public int CoolerModelIndex { get; set; }
+        public int HistoryRetentionIndex { get; set; }
     }
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
@@ -79,6 +84,13 @@ public partial class MainWindow : Window
         ["History saved"] = "Histórico salvo",
         ["Could not save telemetry history."] = "Não foi possível salvar o histórico de telemetria.",
         ["Save failed"] = "Falha ao salvar",
+        ["History retention"] = "Retenção do histórico",
+        ["How long to keep telemetry locally"] = "Por quanto tempo manter a telemetria localmente",
+        ["30 minutes"] = "30 minutos",
+        ["1 hour"] = "1 hora",
+        ["6 hours"] = "6 horas",
+        ["24 hours"] = "24 horas",
+        ["7 days"] = "7 dias",
         ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
         ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
     };
@@ -104,6 +116,7 @@ public partial class MainWindow : Window
             PollIntervalSelector.SelectedIndex = Math.Clamp(preferences.PollIntervalIndex, 0, 2);
             LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
             CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
+            HistoryRetentionSelector.SelectedIndex = Math.Clamp(preferences.HistoryRetentionIndex, 0, HistoryRetentionSelector.Items.Count - 1);
         }
         catch (Exception)
         {
@@ -111,6 +124,7 @@ public partial class MainWindow : Window
             PollIntervalSelector.SelectedIndex = 1;
             LanguageSelector.SelectedIndex = 1;
             CoolerModelSelector.SelectedIndex = 0;
+            HistoryRetentionSelector.SelectedIndex = 0;
         }
         finally
         {
@@ -128,7 +142,8 @@ public partial class MainWindow : Window
                 ThemeIndex = Math.Max(0, ThemeSelector.SelectedIndex),
                 PollIntervalIndex = Math.Max(0, PollIntervalSelector.SelectedIndex),
                 LanguageIndex = Math.Max(0, LanguageSelector.SelectedIndex),
-                CoolerModelIndex = Math.Max(0, CoolerModelSelector.SelectedIndex)
+                CoolerModelIndex = Math.Max(0, CoolerModelSelector.SelectedIndex),
+                HistoryRetentionIndex = Math.Max(0, HistoryRetentionSelector.SelectedIndex)
             };
             var directory = Path.GetDirectoryName(_preferencesPath)!;
             Directory.CreateDirectory(directory);
@@ -147,9 +162,21 @@ public partial class MainWindow : Window
         // Apply the default model after InitializeComponent has created every named control.
         CoolerModelSelector_SelectionChanged(CoolerModelSelector, null!);
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
-        RemoveLegacyAutomaticHistoryFile();
         try
         {
+            _historyRetention = GetSelectedHistoryRetention();
+            var now = DateTime.Now;
+            var persistedHistory = _historyStore.Load(now, _historyRetention);
+            foreach (var point in persistedHistory)
+            {
+                _storedHistory.Enqueue(point);
+                if (point.UpdatedAt >= now - HistoryWindow)
+                {
+                    _history.Enqueue(point);
+                    _utilizationHistory.Enqueue(point);
+                }
+            }
+
             var monitor = await Task.Run(() => new HardwareMonitoringService());
             // The window can close while the hardware service is opening on a worker thread.
             // Dispose the newly created service instead of attaching it to a closed window.
@@ -294,30 +321,15 @@ public partial class MainWindow : Window
         while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
         UpdateUtilizationHistoryChart(s);
 
+        _storedHistory.Enqueue(s);
+        var retentionCutoff = s.UpdatedAt - _historyRetention;
+        while (_storedHistory.Count > 0 && _storedHistory.Peek().UpdatedAt < retentionCutoff)
+            _storedHistory.Dequeue();
 
-
-    }
-
-    private static void RemoveLegacyAutomaticHistoryFile()
-    {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AquaCore");
-
-        foreach (var path in new[]
+        if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
         {
-            Path.Combine(directory, "telemetry-history.json"),
-            Path.Combine(directory, "telemetry-history.json.tmp")
-        })
-        {
-            try
-            {
-                if (File.Exists(path)) File.Delete(path);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                System.Diagnostics.Debug.WriteLine($"[MainWindow] Legacy history cleanup failed: {ex}");
-            }
+            _historyStore.Save(_storedHistory, s.UpdatedAt, _historyRetention);
+            _lastHistorySaveAt = s.UpdatedAt;
         }
     }
 
@@ -336,7 +348,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var snapshots = _history.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
+            var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
             File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(
                 snapshots,
                 new JsonSerializerOptions { WriteIndented = true }));
@@ -355,6 +367,30 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    private TimeSpan GetSelectedHistoryRetention() => HistoryRetentionSelector.SelectedIndex switch
+    {
+        1 => TimeSpan.FromHours(1),
+        2 => TimeSpan.FromHours(6),
+        3 => TimeSpan.FromHours(24),
+        4 => TimeSpan.FromDays(7),
+        _ => TimeSpan.FromMinutes(30)
+    };
+
+    private void HistoryRetentionSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded || HistoryRetentionSelector.SelectedIndex < 0) return;
+        _historyRetention = GetSelectedHistoryRetention();
+        SavePreferences();
+
+        var now = DateTime.Now;
+        var cutoff = now - _historyRetention;
+        var retained = _storedHistory.Where(snapshot => snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now).ToArray();
+        _storedHistory.Clear();
+        foreach (var snapshot in retained) _storedHistory.Enqueue(snapshot);
+        _historyStore.Save(_storedHistory, now, _historyRetention);
+        _lastHistorySaveAt = now;
     }
 
     private void HistoryFilter_Changed(object sender, RoutedEventArgs e)
@@ -642,6 +678,7 @@ public partial class MainWindow : Window
         _closing = true;
         _pollTimer.Stop();
         _storageCycleTimer.Stop();
+        _historyStore.Save(_storedHistory, DateTime.Now, _historyRetention);
         _monitor?.Dispose();
     }
 }
