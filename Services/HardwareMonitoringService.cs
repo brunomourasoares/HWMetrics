@@ -131,7 +131,7 @@ public sealed class HardwareMonitoringService : IDisposable
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
                         {
                             var priority = GetGpuLoadPriority(name);
-                            if (priority > gpuLoadPriority) { gpuLoad = value; gpuLoadPriority = priority;
+                            if (priority > gpuLoadPriority) { gpuLoad = value; gpuLoadPriority = priority; }
                         }
                         break;
 
