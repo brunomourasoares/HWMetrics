@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
 using WaterCoolerApp.Models;
@@ -9,6 +11,9 @@ namespace WaterCoolerApp.Services;
 public sealed class HardwareMonitoringService : IDisposable
 {
     private readonly Computer _computer;
+    private readonly object _sync = new();
+    private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     public HardwareMonitoringService()
@@ -26,59 +31,108 @@ public sealed class HardwareMonitoringService : IDisposable
 
     public SensorSnapshot Read()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
-        double? usedGiB = null, totalGiB = null, driveTemp = null;
-
-        foreach (var hardware in _computer.Hardware)
-            Visit(hardware, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
-                ref usedGiB, ref totalGiB, ref driveTemp);
-
-        // LibreHardwareMonitor does not expose physical memory consistently on every system.
-        // Use the Windows memory API as a reliable fallback for the RAM card.
-        if (usedGiB is null || totalGiB is null)
+        lock (_sync)
         {
-            var memory = ReadPhysicalMemory();
-            usedGiB = memory.UsedGiB;
-            totalGiB = memory.TotalGiB;
-        }
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
+            double? usedGiB = null, totalGiB = null, driveTemp = null;
+            string? cpuModel = null, gpuModel = null, storageModel = null;
+            var storageModels = new List<string>();
+            var cpuTempPriority = -1;
+            var cpuLoadPriority = -1;
+            var gpuTempPriority = -1;
+            var gpuLoadPriority = -1;
+    
+            foreach (var hardware in _computer.Hardware)
+                Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
 
-        var storage = ReadStorage();
-        return new SensorSnapshot(cpuTemp, cpuLoad, gpuTemp, gpuLoad, usedGiB, totalGiB,
-            driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
-            storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary,
-            DateTime.Now, "Leitura concluída");
+            if (cpuTemp is null)
+                Debug.WriteLine("[HardwareMonitoring] Nenhum sensor de temperatura da CPU forneceu um valor válido nesta leitura.");
+    
+            // LibreHardwareMonitor does not expose physical memory consistently on every system.
+            // Use the Windows memory API as a reliable fallback for the RAM card.
+            if (usedGiB is null || totalGiB is null)
+            {
+                var memory = ReadPhysicalMemory();
+    
+                // Fill only missing values: keep a valid LibreHardwareMonitor reading
+                // instead of replacing both fields when just one field is unavailable.
+                usedGiB ??= memory.UsedGiB;
+                totalGiB ??= memory.TotalGiB;
+            }
+    
+            var storage = ReadStorage();
+            return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
+                NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
+                driveTemp, cpuModel, gpuModel, storageModels.FirstOrDefault() ?? storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
+                storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
+                DateTime.Now, "Leitura concluída");
+        }
     }
 
-    private static void Visit(IHardware hardware, ref double? cpuTemp, ref double? cpuLoad,
-        ref double? gpuTemp, ref double? gpuLoad, ref double? usedGiB, ref double? totalGiB,
-        ref double? driveTemp)
+    private void Visit(IHardware hardware,
+        ref double? cpuTemp, ref int cpuTempPriority,
+        ref double? cpuLoad, ref int cpuLoadPriority,
+        ref double? gpuTemp, ref int gpuTempPriority,
+        ref double? gpuLoad, ref int gpuLoadPriority,
+        ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
+        ref string? cpuModel, ref string? gpuModel, ref string? storageModel, List<string> storageModels)
     {
         try
         {
+            if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
+            else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
+            else if (hardware.HardwareType == HardwareType.Storage)
+            {
+                var candidate = CleanModel(hardware.Name);
+                if (IsUsefulStorageModel(candidate))
+                {
+                    storageModel ??= candidate;
+                    if (!storageModels.Contains(candidate!, StringComparer.OrdinalIgnoreCase)) storageModels.Add(candidate!);
+                }
+            }
             hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
-                if (sensor.Value is not float value || !float.IsFinite(value)) continue;
+                var rawValue = sensor.Value;
+                var sensorKey = $"{hardware.Identifier}|{sensor.Identifier}|{sensor.SensorType}";
+                if (_loggedSensors.Add(sensorKey))
+                {
+                    var loggedValue = rawValue?.ToString("0.##", CultureInfo.InvariantCulture) ?? "null";
+                    Debug.WriteLine($"[HardwareMonitoring] Sensor encontrado: hardware={hardware.HardwareType}, nome='{hardware.Name}', tipo={sensor.SensorType}, sensor='{sensor.Name}', valorInicial={loggedValue}");
+                }
+                if (rawValue is not float value || !float.IsFinite(value)) continue;
                 var name = sensor.Name.ToLowerInvariant();
                 switch (sensor.SensorType)
                 {
                     case SensorType.Temperature:
-                        if (hardware.HardwareType == HardwareType.Cpu &&
-                            (cpuTemp is null || name.Contains("package") || name.Contains("tctl")))
-                            cpuTemp = value;
-                        else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
-                            gpuTemp ??= value;
+                        if (hardware.HardwareType == HardwareType.Cpu)
+                        {
+                            var priority = GetCpuTemperaturePriority(name);
+                            if (priority > cpuTempPriority) { cpuTemp = value; cpuTempPriority = priority; }
+                        }
+                        else if (IsGpu(hardware.HardwareType))
+                        {
+                            var priority = GetGpuTemperaturePriority(name);
+                            if (priority > gpuTempPriority) { gpuTemp = value; gpuTempPriority = priority; }
+                        }
                         else if (hardware.HardwareType == HardwareType.Storage)
                             driveTemp ??= value;
                         break;
 
                     case SensorType.Load:
-                        if (hardware.HardwareType == HardwareType.Cpu &&
-                            (name.Contains("total") || name.Contains("cpu total")))
-                            cpuLoad = value;
+                        if (hardware.HardwareType == HardwareType.Cpu)
+                        {
+                            var priority = GetCpuLoadPriority(name);
+                            if (priority > cpuLoadPriority) { cpuLoad = value; cpuLoadPriority = priority; }
+                        }
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
-                            gpuLoad ??= value;
+                        {
+                            var priority = GetGpuLoadPriority(name);
+                            if (priority > gpuLoadPriority) { gpuLoad = value; gpuLoadPriority = priority; }
+                        }
                         break;
 
                     case SensorType.Data when hardware.HardwareType == HardwareType.Memory:
@@ -88,19 +142,77 @@ public sealed class HardwareMonitoringService : IDisposable
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // A failed controller/driver must not prevent readings from other devices.
+            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+            if (_loggedHardwareErrors.Add(hardwareKey))
+                Debug.WriteLine($"[HardwareMonitoring] Falha ao atualizar hardware '{hardware.Name}' ({hardware.HardwareType}): {ex}");
         }
 
         foreach (var child in hardware.SubHardware)
-            Visit(child, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
-                ref usedGiB, ref totalGiB, ref driveTemp);
+            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
     }
 
 
+    private static bool IsGpu(HardwareType type) =>
+        type is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
+
+    private static int GetCpuTemperaturePriority(string name)
+    {
+        if (name.Contains("package")) return 100;
+        if (name.Contains("tdie")) return 95;
+        if (name.Contains("tctl")) return 90;
+        if (name.Contains("core max")) return 85;
+        if (name.Contains("core average") || name.Contains("average")) return 80;
+        if (name.Contains("core")) return 70;
+        if (name.Contains("cpu")) return 60;
+        return 10;
+    }
+
+    private static int GetCpuLoadPriority(string name)
+    {
+        if (name.Contains("total")) return 100;
+        if (name.Contains("cpu")) return 80;
+        return 10;
+    }
+
+    private static int GetGpuTemperaturePriority(string name)
+    {
+        if (name.Contains("gpu core") || name.Contains("core temperature")) return 100;
+        if (name.Contains("gpu temperature") || name == "temperature") return 90;
+        if (name.Contains("core")) return 80;
+        if (name.Contains("junction") || name.Contains("hot spot") || name.Contains("hotspot")) return 50;
+        if (name.Contains("memory")) return 20;
+        return 10;
+    }
+
+    private static int GetGpuLoadPriority(string name)
+    {
+        if (name.Contains("total")) return 100;
+        if (name.Contains("core")) return 80;
+        if (name.Contains("gpu")) return 70;
+        return 10;
+    }
+
+    private static string? CleanModel(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : name.Trim();
+
+    private static bool IsUsefulStorageModel(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        var value = name.Trim();
+        return !value.Equals("Storage", StringComparison.OrdinalIgnoreCase)
+            && !value.Equals("Generic", StringComparison.OrdinalIgnoreCase)
+            && !value.Equals("Generic Storage", StringComparison.OrdinalIgnoreCase)
+            && !value.Equals("NVMe", StringComparison.OrdinalIgnoreCase)
+            && !value.Equals("S.M.A.R.T.", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
-        double? FreeGiB, double? UsedPercent, string VolumesSummary) ReadStorage()
+        double? FreeGiB, double? UsedPercent, string VolumesSummary,
+        IReadOnlyList<StorageVolumeSnapshot> Volumes) ReadStorage()
     {
         const double bytesPerGiB = 1024d * 1024d * 1024d;
         var drives = new List<(DriveInfo Drive, double Total, double Free, double Used)>();
@@ -118,18 +230,41 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         if (drives.Count == 0)
-            return (null, null, null, null, null, "No local volumes detected");
+            return (null, null, null, null, null, "No local volumes detected",
+                Array.Empty<StorageVolumeSnapshot>());
+
+        // Stable ordering prevents the rotating UI from changing drive identity between reads.
+        drives = drives.OrderBy(item => item.Drive.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var volumes = drives.Select(item =>
+        {
+            var used = Math.Clamp(item.Used, 0d, item.Total);
+            var free = Math.Clamp(item.Free, 0d, item.Total);
+            var percent = item.Total <= 0 ? 0d : Math.Clamp(used / item.Total * 100d, 0d, 100d);
+            return new StorageVolumeSnapshot(item.Drive.Name.TrimEnd('\\'), used, item.Total, free, percent);
+        }).ToArray();
 
         var systemRoot = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
-        var selected = drives.FirstOrDefault(item =>
-            string.Equals(item.Drive.Name, systemRoot, StringComparison.OrdinalIgnoreCase));
-        if (selected.Drive is null) selected = drives[0];
-
-        var summary = string.Join("   ·   ", drives.Select(item =>
-            $"{item.Drive.Name.TrimEnd('\\')}  {item.Used:0.0}/{item.Total:0.0} GB"));
-        var percent = selected.Total <= 0 ? 0 : Math.Clamp(selected.Used / selected.Total * 100d, 0d, 100d);
-        return (selected.Drive.Name.TrimEnd('\\'), selected.Used, selected.Total, selected.Free, percent, summary);
+        var selected = volumes.FirstOrDefault(item =>
+            string.Equals(item.Name + Path.DirectorySeparatorChar, systemRoot, StringComparison.OrdinalIgnoreCase))
+            ?? volumes[0];
+        var summary = string.Join("   ·   ", volumes.Select(item =>
+            $"{item.Name}  {item.UsedGiB:0.0}/{item.TotalGiB:0.0} GB"));
+        return (selected.Name, selected.UsedGiB, selected.TotalGiB, selected.FreeGiB,
+            selected.UsedPercent, summary, volumes);
     }
+
+    private static double? NormalizePercent(double? value) =>
+        value.HasValue && double.IsFinite(value.Value) ? Math.Clamp(value.Value, 0d, 100d) : null;
+
+    private static double? NormalizeMemoryUsed(double? used, double? total)
+    {
+        if (!used.HasValue || !total.HasValue || !double.IsFinite(used.Value) ||
+            !double.IsFinite(total.Value) || total.Value <= 0) return null;
+        return Math.Clamp(used.Value, 0d, total.Value);
+    }
+
+    private static double? NormalizeMemoryTotal(double? total) =>
+        total.HasValue && double.IsFinite(total.Value) && total.Value > 0 ? total : null;
 
     private static (double? UsedGiB, double? TotalGiB) ReadPhysicalMemory()
     {
@@ -161,8 +296,11 @@ public sealed class HardwareMonitoringService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _computer.Close();
+        lock (_sync)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _computer.Close();
+        }
     }
 }
