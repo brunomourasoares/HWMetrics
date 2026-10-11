@@ -493,7 +493,7 @@ public partial class MainWindow : Window
             Filter = "JSON files (*.json)|*.json",
             DefaultExt = ".json",
             AddExtension = true,
-            FileName = $"aqua-core-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
+            FileName = $"hw-metrics-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
         };
 
         if (dialog.ShowDialog(this) != true) return;
@@ -907,7 +907,8 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException("Could not determine the current executable path.");
 
                 var startupCommand = BuildWindowsStartupCommand(executable, typeof(App).Assembly.Location);
-                key.SetValue("AquaCore", startupCommand);
+                key.SetValue("HWMetrics", startupCommand);
+                key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
             else
             {
