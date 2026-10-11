@@ -10,6 +10,13 @@ using NotifyIcon = System.Windows.Forms.NotifyIcon;
 using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
 using Button = System.Windows.Controls.Button;
 using ProgressBar = System.Windows.Controls.ProgressBar;
+using Control = System.Windows.Controls.Control;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
+using Point = System.Windows.Point;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
