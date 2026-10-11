@@ -235,18 +235,6 @@ public partial class MainWindow : Window
         }
 
 
-        var availableThermals = new List<string>();
-        if (s.CpuTemperatureC.HasValue) availableThermals.Add("CPU");
-        if (s.GpuTemperatureC.HasValue) availableThermals.Add("GPU");
-        if (s.StorageTemperatureC.HasValue) availableThermals.Add(T("Storage", "Armazenamento"));
-            ? T("Temperature sensors available: ", "Sensores de temperatura disponíveis: ") + string.Join(" · ", availableThermals)
-            : T("No temperature sensors exposed by the current hardware/driver.", "O hardware/driver atual não disponibilizou sensores de temperatura.");
-
-        var hasAnyTelemetry = s.CpuTemperatureC.HasValue || s.CpuLoadPercent.HasValue ||
-                              s.GpuTemperatureC.HasValue || s.GpuLoadPercent.HasValue ||
-                              s.MemoryUsedGiB.HasValue || s.StorageTemperatureC.HasValue || s.StorageUsedPercent.HasValue;
-            ? T("Monitoring active · unsupported sensors remain N/D", "Monitoramento ativo · sensores não suportados aparecem como N/D")
-            : T("No readable sensors detected · try running as administrator", "Nenhum sensor legível · tente executar como administrador");
     }
 
     private static string MemoryUsagePercent(SensorSnapshot snapshot) =>
