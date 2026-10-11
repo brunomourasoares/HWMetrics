@@ -88,7 +88,6 @@ public partial class MainWindow : Window
             }
 
             _monitor = await Task.Run(() => new HardwareMonitoringService());
-            StatusText.Text = T("Sensor service ready · polling every 2 seconds", "Serviço de sensores pronto · leitura a cada 2 segundos");
             DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
             _pollTimer.Start();
             _storageCycleTimer.Start();
@@ -96,7 +95,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = T("Sensor initialization failed: ", "Falha ao iniciar os sensores: ") + ex.Message;
             DeviceStatusText.Text = T("Sensors unavailable", "Sensores indisponíveis");
         }
     }
@@ -113,7 +111,6 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = T("Sensor read error: ", "Erro ao ler sensores: ") + ex.Message;
         }
         finally
         {
@@ -237,20 +234,17 @@ public partial class MainWindow : Window
             _lastHistorySaveAt = s.UpdatedAt;
         }
 
-        LastUpdatedText.Text = T("Last update: ", "Última atualização: ") + s.UpdatedAt.ToString("HH:mm:ss");
 
         var availableThermals = new List<string>();
         if (s.CpuTemperatureC.HasValue) availableThermals.Add("CPU");
         if (s.GpuTemperatureC.HasValue) availableThermals.Add("GPU");
         if (s.StorageTemperatureC.HasValue) availableThermals.Add(T("Storage", "Armazenamento"));
-        ThermalSensorStatusText.Text = availableThermals.Count > 0
             ? T("Temperature sensors available: ", "Sensores de temperatura disponíveis: ") + string.Join(" · ", availableThermals)
             : T("No temperature sensors exposed by the current hardware/driver.", "O hardware/driver atual não disponibilizou sensores de temperatura.");
 
         var hasAnyTelemetry = s.CpuTemperatureC.HasValue || s.CpuLoadPercent.HasValue ||
                               s.GpuTemperatureC.HasValue || s.GpuLoadPercent.HasValue ||
                               s.MemoryUsedGiB.HasValue || s.StorageTemperatureC.HasValue || s.StorageUsedPercent.HasValue;
-        StatusText.Text = hasAnyTelemetry
             ? T("Monitoring active · unsupported sensors remain N/D", "Monitoramento ativo · sensores não suportados aparecem como N/D")
             : T("No readable sensors detected · try running as administrator", "Nenhum sensor legível · tente executar como administrador");
     }
@@ -338,7 +332,6 @@ public partial class MainWindow : Window
         if (!IsLoaded || PollIntervalSelector.SelectedIndex < 0) return;
         var seconds = PollIntervalSelector.SelectedIndex switch { 0 => 1, 2 => 5, _ => 2 };
         _pollTimer.Interval = TimeSpan.FromSeconds(seconds);
-        StatusText.Text = _language == "pt" ? $"Intervalo de atualização definido para {seconds} segundo(s)" : $"Refresh interval set to {seconds} second(s)";
         if (_monitor is not null && !_pollTimer.IsEnabled) _pollTimer.Start();
     }
 
@@ -380,7 +373,6 @@ public partial class MainWindow : Window
     {
         if (!IsLoaded || LanguageSelector.SelectedIndex < 0) return;
         ApplyLanguage(LanguageSelector.SelectedIndex == 1 ? "pt" : "en");
-        StatusText.Text = T("Language changed", "Idioma alterado");
     }
 
     private void ApplyLanguage(string language)
