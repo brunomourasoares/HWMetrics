@@ -16,6 +16,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../WaterCoolerApp.csproj" />
+    <ProjectReference Include="../../HWMetrics.csproj" />
   </ItemGroup>
 </Project>
