@@ -44,9 +44,23 @@ public sealed class TelemetryHistoryStore
 
             return recent;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or NotSupportedException or ArgumentException)
+        catch (JsonException)
         {
-            // A missing or malformed history file must never prevent hardware monitoring from starting.
+            // Replace corrupt JSON so it is not left in place indefinitely if telemetry is unavailable.
+            try
+            {
+                WriteSnapshots(Array.Empty<SensorSnapshot>());
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+            {
+                // Recovery is best-effort; a read-only or unavailable file must not block monitoring.
+            }
+
+            return Array.Empty<SensorSnapshot>();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            // A missing or inaccessible history file must never prevent hardware monitoring from starting.
             return Array.Empty<SensorSnapshot>();
         }
     }
