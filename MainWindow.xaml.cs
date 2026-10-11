@@ -158,7 +158,7 @@ public partial class MainWindow : Window
             _storageCycleTimer.Start();
             await RefreshSensorsAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             DeviceStatusText.Text = T("Sensors unavailable", "Sensores indisponíveis");
         }
@@ -174,7 +174,7 @@ public partial class MainWindow : Window
             var snapshot = await Task.Run(monitor.Read);
             if (!_closing) Render(snapshot);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
         }
         finally
@@ -342,11 +342,6 @@ public partial class MainWindow : Window
         // The utilization card uses a fixed color legend in its footer, so no
         // separate caption control is required here.
     }
-
-    private static string MemoryUsagePercent(SensorSnapshot snapshot) =>
-        snapshot.MemoryUsedGiB.HasValue && snapshot.MemoryTotalGiB is > 0
-            ? $"{Math.Clamp(snapshot.MemoryUsedGiB.Value / snapshot.MemoryTotalGiB.Value * 100d, 0d, 100d):0}%"
-            : "N/D";
 
     private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source)
     {
