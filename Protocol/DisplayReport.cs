@@ -25,8 +25,8 @@ public static class DisplayReport
             snapshot.GpuTemperatureC,
             snapshot.CpuLoadPercent,
             GetMemoryLoadPercent(snapshot.MemoryUsedGiB, snapshot.MemoryTotalGiB),
-            motherboardTemperatureC: null,
-            snapshot.GpuLoadPercent);
+            motherboardTemperatureCelsius: null,
+            gpuLoadPercent: snapshot.GpuLoadPercent);
     }
 
     public static byte[] CreateCpuTemperatureOnly(double temperatureCelsius) =>
