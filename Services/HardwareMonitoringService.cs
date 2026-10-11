@@ -49,17 +49,19 @@ public sealed class HardwareMonitoringService : IDisposable
             var cpuLoadPriority = -1;
             var gpuTempPriority = -1;
             var gpuLoadPriority = -1;
-            var cpuCoreLoads = new List<double>();
+            double cpuCoreLoadSum = 0;
+            var cpuCoreLoadCount = 0;
 
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
-                    cpuCoreLoads, ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                    ref cpuCoreLoadSum, ref cpuCoreLoadCount,
+                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                     ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
 
             // If no aggregate CPU load sensor exists, report the mean of the per-core
             // readings rather than whichever core happened to appear first.
-            if (cpuLoad is null && cpuCoreLoads.Count > 0)
-                cpuLoad = cpuCoreLoads.Average();
+            if (cpuLoad is null && cpuCoreLoadCount > 0)
+                cpuLoad = cpuCoreLoadSum / cpuCoreLoadCount;
 
             // Some motherboards expose the CPU thermistor through Super I/O instead of
             // the CPU hardware node. Visit() accepts those explicitly labelled CPU sensors
@@ -99,7 +101,8 @@ public sealed class HardwareMonitoringService : IDisposable
 
     private void Visit(IHardware hardware,
         ref double? cpuTemp, ref int cpuTempPriority,
-        ref double? cpuLoad, ref int cpuLoadPriority, List<double> cpuCoreLoads,
+        ref double? cpuLoad, ref int cpuLoadPriority,
+        ref double cpuCoreLoadSum, ref int cpuCoreLoadCount,
         ref double? gpuTemp, ref int gpuTempPriority,
         ref double? gpuLoad, ref int gpuLoadPriority,
         ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
@@ -154,7 +157,10 @@ public sealed class HardwareMonitoringService : IDisposable
                         {
                             var priority = GetCpuLoadPriority(name);
                             if (priority == 30)
-                                cpuCoreLoads.Add(value);
+                            {
+                                cpuCoreLoadSum += value;
+                                cpuCoreLoadCount++;
+                            }
                             else if (priority >= 70 && priority > cpuLoadPriority)
                             {
                                 cpuLoad = value;
@@ -183,7 +189,8 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         foreach (var child in hardware.SubHardware)
-            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority, cpuCoreLoads,
+            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                 ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
     }
