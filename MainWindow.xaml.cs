@@ -158,8 +158,9 @@ public partial class MainWindow : Window
             _storageCycleTimer.Start();
             await RefreshSensorsAsync();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Sensor initialization failed: {ex}");
             DeviceStatusText.Text = T("Sensors unavailable", "Sensores indisponíveis");
         }
     }
@@ -174,8 +175,9 @@ public partial class MainWindow : Window
             var snapshot = await Task.Run(monitor.Read);
             if (!_closing) Render(snapshot);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Sensor refresh failed: {ex}");
         }
         finally
         {
