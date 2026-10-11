@@ -8,6 +8,8 @@ using System.IO;
 using System.Text.Json;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
 using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
+using Button = System.Windows.Controls.Button;
+using ProgressBar = System.Windows.Controls.ProgressBar;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
