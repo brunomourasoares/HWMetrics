@@ -65,7 +65,7 @@ public partial class MainWindow : Window
     {
         ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
-        ["Close settings"] = "Fechar configurações",
+        ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
         ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
@@ -919,6 +919,21 @@ public partial class MainWindow : Window
             return;
         }
         SavePreferences();
+    }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F5)
+        {
+            e.Handled = true;
+            if (RefreshNowButton.IsEnabled)
+                RefreshNow_Click(this, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
+        {
+            HideSettingsPanel();
+            e.Handled = true;
+        }
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
