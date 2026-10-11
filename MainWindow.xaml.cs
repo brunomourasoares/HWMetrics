@@ -187,10 +187,6 @@ public partial class MainWindow : Window
 
         CpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.CpuLoadPercent);
         GpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.GpuLoadPercent);
-        CpuDetailLoad.Text = Percent(s.CpuLoadPercent);
-        GpuDetailLoad.Text = Percent(s.GpuLoadPercent);
-        AnimateProgress(CpuLoadBar, Clamp(s.CpuLoadPercent));
-        AnimateProgress(GpuLoadBar, Clamp(s.GpuLoadPercent));
 
         if (s.MemoryUsedGiB.HasValue && s.MemoryTotalGiB.HasValue && s.MemoryTotalGiB.Value > 0)
         {
@@ -201,16 +197,12 @@ public partial class MainWindow : Window
             MemoryText.Text = $"{pct:0}%";
             MemoryPercentText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)} {T("total", "Total")} - {FormatCapacity(free)} {T("free", "livres")}";
             AnimateProgress(MemoryUsageBar, pct);
-            MemoryDetailText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)}";
-            AnimateProgress(MemoryLoadBar, pct);
         }
         else
         {
             MemoryText.Text = "N/D";
             MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
             AnimateProgress(MemoryUsageBar, 0);
-            MemoryDetailText.Text = "N/D";
-            AnimateProgress(MemoryLoadBar, 0);
         }
 
         _history.Enqueue(s);
@@ -226,7 +218,7 @@ public partial class MainWindow : Window
         GpuUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent));
         MemoryUtilizationHistoryPath.Data = BuildUtilizationGeometry(_utilizationHistory.Select(point =>
             point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
-                ? point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d : null));
+                ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null));
         UtilizationGraphCaption.Text = $"CPU {Percent(s.CpuLoadPercent)} · GPU {Percent(s.GpuLoadPercent)} · RAM {MemoryUsagePercent(s)}";
         LastUpdatedText.Text = T("Last update: ", "Última atualização: ") + s.UpdatedAt.ToString("HH:mm:ss");
 
