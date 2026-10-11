@@ -14,7 +14,9 @@
     <PackageReference Include="HidSharp" Version="2.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf" />
+    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf">
+      <Link>Resources\Fonts\DSEG7Classic-Regular.ttf</Link>
+    </Resource>
   </ItemGroup>
   <UsingTask TaskName="DecodeDsegBase64Font" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
