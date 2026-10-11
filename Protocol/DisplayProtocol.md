@@ -1,6 +1,6 @@
 # Display protocol notes
 
-Reverse engineering of the original software indicates HID VID `0xAA88`, PID `0x8666`, and an 11-byte telemetry payload sent through the `tifPipe` named pipe. The original payload fields are:
+Reverse engineering of the original software indicates HID VID `0xAA88`, PID `0x8666`, and an 11-byte telemetry payload recovered from the original `tifPipe` path. The payload fields are:
 
 | Payload byte | Meaning | Current app behavior |
 |---:|---|---|
@@ -13,6 +13,6 @@ Reverse engineering of the original software indicates HID VID `0xAA88`, PID `0x
 | 6 | GPU utilization % | Valid 0–100% reading, otherwise 0 |
 | 7–10 | Reserved | 0 |
 
-The legacy HID writer prepended Report ID 0 to the 11-byte payload. The app therefore discovers the matching HID device, queries its maximum output report length, requires at least 12 bytes, then writes a report containing Report ID 0 followed by the payload. If the device is absent, cannot be opened, or reports an incompatible output length, transmission is not attempted. After a write error the stream is closed so the next polling cycle can try to reconnect.
+The original software's legacy HID writer prepended Report ID 0 in its output path. However, the physical device interface discovered during validation advertises an 11-byte output report, and the app was verified against that interface by writing the 11-byte payload directly. The current transport therefore requires an output report length of at least 11 bytes and writes exactly the 11-byte payload without adding a separate byte. Do not change this framing without testing against the physical cooler.
 
-This reconstructs the observed telemetry path without the original multi-process arrangement: the app reads sensors, encodes the payload, and sends it directly to HID. A successful Windows HID write does not prove that the physical display rendered the values; the cooler must still be tested on hardware. Fan and pump control commands are not implemented because the analyzed telemetry packet does not establish a safe control protocol.
+The app reads sensors, encodes one snapshot, and sends it directly to the matching HID device. A successful Windows HID write only means the write completed without an exception; it does not prove that the physical display rendered the values. Validation on the actual cooler is still required. Fan and pump control commands are not implemented because the analyzed telemetry packet does not establish a safe control protocol.
