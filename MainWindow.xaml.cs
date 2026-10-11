@@ -64,6 +64,8 @@ public partial class MainWindow : Window
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
         ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
+        ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
+        ["Open Aqua Core"] = "Abrir Aqua Core", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
@@ -198,8 +200,8 @@ public partial class MainWindow : Window
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Open Aqua Core", null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
-        menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        menu.Items.Add(T("Open Aqua Core", "Abrir Aqua Core"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
         _trayIcon = new NotifyIcon
         {
             Icon = System.Drawing.SystemIcons.Application,
@@ -290,6 +292,23 @@ public partial class MainWindow : Window
         finally
         {
             _reading = false;
+        }
+    }
+
+    private async void RefreshNow_Click(object sender, RoutedEventArgs e)
+    {
+        if (_closing) return;
+        var originalContent = RefreshNowButton.Content;
+        RefreshNowButton.IsEnabled = false;
+        RefreshNowButton.Content = T("Refreshing…", "Atualizando…");
+        try
+        {
+            await RefreshSensorsAsync();
+        }
+        finally
+        {
+            RefreshNowButton.Content = originalContent;
+            RefreshNowButton.IsEnabled = !_closing;
         }
     }
 
@@ -421,7 +440,7 @@ public partial class MainWindow : Window
             var free = Math.Max(0, total - used);
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{pct:0}%";
-            MemoryPercentText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)} {T("total", "Total")} - {FormatCapacity(free)} {T("free", "livres")}";
+            MemoryPercentText.Text = T($"{FormatCapacity(used)} used · {FormatCapacity(free)} free of {FormatCapacity(total)}", $"{FormatCapacity(used)} em uso · {FormatCapacity(free)} livres de {FormatCapacity(total)}");
             AnimateProgress(MemoryUsageBar, pct);
         }
         else
