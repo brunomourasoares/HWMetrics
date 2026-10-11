@@ -135,6 +135,9 @@ public partial class MainWindow : Window
     private void Render(SensorSnapshot s)
     {
         _lastSnapshot = s;
+        CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable", "Modelo do processador indisponível") : s.CpuModel;
+        GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable", "Modelo gráfico indisponível") : s.GpuModel;
+        StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable", "Modelo do disco indisponível") : s.StorageModel;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
         CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
         CoolerDisplayTemp.Text = s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--";
