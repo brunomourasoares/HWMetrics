@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly Queue<SensorSnapshot> _storedHistory = new();
     private readonly TelemetryHistoryStore _historyStore = new();
     private DateTime _lastHistorySaveAt = DateTime.MinValue;
+    private DateTime _lastPersistedSnapshotAt = DateTime.MinValue;
     private TimeSpan _historyRetention = TelemetryHistoryStore.DefaultRetention;
     private HardwareMonitoringService? _monitor;
     private bool _reading;
@@ -90,7 +91,6 @@ public partial class MainWindow : Window
         ["1 hour"] = "1 hora",
         ["6 hours"] = "6 horas",
         ["24 hours"] = "24 horas",
-        ["7 days"] = "7 dias",
         ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
         ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
     };
@@ -170,6 +170,7 @@ public partial class MainWindow : Window
             foreach (var point in persistedHistory)
             {
                 _storedHistory.Enqueue(point);
+                _lastPersistedSnapshotAt = point.UpdatedAt;
                 if (point.UpdatedAt >= now - HistoryWindow)
                 {
                     _history.Enqueue(point);
@@ -321,7 +322,12 @@ public partial class MainWindow : Window
         while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
         UpdateUtilizationHistoryChart(s);
 
-        _storedHistory.Enqueue(s);
+        if (_storedHistory.Count == 0 || s.UpdatedAt - _lastPersistedSnapshotAt >= TimeSpan.FromSeconds(10))
+        {
+            _storedHistory.Enqueue(s);
+            _lastPersistedSnapshotAt = s.UpdatedAt;
+        }
+
         var retentionCutoff = s.UpdatedAt - _historyRetention;
         while (_storedHistory.Count > 0 && _storedHistory.Peek().UpdatedAt < retentionCutoff)
             _storedHistory.Dequeue();
@@ -374,7 +380,6 @@ public partial class MainWindow : Window
         1 => TimeSpan.FromHours(1),
         2 => TimeSpan.FromHours(6),
         3 => TimeSpan.FromHours(24),
-        4 => TimeSpan.FromDays(7),
         _ => TimeSpan.FromMinutes(30)
     };
 
