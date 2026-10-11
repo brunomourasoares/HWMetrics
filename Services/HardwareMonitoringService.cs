@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
 using WaterCoolerApp.Models;
@@ -10,6 +12,8 @@ public sealed class HardwareMonitoringService : IDisposable
 {
     private readonly Computer _computer;
     private readonly object _sync = new();
+    private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     public HardwareMonitoringService()
@@ -34,10 +38,18 @@ public sealed class HardwareMonitoringService : IDisposable
             double? usedGiB = null, totalGiB = null, driveTemp = null;
             string? cpuModel = null, gpuModel = null, storageModel = null;
             var storageModels = new List<string>();
+            var cpuTempPriority = -1;
+            var cpuLoadPriority = -1;
+            var gpuTempPriority = -1;
+            var gpuLoadPriority = -1;
     
             foreach (var hardware in _computer.Hardware)
-                Visit(hardware, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
+                Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                     ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+
+            if (cpuTemp is null)
+                Debug.WriteLine("[HardwareMonitoring] Nenhum sensor de temperatura da CPU forneceu um valor válido nesta leitura.");
     
             // LibreHardwareMonitor does not expose physical memory consistently on every system.
             // Use the Windows memory API as a reliable fallback for the RAM card.
@@ -60,9 +72,13 @@ public sealed class HardwareMonitoringService : IDisposable
         }
     }
 
-    private static void Visit(IHardware hardware, ref double? cpuTemp, ref double? cpuLoad,
-        ref double? gpuTemp, ref double? gpuLoad, ref double? usedGiB, ref double? totalGiB,
-        ref double? driveTemp, ref string? cpuModel, ref string? gpuModel, ref string? storageModel, List<string> storageModels)
+    private void Visit(IHardware hardware,
+        ref double? cpuTemp, ref int cpuTempPriority,
+        ref double? cpuLoad, ref int cpuLoadPriority,
+        ref double? gpuTemp, ref int gpuTempPriority,
+        ref double? gpuLoad, ref int gpuLoadPriority,
+        ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
+        ref string? cpuModel, ref string? gpuModel, ref string? storageModel, List<string> storageModels)
     {
         try
         {
@@ -80,20 +96,27 @@ public sealed class HardwareMonitoringService : IDisposable
             hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
-                if (sensor.Value is not float value || !float.IsFinite(value)) continue;
+                var rawValue = sensor.Value;
+                var sensorKey = $"{hardware.Identifier}|{sensor.Identifier}|{sensor.SensorType}";
+                if (_loggedSensors.Add(sensorKey))
+                {
+                    var loggedValue = rawValue?.ToString("0.##", CultureInfo.InvariantCulture) ?? "null";
+                    Debug.WriteLine($"[HardwareMonitoring] Sensor encontrado: hardware={hardware.HardwareType}, nome='{hardware.Name}', tipo={sensor.SensorType}, sensor='{sensor.Name}', valorInicial={loggedValue}");
+                }
+                if (rawValue is not float value || !float.IsFinite(value)) continue;
                 var name = sensor.Name.ToLowerInvariant();
                 switch (sensor.SensorType)
                 {
                     case SensorType.Temperature:
-                        if (hardware.HardwareType == HardwareType.Cpu &&
-                            (cpuTemp is null || name.Contains("package") || name.Contains("tctl")))
-                            cpuTemp = value;
-                        else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
+                        if (hardware.HardwareType == HardwareType.Cpu)
                         {
-                            // Prefer the GPU core sensor when available; keep the first valid
-                            // temperature as a fallback for drivers with generic sensor names.
-                            if (gpuTemp is null || (name.Contains("core") && !name.Contains("hot spot") && !name.Contains("hotspot")))
-                                gpuTemp = value;
+                            var priority = GetCpuTemperaturePriority(name);
+                            if (priority > cpuTempPriority) { cpuTemp = value; cpuTempPriority = priority; }
+                        }
+                        else if (IsGpu(hardware.HardwareType))
+                        {
+                            var priority = GetGpuTemperaturePriority(name);
+                            if (priority > gpuTempPriority) { gpuTemp = value; gpuTempPriority = priority; }
                         }
                         else if (hardware.HardwareType == HardwareType.Storage)
                             driveTemp ??= value;
@@ -102,16 +125,13 @@ public sealed class HardwareMonitoringService : IDisposable
                     case SensorType.Load:
                         if (hardware.HardwareType == HardwareType.Cpu)
                         {
-                            // Do not leave CPU utilization blank just because a driver does not
-                            // name its aggregate sensor "Total"; replace the fallback if it appears.
-                            if (cpuLoad is null || name.Contains("total"))
-                                cpuLoad = value;
+                            var priority = GetCpuLoadPriority(name);
+                            if (priority > cpuLoadPriority) { cpuLoad = value; cpuLoadPriority = priority; }
                         }
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
                         {
-                            // Prefer core/aggregate GPU load, while retaining a usable fallback.
-                            if (gpuLoad is null || name.Contains("core") || name.Contains("total"))
-                                gpuLoad = value;
+                            var priority = GetGpuLoadPriority(name);
+                            if (priority > gpuLoadPriority) { gpuLoad = value; gpuLoadPriority = priority;
                         }
                         break;
 
@@ -122,16 +142,59 @@ public sealed class HardwareMonitoringService : IDisposable
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // A failed controller/driver must not prevent readings from other devices.
+            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+            if (_loggedHardwareErrors.Add(hardwareKey))
+                Debug.WriteLine($"[HardwareMonitoring] Falha ao atualizar hardware '{hardware.Name}' ({hardware.HardwareType}): {ex}");
         }
 
         foreach (var child in hardware.SubHardware)
-            Visit(child, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
+            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
     }
 
+
+    private static bool IsGpu(HardwareType type) =>
+        type is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
+
+    private static int GetCpuTemperaturePriority(string name)
+    {
+        if (name.Contains("package")) return 100;
+        if (name.Contains("tdie")) return 95;
+        if (name.Contains("tctl")) return 90;
+        if (name.Contains("core max")) return 85;
+        if (name.Contains("core average") || name.Contains("average")) return 80;
+        if (name.Contains("core")) return 70;
+        if (name.Contains("cpu")) return 60;
+        return 10;
+    }
+
+    private static int GetCpuLoadPriority(string name)
+    {
+        if (name.Contains("total")) return 100;
+        if (name.Contains("cpu")) return 80;
+        return 10;
+    }
+
+    private static int GetGpuTemperaturePriority(string name)
+    {
+        if (name.Contains("gpu core") || name.Contains("core temperature")) return 100;
+        if (name.Contains("gpu temperature") || name == "temperature") return 90;
+        if (name.Contains("core")) return 80;
+        if (name.Contains("junction") || name.Contains("hot spot") || name.Contains("hotspot")) return 50;
+        if (name.Contains("memory")) return 20;
+        return 10;
+    }
+
+    private static int GetGpuLoadPriority(string name)
+    {
+        if (name.Contains("total")) return 100;
+        if (name.Contains("core")) return 80;
+        if (name.Contains("gpu")) return 70;
+        return 10;
+    }
 
     private static string? CleanModel(string? name) =>
         string.IsNullOrWhiteSpace(name) ? null : name.Trim();
