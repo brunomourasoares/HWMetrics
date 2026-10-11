@@ -22,6 +22,8 @@ public sealed class HardwareMonitoringService : IDisposable
     private (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
         double? FreeGiB, double? UsedPercent, string VolumesSummary,
         IReadOnlyList<StorageVolumeSnapshot> Volumes)? _cachedStorage;
+    private string? _cachedStorageModel;
+    private DateTime _lastStorageModelReadAt = DateTime.MinValue;
 
     public HardwareMonitoringService()
     {
@@ -44,7 +46,7 @@ public sealed class HardwareMonitoringService : IDisposable
             double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
             double? usedGiB = null, totalGiB = null, driveTemp = null;
             string? cpuModel = null, gpuModel = null, storageModel = null;
-            var storageModels = new List<string>();
+            string? storageModel = null;
             var cpuTempPriority = -1;
             var cpuLoadPriority = -1;
             var gpuTempPriority = -1;
@@ -56,7 +58,7 @@ public sealed class HardwareMonitoringService : IDisposable
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                     ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                     ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
 
             // If no aggregate CPU load sensor exists, report the mean of the per-core
             // readings rather than whichever core happened to appear first.
@@ -90,10 +92,16 @@ public sealed class HardwareMonitoringService : IDisposable
                 _lastStorageReadAt = now;
             }
 
+            if (now - _lastStorageModelReadAt >= TimeSpan.FromSeconds(30))
+            {
+                _cachedStorageModel = storageModel;
+                _lastStorageModelReadAt = now;
+            }
+
             var storage = _cachedStorage.Value;
             return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
-                driveTemp, cpuModel, gpuModel, storageModels.FirstOrDefault() ?? storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
+                driveTemp, cpuModel, gpuModel, _cachedStorageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
                 now, "Leitura concluída");
         }
@@ -106,7 +114,7 @@ public sealed class HardwareMonitoringService : IDisposable
         ref double? gpuTemp, ref int gpuTempPriority,
         ref double? gpuLoad, ref int gpuLoadPriority,
         ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
-        ref string? cpuModel, ref string? gpuModel, ref string? storageModel, List<string> storageModels)
+        ref string? cpuModel, ref string? gpuModel, ref string? storageModel)
     {
         try
         {
@@ -118,7 +126,6 @@ public sealed class HardwareMonitoringService : IDisposable
                 if (IsUsefulStorageModel(candidate))
                 {
                     storageModel ??= candidate;
-                    if (!storageModels.Contains(candidate!, StringComparer.OrdinalIgnoreCase)) storageModels.Add(candidate!);
                 }
             }
             hardware.Update();
