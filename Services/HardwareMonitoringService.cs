@@ -180,7 +180,7 @@ public sealed class HardwareMonitoringService : IDisposable
             if (name.Contains("core average") || name.Contains("average")) return 80;
             if (name.Contains("core")) return 70;
             if (name.Contains("cpu")) return 60;
-            return 10;
+            return 60;
         }
 
         // Some boards expose only a CPU-labelled socket/thermistor under Motherboard
