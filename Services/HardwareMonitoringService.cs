@@ -44,7 +44,6 @@ public sealed class HardwareMonitoringService : IDisposable
             double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
             double? usedGiB = null, totalGiB = null, driveTemp = null;
             string? cpuModel = null, gpuModel = null, storageModel = null;
-            string? storageModel = null;
             var cpuTempPriority = -1;
             var cpuLoadPriority = -1;
             var gpuTempPriority = -1;
