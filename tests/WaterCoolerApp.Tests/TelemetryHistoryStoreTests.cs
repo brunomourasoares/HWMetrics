@@ -36,6 +36,27 @@ public sealed class TelemetryHistoryStoreTests
     }
 
     [Fact]
+    public void Save_IgnoresNullEntries()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "telemetry-history.json");
+        var now = DateTime.Now;
+        var store = new TelemetryHistoryStore(path);
+
+        try
+        {
+            store.Save(new[] { (SensorSnapshot)null!, CreateSnapshot(now.AddMinutes(-5)) }, now);
+
+            var loaded = Assert.Single(store.Load(now));
+            Assert.Equal(now.AddMinutes(-5), loaded.UpdatedAt);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Load_IgnoresNullEntriesInHistoryFile()
     {
         var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
