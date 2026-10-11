@@ -106,6 +106,25 @@ public sealed class TelemetryHistoryStoreTests
     }
 
     [Fact]
+    public void Load_ReturnsEmptyWhenHistoryRootIsNull()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "telemetry-history.json");
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            File.WriteAllText(path, "null");
+
+            Assert.Empty(new TelemetryHistoryStore(path).Load(DateTime.Now));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void Load_ReturnsEmptyWhenHistoryFileIsMalformed()
     {
         var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
