@@ -25,15 +25,15 @@ A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **
 ## Restore, build, run / Restaurar, compilar e executar
 
 ```powershell
-dotnet restore .\WaterCoolerApp.csproj
-dotnet build .\WaterCoolerApp.csproj -c Release
-dotnet run --project .\WaterCoolerApp.csproj -c Release
+dotnet restore .\HWMetrics.csproj
+dotnet build .\HWMetrics.csproj -c Release
+dotnet run --project .\HWMetrics.csproj -c Release
 ```
 
 ## Publish self-contained x64 / Publicar independente x64
 
 ```powershell
-dotnet publish .\WaterCoolerApp.csproj -c Release -r win-x64 --self-contained true
+dotnet publish .\HWMetrics.csproj -c Release -r win-x64 --self-contained true
 ```
 
 ## Windows x64 CI artifact / Artefato Windows x64 pela CI
