@@ -1,3 +1,4 @@
+using Xunit;
 using WaterCoolerApp.Models;
 
 namespace WaterCoolerApp.Tests;
