@@ -27,6 +27,11 @@ public sealed class DisplayTransportService : IDisposable
     // The device currently advertises an 11-byte output report.
     public const int RequiredOutputReportLength = DisplayReport.PayloadLength;
 
+    private static readonly object DiagnosticSync = new();
+    private static readonly Dictionary<string, DateTime> LastDiagnosticWrites = new(StringComparer.Ordinal);
+    private static readonly TimeSpan DiagnosticRepeatInterval = TimeSpan.FromMinutes(1);
+    private const int MaxTrackedDiagnosticMessages = 128;
+
     private readonly object _sync = new();
     private HidStream? _stream;
     private int _outputReportLength;
@@ -36,18 +41,34 @@ public sealed class DisplayTransportService : IDisposable
     {
         try
         {
-            var directory = Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData),
-                "WaterCoolerApp");
+            lock (DiagnosticSync)
+            {
+                var now = DateTime.UtcNow;
+                if (LastDiagnosticWrites.TryGetValue(message, out var lastWrite) &&
+                    now - lastWrite < DiagnosticRepeatInterval)
+                {
+                    return;
+                }
 
-            Directory.CreateDirectory(directory);
+                // Bound the in-memory throttle cache even if exception messages vary.
+                if (LastDiagnosticWrites.Count >= MaxTrackedDiagnosticMessages)
+                    LastDiagnosticWrites.Clear();
 
-            var logPath = Path.Combine(directory, "hid-diagnostic.log");
+                LastDiagnosticWrites[message] = now;
 
-            File.AppendAllText(
-                logPath,
-                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
+                var directory = Path.Combine(
+                    Environment.GetFolderPath(
+                        Environment.SpecialFolder.LocalApplicationData),
+                    "WaterCoolerApp");
+
+                Directory.CreateDirectory(directory);
+
+                var logPath = Path.Combine(directory, "hid-diagnostic.log");
+
+                File.AppendAllText(
+                    logPath,
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
+            }
         }
         catch
         {
