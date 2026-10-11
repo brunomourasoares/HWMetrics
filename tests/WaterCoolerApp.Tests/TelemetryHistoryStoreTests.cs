@@ -203,6 +203,10 @@ public sealed class TelemetryHistoryStoreTests
             var store = new TelemetryHistoryStore(path);
 
             Assert.Empty(store.Load(DateTime.Now));
+
+            var recoveredFile = JsonSerializer.Deserialize<SensorSnapshot[]>(File.ReadAllText(path));
+            Assert.NotNull(recoveredFile);
+            Assert.Empty(recoveredFile);
         }
         finally
         {
