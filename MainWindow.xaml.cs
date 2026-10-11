@@ -366,13 +366,9 @@ public partial class MainWindow : Window
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
         var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
         CoolerModelBadge.Text = model;
-        var accent = CoolerModelSelector.SelectedIndex switch
-        {
-            1 => Color.FromRgb(105, 191, 255),
-            2 => Color.FromRgb(244, 189, 104),
-            3 => Color.FromRgb(189, 163, 255),
-            _ => Color.FromRgb(112, 232, 208)
-        };
+        // Todos os modelos Aura Ice usam o mesmo visor e o mesmo aro ARGB;
+        // os códigos RM-WAI são brancos e RM-WAIB são pretos.
+        var accent = Color.FromRgb(112, 232, 208);
         CoolerDisplayTemp.Foreground = new SolidColorBrush(accent);
         CoolerModelBadge.Foreground = new SolidColorBrush(accent);
     }
