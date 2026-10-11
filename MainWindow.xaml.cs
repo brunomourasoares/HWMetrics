@@ -66,6 +66,7 @@ public partial class MainWindow : Window
         ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
         ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
+        ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
         ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
