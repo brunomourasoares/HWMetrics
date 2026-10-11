@@ -46,6 +46,7 @@ public partial class MainWindow : Window
     private readonly string _legacyPreferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
     private NotifyIcon? _trayIcon;
+    private System.Drawing.Icon? _trayApplicationIcon;
     private bool _allowExit;
     private bool _closePromptAnswered;
     private bool _startHidden;
