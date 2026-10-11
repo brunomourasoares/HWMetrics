@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
+    <Resource Include="Resources/Fonts/fs-sevegment.ttf" />
     <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf">
       <Link>Resources\Fonts\DSEG7Classic-Regular.ttf</Link>
     </Resource>
