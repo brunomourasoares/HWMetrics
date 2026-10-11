@@ -46,6 +46,7 @@ public partial class MainWindow : Window
     private readonly string _legacyPreferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
     private NotifyIcon? _trayIcon;
+    private System.Drawing.Icon? _trayApplicationIcon;
     private bool _allowExit;
     private bool _closePromptAnswered;
     private bool _startHidden;
@@ -133,11 +134,36 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ApplyApplicationIcon();
         LoadPreferences();
         ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
         InitializeTrayIcon();
+    }
+
+    private void ApplyApplicationIcon()
+    {
+        try
+        {
+            var bytes = Convert.FromBase64String(TrayIconPngBase64);
+            using var stream = new MemoryStream(bytes);
+            using var bitmap = new System.Drawing.Bitmap(stream);
+            var handle = bitmap.GetHicon();
+            try
+            {
+                Icon = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                    handle, Int32Rect.Empty, System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+            }
+            finally
+            {
+                DestroyIcon(handle);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HWMetrics] Could not apply window icon: {ex}");
+        }
     }
 
     private void LoadPreferences()
@@ -207,14 +233,54 @@ public partial class MainWindow : Window
 
     public bool StartHidden { get => _startHidden; set => _startHidden = value; }
 
+    private static void FillRoundedRectangle(System.Drawing.Graphics graphics, System.Drawing.Brush brush, System.Drawing.Rectangle bounds, int radius)
+    {
+        using var path = new System.Drawing.Drawing2D.GraphicsPath();
+        var diameter = radius * 2;
+        path.AddArc(bounds.X, bounds.Y, diameter, diameter, 180, 90);
+        path.AddArc(bounds.Right - diameter, bounds.Y, diameter, diameter, 270, 90);
+        path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0, 90);
+        path.AddArc(bounds.X, bounds.Bottom - diameter, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        graphics.FillPath(brush, path);
+    }
+
+    // Downscaled 32x32 variant of the official Resources icon.png, embedded to keep
+    // the tray icon independent of generated text and installed fonts.
+    private const string TrayIconPngBase64 =
+        "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";
+
+    private System.Drawing.Icon CreateTrayIcon()
+    {
+        // Use the embedded official icon artwork; this avoids depending on an image resource that may not be packaged.
+        var iconBytes = Convert.FromBase64String(TrayIconPngBase64);
+        using var stream = new MemoryStream(iconBytes);
+        using var bitmap = new System.Drawing.Bitmap(stream);
+        using var scaled = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(32, 32));
+        var handle = scaled.GetHicon();
+        try
+        {
+            return (System.Drawing.Icon)System.Drawing.Icon.FromHandle(handle).Clone();
+        }
+        finally
+        {
+            DestroyIcon(handle);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(nint handle);
+
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
         menu.Items.Add(T("Open HW Metrics", "Abrir HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
         menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        _trayApplicationIcon = CreateTrayIcon();
         _trayIcon = new NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = _trayApplicationIcon,
             Text = "HW Metrics — Hardware Studio",
             ContextMenuStrip = menu,
             Visible = true
@@ -966,5 +1032,7 @@ public partial class MainWindow : Window
             _trayIcon.Dispose();
             _trayIcon = null;
         }
+        _trayApplicationIcon?.Dispose();
+        _trayApplicationIcon = null;
     }
 }

@@ -31,5 +31,12 @@ public sealed class WpfResourcePackagingTests
                 key,
                 "resources/fonts/dseg7classic-regular.ttf",
                 StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(
+            resourceKeys,
+            key => string.Equals(
+                key,
+                "resources/images/rise-mode.png",
+                StringComparison.OrdinalIgnoreCase));
     }
 }
