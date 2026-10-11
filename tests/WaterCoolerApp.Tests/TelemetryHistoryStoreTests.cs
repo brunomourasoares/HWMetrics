@@ -1,4 +1,3 @@
-using System.Text.Json;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 using Xunit;
@@ -28,6 +27,29 @@ public sealed class TelemetryHistoryStoreTests
 
             var snapshot = Assert.Single(loaded);
             Assert.Equal(now.AddMinutes(-10), snapshot.UpdatedAt);
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Load_IgnoresNullEntriesInHistoryFile()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "telemetry-history.json");
+        var now = DateTime.Now;
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            var snapshots = new SensorSnapshot?[] { null, CreateSnapshot(now.AddMinutes(-5)) };
+            File.WriteAllText(path, JsonSerializer.Serialize(snapshots));
+            var store = new TelemetryHistoryStore(path);
+
+            var loaded = Assert.Single(store.Load(now));
+            Assert.Equal(now.AddMinutes(-5), loaded.UpdatedAt);
         }
         finally
         {
