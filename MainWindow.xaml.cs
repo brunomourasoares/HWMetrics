@@ -207,6 +207,18 @@ public partial class MainWindow : Window
 
     public bool StartHidden { get => _startHidden; set => _startHidden = value; }
 
+    private static void FillRoundedRectangle(System.Drawing.Graphics graphics, System.Drawing.Brush brush, System.Drawing.Rectangle bounds, int radius)
+    {
+        using var path = new System.Drawing.Drawing2D.GraphicsPath();
+        var diameter = radius * 2;
+        path.AddArc(bounds.X, bounds.Y, diameter, diameter, 180, 90);
+        path.AddArc(bounds.Right - diameter, bounds.Y, diameter, diameter, 270, 90);
+        path.AddArc(bounds.Right - diameter, bounds.Bottom - diameter, diameter, diameter, 0, 90);
+        path.AddArc(bounds.X, bounds.Bottom - diameter, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        graphics.FillPath(brush, path);
+    }
+
     private System.Drawing.Icon CreateTrayIcon()
     {
         using var bitmap = new System.Drawing.Bitmap(32, 32);
@@ -218,8 +230,8 @@ public partial class MainWindow : Window
         {
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             graphics.Clear(System.Drawing.Color.Transparent);
-            graphics.FillRoundedRectangle(background, new System.Drawing.Rectangle(1, 1, 30, 30), 7);
-            graphics.FillRoundedRectangle(accent, new System.Drawing.Rectangle(5, 5, 22, 3), 1);
+            FillRoundedRectangle(graphics, background, new System.Drawing.Rectangle(1, 1, 30, 30), 7);
+            FillRoundedRectangle(graphics, accent, new System.Drawing.Rectangle(5, 5, 22, 3), 1);
             graphics.DrawString("HW", font, System.Drawing.Brushes.White, new System.Drawing.RectangleF(1, 7, 30, 23), format);
         }
 
