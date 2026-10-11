@@ -346,7 +346,6 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[MainWindow] Sensor initialization failed: {ex}");
-            DeviceStatusText.Text = T("Sensors unavailable", "Sensores indisponíveis");
         }
     }
 
