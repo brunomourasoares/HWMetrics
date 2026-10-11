@@ -15,9 +15,14 @@ public sealed class TelemetryHistoryStore
 {
     private static readonly TimeSpan Retention = TimeSpan.FromMinutes(30);
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
-    private readonly string _filePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "AquaCore", "telemetry-history.json");
+    private readonly string _filePath;
+
+    public TelemetryHistoryStore(string? filePath = null)
+    {
+        _filePath = filePath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AquaCore", "telemetry-history.json");
+    }
 
     public IReadOnlyList<SensorSnapshot> Load(DateTime now)
     {
