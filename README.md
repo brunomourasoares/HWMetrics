@@ -34,6 +34,12 @@ dotnet run --project .\WaterCoolerApp.csproj -c Release
 dotnet publish .\WaterCoolerApp.csproj -c Release -r win-x64 --self-contained true
 ```
 
+## Windows x64 CI artifact / Artefato Windows x64 pela CI
+
+To create a downloadable self-contained Windows x64 build, open **Actions → Publish Windows x64 artifact → Run workflow** on GitHub. The workflow runs the test suite, publishes the app for `win-x64`, and uploads an artifact named `WaterCoolerApp-win-x64` retained for 14 days. Download and extract the artifact, then launch `WaterCoolerApp.exe` on Windows 10/11. This is a portable publish folder, not an installer.
+
+Para gerar uma compilação independente para Windows x64, abra **Actions → Publish Windows x64 artifact → Run workflow** no GitHub. O workflow executa os testes, publica o aplicativo para `win-x64` e envia um artefato chamado `WaterCoolerApp-win-x64`, mantido por 14 dias. Baixe e extraia o artefato e execute `WaterCoolerApp.exe` no Windows 10/11. O resultado é uma pasta portátil publicada, não um instalador.
+
 ## Storage notes / Observações sobre armazenamento
 
 The Storage card reports filesystem capacity for ready fixed volumes (the Windows system volume is prioritized). This is different from SMART/NVMe drive temperature: temperature is displayed only if LibreHardwareMonitor and the storage controller expose it. If a drive is absent from the summary, confirm that Windows has mounted it and assigned a drive letter.
