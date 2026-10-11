@@ -18,6 +18,10 @@ public sealed class HardwareMonitoringService : IDisposable
     private long? _previousIdleTime;
     private long? _previousKernelTime;
     private long? _previousUserTime;
+    private DateTime _lastStorageReadAt = DateTime.MinValue;
+    private (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
+        double? FreeGiB, double? UsedPercent, string VolumesSummary,
+        IReadOnlyList<StorageVolumeSnapshot> Volumes)? _cachedStorage;
 
     public HardwareMonitoringService()
     {
@@ -77,12 +81,19 @@ public sealed class HardwareMonitoringService : IDisposable
                 totalGiB ??= memory.TotalGiB;
             }
     
-            var storage = ReadStorage();
+            var now = DateTime.Now;
+            if (_cachedStorage is null || now - _lastStorageReadAt >= TimeSpan.FromSeconds(5))
+            {
+                _cachedStorage = ReadStorage();
+                _lastStorageReadAt = now;
+            }
+
+            var storage = _cachedStorage.Value;
             return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
                 driveTemp, cpuModel, gpuModel, storageModels.FirstOrDefault() ?? storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
-                DateTime.Now, "Leitura concluída");
+                now, "Leitura concluída");
         }
     }
 
