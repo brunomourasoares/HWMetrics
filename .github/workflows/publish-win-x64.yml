@@ -1,0 +1,36 @@
+name: Publish Windows x64 artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore WaterCoolerApp.csproj
+
+      - name: Run tests
+        run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
+
+      - name: Publish self-contained Windows x64
+        run: dotnet publish WaterCoolerApp.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/WaterCoolerApp-win-x64
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WaterCoolerApp-win-x64
+          path: artifacts/WaterCoolerApp-win-x64/
+          if-no-files-found: error
+          retention-days: 14
