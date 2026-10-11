@@ -9,6 +9,7 @@ namespace WaterCoolerApp.Services;
 public sealed class HardwareMonitoringService : IDisposable
 {
     private readonly Computer _computer;
+    private readonly object _sync = new();
     private bool _disposed;
 
     public HardwareMonitoringService()
@@ -26,6 +27,8 @@ public sealed class HardwareMonitoringService : IDisposable
 
     public SensorSnapshot Read()
     {
+        lock (_sync)
+        {
         ObjectDisposedException.ThrowIf(_disposed, this);
         double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
         double? usedGiB = null, totalGiB = null, driveTemp = null;
@@ -52,6 +55,7 @@ public sealed class HardwareMonitoringService : IDisposable
             driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
             storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
             DateTime.Now, "Leitura concluída");
+        }
     }
 
     private static void Visit(IHardware hardware, ref double? cpuTemp, ref double? cpuLoad,
@@ -202,8 +206,11 @@ public sealed class HardwareMonitoringService : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        _computer.Close();
+        lock (_sync)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _computer.Close();
+        }
     }
 }
