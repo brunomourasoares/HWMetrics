@@ -752,10 +752,10 @@ public partial class MainWindow : Window
         if (_trayIcon is not null)
         {
             _trayIcon.Text = T("Aqua Core — Hardware Studio", "Aqua Core — Central de Hardware");
-            if (_trayIcon.ContextMenuStrip?.Items.Count >= 2)
+            if (_trayIcon.ContextMenuStrip is ContextMenuStrip trayMenu && trayMenu.Items.Count >= 2)
             {
-                _trayIcon.ContextMenuStrip.Items[0].Text = T("Open Aqua Core", "Abrir Aqua Core");
-                _trayIcon.ContextMenuStrip.Items[1].Text = T("Exit", "Sair");
+                trayMenu.Items[0].Text = T("Open Aqua Core", "Abrir Aqua Core");
+                trayMenu.Items[1].Text = T("Exit", "Sair");
             }
         }
     }
