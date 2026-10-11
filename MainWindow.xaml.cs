@@ -846,10 +846,10 @@ public partial class MainWindow : Window
             if (string.IsNullOrWhiteSpace(assemblyPath))
                 throw new ArgumentException("An assembly path is required when launching through dotnet.", nameof(assemblyPath));
 
-            return $"\\\"{executable}\\\" \\\"{assemblyPath}\\\" --tray";
+            return $"\"{executable}\" \"{assemblyPath}\" --tray";
         }
 
-        return $"\\\"{executable}\\\" --tray";
+        return $"\"{executable}\" --tray";
     }
 
     private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
