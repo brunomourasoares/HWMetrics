@@ -29,32 +29,32 @@ public sealed class HardwareMonitoringService : IDisposable
     {
         lock (_sync)
         {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
-        double? usedGiB = null, totalGiB = null, driveTemp = null;
-
-        foreach (var hardware in _computer.Hardware)
-            Visit(hardware, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
-                ref usedGiB, ref totalGiB, ref driveTemp);
-
-        // LibreHardwareMonitor does not expose physical memory consistently on every system.
-        // Use the Windows memory API as a reliable fallback for the RAM card.
-        if (usedGiB is null || totalGiB is null)
-        {
-            var memory = ReadPhysicalMemory();
-
-            // Fill only missing values: keep a valid LibreHardwareMonitor reading
-            // instead of replacing both fields when just one field is unavailable.
-            usedGiB ??= memory.UsedGiB;
-            totalGiB ??= memory.TotalGiB;
-        }
-
-        var storage = ReadStorage();
-        return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
-            NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
-            driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
-            storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
-            DateTime.Now, "Leitura concluída");
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
+            double? usedGiB = null, totalGiB = null, driveTemp = null;
+    
+            foreach (var hardware in _computer.Hardware)
+                Visit(hardware, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
+                    ref usedGiB, ref totalGiB, ref driveTemp);
+    
+            // LibreHardwareMonitor does not expose physical memory consistently on every system.
+            // Use the Windows memory API as a reliable fallback for the RAM card.
+            if (usedGiB is null || totalGiB is null)
+            {
+                var memory = ReadPhysicalMemory();
+    
+                // Fill only missing values: keep a valid LibreHardwareMonitor reading
+                // instead of replacing both fields when just one field is unavailable.
+                usedGiB ??= memory.UsedGiB;
+                totalGiB ??= memory.TotalGiB;
+            }
+    
+            var storage = ReadStorage();
+            return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
+                NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
+                driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
+                storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
+                DateTime.Now, "Leitura concluída");
         }
     }
 
