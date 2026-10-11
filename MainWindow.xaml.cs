@@ -380,16 +380,15 @@ public partial class MainWindow : Window
         var ringBrush = new LinearGradientBrush();
         ringBrush.StartPoint = new Point(0, 0.5);
         ringBrush.EndPoint = new Point(1, 0.5);
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(42, 151, 255), 0.0));
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(145, 95, 255), 0.5));
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 76, 92), 1.0));
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 0, 0), 0.0));
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 255, 0), 0.5));
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
         CoolerArgbRing.Stroke = ringBrush;
-        CoolerDisplayTemp.Foreground = new SolidColorBrush(blackModel
-            ? Color.FromRgb(112, 232, 208)
-            : Color.FromRgb(63, 191, 183));
+        // Display digits and thermometer glyph use an ice-white treatment on both case colors.
+        CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = new SolidColorBrush(blackModel
-            ? Color.FromRgb(112, 232, 208)
-            : Color.FromRgb(63, 191, 183));
+            ? Color.FromRgb(244, 251, 255)
+            : Color.FromRgb(244, 251, 255));
     }
 
     private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
