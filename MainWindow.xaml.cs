@@ -276,11 +276,8 @@ public partial class MainWindow : Window
                 point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
                     ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null))
             : Geometry.Empty;
-        var parts = new List<string>();
-        if (showCpu) parts.Add($"CPU {Percent(current.CpuLoadPercent)}");
-        if (showGpu) parts.Add($"GPU {Percent(current.GpuLoadPercent)}");
-        if (showRam) parts.Add($"RAM {MemoryUsagePercent(current)}");
-        UtilizationGraphCaption.Text = parts.Count > 0 ? string.Join(" · ", parts) : "Nenhuma série selecionada";
+        // The utilization card uses a fixed color legend in its footer, so no
+        // separate caption control is required here.
     }
 
     private static string MemoryUsagePercent(SensorSnapshot snapshot) =>
