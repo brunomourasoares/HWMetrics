@@ -418,7 +418,11 @@ public partial class MainWindow : Window
                 false)
         };
 
-        // Connection status is shown in the sidebar status area; no duplicate badge is rendered here.
+        DisplayConnectionTitleText.Text = title;
+        DisplayConnectionStatusText.Text = detail;
+        DisplayConnectionIndicator.Fill = connected
+            ? (Brush)FindResource("AccentBrush")
+            : (Brush)FindResource("WarningBrush");
     }
 
     private void RotateStorageDrive()
