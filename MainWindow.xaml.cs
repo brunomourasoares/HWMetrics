@@ -151,12 +151,14 @@ public partial class MainWindow : Window
             var total = s.MemoryTotalGiB.Value;
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{used:0.0} GB";
+            AnimateProgress(MemoryUsageBar, pct);
             MemoryPercentText.Text = _language == "pt" ? $"{pct:0}% de {total:0.0} GB" : $"{pct:0}% of {total:0.0} GB";
             MemoryDetailText.Text = $"{used:0.0} / {total:0.0} GB";
         }
         else
         {
             MemoryText.Text = "N/D";
+            MemoryUsageBar.Value = 0;
             MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
             MemoryDetailText.Text = "N/D";
         }
