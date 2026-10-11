@@ -48,7 +48,7 @@ public sealed class TelemetryHistoryStore
     {
         var cutoff = now - Retention;
         var recent = snapshots
-            .Where(snapshot => snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now.AddMinutes(1))
+            .Where(snapshot => snapshot is not null && snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now.AddMinutes(1))
             .OrderBy(snapshot => snapshot.UpdatedAt)
             .ToArray();
 
