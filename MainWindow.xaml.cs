@@ -63,7 +63,7 @@ public partial class MainWindow : Window
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
-        ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
+        ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
         ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
         ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
