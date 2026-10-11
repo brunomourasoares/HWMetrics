@@ -45,11 +45,17 @@ public sealed class HardwareMonitoringService : IDisposable
             var cpuLoadPriority = -1;
             var gpuTempPriority = -1;
             var gpuLoadPriority = -1;
-    
+            var cpuCoreLoads = new List<double>();
+
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
-                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                    cpuCoreLoads, ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                     ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+
+            // If no aggregate CPU load sensor exists, report the mean of the per-core
+            // readings rather than whichever core happened to appear first.
+            if (cpuLoad is null && cpuCoreLoads.Count > 0)
+                cpuLoad = cpuCoreLoads.Average();
 
             // Some motherboards expose the CPU thermistor through Super I/O instead of
             // the CPU hardware node. Visit() accepts those explicitly labelled CPU sensors
@@ -82,7 +88,7 @@ public sealed class HardwareMonitoringService : IDisposable
 
     private void Visit(IHardware hardware,
         ref double? cpuTemp, ref int cpuTempPriority,
-        ref double? cpuLoad, ref int cpuLoadPriority,
+        ref double? cpuLoad, ref int cpuLoadPriority, List<double> cpuCoreLoads,
         ref double? gpuTemp, ref int gpuTempPriority,
         ref double? gpuLoad, ref int gpuLoadPriority,
         ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
@@ -116,6 +122,7 @@ public sealed class HardwareMonitoringService : IDisposable
                 switch (sensor.SensorType)
                 {
                     case SensorType.Temperature:
+                        if (!IsValidTemperature(value)) break;
                         var cpuPriority = GetCpuTemperaturePriority(name, hardware.HardwareType);
                         if (cpuPriority >= 0 && cpuPriority > cpuTempPriority)
                         {
@@ -135,7 +142,13 @@ public sealed class HardwareMonitoringService : IDisposable
                         if (hardware.HardwareType == HardwareType.Cpu)
                         {
                             var priority = GetCpuLoadPriority(name);
-                            if (priority > cpuLoadPriority) { cpuLoad = value; cpuLoadPriority = priority; }
+                            if (priority == 30)
+                                cpuCoreLoads.Add(value);
+                            else if (priority >= 70 && priority > cpuLoadPriority)
+                            {
+                                cpuLoad = value;
+                                cpuLoadPriority = priority;
+                            }
                         }
                         else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel)
                         {
@@ -159,7 +172,7 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         foreach (var child in hardware.SubHardware)
-            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority, cpuCoreLoads,
                 ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
     }
@@ -196,12 +209,19 @@ public sealed class HardwareMonitoringService : IDisposable
         return -1;
     }
 
-    private static int GetCpuLoadPriority(string name)
+    internal static int GetCpuLoadPriority(string name)
     {
         if (name.Contains("total")) return 100;
+        if (name.Contains("average")) return 70;
+        // Test "core" before "cpu": names such as "CPU Core #1" are per-core
+        // values and must not outrank an aggregate CPU utilization sensor.
+        if (name.Contains("core")) return 30;
         if (name.Contains("cpu")) return 80;
-        return 10;
+        return -1;
     }
+
+    internal static bool IsValidTemperature(double value) =>
+        double.IsFinite(value) && value is >= 0 and <= 150;
 
     private static int GetGpuTemperaturePriority(string name)
     {
