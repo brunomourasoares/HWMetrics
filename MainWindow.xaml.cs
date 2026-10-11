@@ -47,9 +47,9 @@ public partial class MainWindow : Window
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
         ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
-        ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
-        ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
-        ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Capacity unavailable"] = "Capacidade indisponível",
+        ["Your hardware, at a glance."] = "Seu hardware em um só lugar.", ["LIVE TELEMETRY"] = "TELEMETRIA AO VIVO",
+        ["Refresh now"] = "Atualizar agora", ["PROCESSOR"] = "PROCESSADOR", ["Load --%"] = "Carga --%",
+        ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Memory model unavailable"] = "Modelo de memória indisponível", ["Capacity unavailable"] = "Capacidade indisponível",
         ["STORAGE"] = "ARMAZENAMENTO", ["Waiting for disk data"] = "Aguardando dados do disco",
         ["Thermal performance"] = "Desempenho térmico", ["Utilization performance"] = "Desempenho de utilização", ["Live CPU, GPU and memory history · rolling 30 minutes"] = "Histórico ao vivo de CPU, GPU e memória · últimos 30 minutos", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
         ["Rolling 30 minutes · data since launch"] = "Últimos 30 minutos · dados desde a inicialização", ["100%"] = "100%", ["75%"] = "75%", ["50%"] = "50%", ["25%"] = "25%",
@@ -272,6 +272,7 @@ public partial class MainWindow : Window
         else
         {
             MemoryText.Text = "N/D";
+            MemoryUsageBar.Value = 0;
             MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
             AnimateProgress(MemoryUsageBar, 0);
         }
