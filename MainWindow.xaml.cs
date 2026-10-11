@@ -63,7 +63,15 @@ public partial class MainWindow : Window
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
-        ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
+        ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
+        ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
+        ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
+        ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
+        ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
+        ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
+        ["Utilization --%"] = "Utilização --%",
+        ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
+        ["Open Aqua Core"] = "Abrir Aqua Core", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
@@ -198,8 +206,8 @@ public partial class MainWindow : Window
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Open Aqua Core", null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
-        menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        menu.Items.Add(T("Open Aqua Core", "Abrir Aqua Core"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
         _trayIcon = new NotifyIcon
         {
             Icon = System.Drawing.SystemIcons.Application,
@@ -290,6 +298,22 @@ public partial class MainWindow : Window
         finally
         {
             _reading = false;
+        }
+    }
+
+    private async void RefreshNow_Click(object sender, RoutedEventArgs e)
+    {
+        if (_closing) return;
+        RefreshNowButton.IsEnabled = false;
+        RefreshNowButton.Content = T("Refreshing…", "Atualizando…");
+        try
+        {
+            await RefreshSensorsAsync();
+        }
+        finally
+        {
+            RefreshNowButton.Content = T("Refresh now", "Atualizar agora");
+            RefreshNowButton.IsEnabled = !_closing;
         }
     }
 
@@ -421,7 +445,7 @@ public partial class MainWindow : Window
             var free = Math.Max(0, total - used);
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{pct:0}%";
-            MemoryPercentText.Text = $"{FormatCapacity(used)} / {FormatCapacity(total)} {T("total", "Total")} - {FormatCapacity(free)} {T("free", "livres")}";
+            MemoryPercentText.Text = T($"{FormatCapacity(used)} used · {FormatCapacity(free)} free of {FormatCapacity(total)}", $"{FormatCapacity(used)} em uso · {FormatCapacity(free)} livres de {FormatCapacity(total)}");
             AnimateProgress(MemoryUsageBar, pct);
         }
         else
@@ -725,6 +749,15 @@ public partial class MainWindow : Window
         var reverse = Portuguese.GroupBy(pair => pair.Value, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
         TranslateTree(this, language == "pt" ? Portuguese : reverse);
         Title = language == "pt" ? Portuguese["Aqua Core — Hardware Studio"] : "Aqua Core — Hardware Studio";
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Text = T("Aqua Core — Hardware Studio", "Aqua Core — Central de Hardware");
+            if (_trayIcon.ContextMenuStrip is ContextMenuStrip trayMenu && trayMenu.Items.Count >= 2)
+            {
+                trayMenu.Items[0].Text = T("Open Aqua Core", "Abrir Aqua Core");
+                trayMenu.Items[1].Text = T("Exit", "Sair");
+            }
+        }
     }
 
     private static void TranslateTree(DependencyObject parent, IReadOnlyDictionary<string, string> dictionary)
@@ -733,6 +766,8 @@ public partial class MainWindow : Window
             textBlock.Text = translatedText;
         if (parent is ContentControl contentControl && contentControl.Content is string content && dictionary.TryGetValue(content, out var translatedContent))
             contentControl.Content = translatedContent;
+        if (parent is FrameworkElement element && element.ToolTip is string toolTip && dictionary.TryGetValue(toolTip, out var translatedToolTip))
+            element.ToolTip = translatedToolTip;
 
         foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>().ToArray())
             TranslateTree(child, dictionary);
@@ -885,6 +920,21 @@ public partial class MainWindow : Window
             return;
         }
         SavePreferences();
+    }
+
+    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.F5)
+        {
+            e.Handled = true;
+            if (RefreshNowButton.IsEnabled)
+                RefreshNow_Click(this, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
+        {
+            HideSettingsPanel();
+            e.Handled = true;
+        }
     }
 
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
