@@ -227,12 +227,9 @@ public partial class MainWindow : Window
 
     private System.Drawing.Icon CreateTrayIcon()
     {
-        // Use the official application icon resource instead of drawing a text-only placeholder.
-        var resource = Application.GetResourceStream(
-            new Uri("pack://application:,,,/Resources/Images/icon.png", UriKind.Absolute))
-            ?? throw new InvalidOperationException("The official HW Metrics icon resource was not found.");
-
-        using var stream = resource.Stream;
+        // Use the embedded official icon artwork; this avoids depending on an image resource that may not be packaged.
+        var iconBytes = Convert.FromBase64String(TrayIconPngBase64);
+        using var stream = new MemoryStream(iconBytes);
         using var bitmap = new System.Drawing.Bitmap(stream);
         using var scaled = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(32, 32));
         var handle = scaled.GetHicon();
