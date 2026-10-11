@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private DateTime _lastPersistedSnapshotAt = DateTime.MinValue;
     private TimeSpan _historyRetention = TelemetryHistoryStore.DefaultRetention;
     private HardwareMonitoringService? _monitor;
+    private readonly DisplayTransportService _displayTransport = new();
     private bool _reading;
     private bool _closing;
     private string _language = "pt";
@@ -48,6 +49,11 @@ public partial class MainWindow : Window
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
+        ["HID display connected"] = "Display HID conectado", ["Telemetry sent to physical display"] = "Telemetria enviada ao display físico",
+        ["HID display not found"] = "Display HID não encontrado", ["CPU temperature unavailable · not sent"] = "Temperatura da CPU indisponível · não enviado",
+        ["HID report incompatible"] = "Relatório HID incompatível", ["Could not open HID display"] = "Não foi possível abrir o display HID",
+        ["HID write failed"] = "Falha ao transmitir por HID", ["Preview only · HID not connected"] = "Somente prévia · HID não conectado",
+        ["HID telemetry active · fan/pump control disabled"] = "Telemetria HID ativa · controle de bomba/ventoinha desativado",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
         ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
@@ -188,7 +194,7 @@ public partial class MainWindow : Window
             }
 
             _monitor = monitor;
-            DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
+            UpdateDisplayStatus(DisplayTransportStatus.DeviceNotFound);
             _pollTimer.Start();
             _storageCycleTimer.Start();
             await RefreshSensorsAsync();
@@ -208,7 +214,10 @@ public partial class MainWindow : Window
         try
         {
             var snapshot = await Task.Run(monitor.Read);
-            if (!_closing) Render(snapshot);
+            if (_closing) return;
+            Render(snapshot);
+            var displayStatus = await Task.Run(() => _displayTransport.Send(snapshot));
+            if (!_closing) UpdateDisplayStatus(displayStatus);
         }
         catch (Exception ex)
         {
@@ -218,6 +227,51 @@ public partial class MainWindow : Window
         {
             _reading = false;
         }
+    }
+
+    private void UpdateDisplayStatus(DisplayTransportStatus status)
+    {
+        var (title, detail, connected) = status switch
+        {
+            DisplayTransportStatus.Sent => (
+                T("HID display connected", "Display HID conectado"),
+                T("Telemetry sent to physical display", "Telemetria enviada ao display físico"),
+                true),
+            DisplayTransportStatus.InvalidTelemetry => (
+                T("Waiting for device", "Aguardando dispositivo"),
+                T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado"),
+                false),
+            DisplayTransportStatus.IncompatibleReport => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("HID report incompatible", "Relatório HID incompatível"),
+                false),
+            DisplayTransportStatus.OpenFailed => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("Could not open HID display", "Não foi possível abrir o display HID"),
+                false),
+            DisplayTransportStatus.Error => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("HID write failed", "Falha ao transmitir por HID"),
+                false),
+            _ => (
+                T("Waiting for device", "Aguardando dispositivo"),
+                T("HID display not found", "Display HID não encontrado"),
+                false)
+        };
+
+        DisplayConnectionTitleText.Text = title;
+        DisplayConnectionStatusText.Text = detail;
+        DisplayConnectionIndicator.Fill = connected
+            ? (Brush)FindResource("AccentBrush")
+            : (Brush)FindResource("WarningBrush");
+        DeviceStatusText.Text = connected
+            ? T("HID display connected", "Display HID conectado")
+            : status == DisplayTransportStatus.InvalidTelemetry
+                ? T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado")
+                : T("HID display not found", "Display HID não encontrado");
+        DisplayModeText.Text = connected
+            ? T("HID telemetry active · fan/pump control disabled", "Telemetria HID ativa · controle de bomba/ventoinha desativado")
+            : T("Preview only · HID not connected", "Somente prévia · HID não conectado");
     }
 
     private void RotateStorageDrive()
@@ -685,5 +739,6 @@ public partial class MainWindow : Window
         _storageCycleTimer.Stop();
         _historyStore.Save(_storedHistory, DateTime.Now, _historyRetention);
         _monitor?.Dispose();
+        _displayTransport.Dispose();
     }
 }
