@@ -386,7 +386,7 @@ public partial class MainWindow : Window
     private void ApplyLanguage(string language)
     {
         _language = language;
-        var reverse = Portuguese.ToDictionary(pair => pair.Value, pair => pair.Key, StringComparer.Ordinal);
+        var reverse = Portuguese.GroupBy(pair => pair.Value, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
         TranslateTree(this, language == "pt" ? Portuguese : reverse);
         Title = language == "pt" ? Portuguese["Aqua Core — Hardware Studio"] : "Aqua Core — Hardware Studio";
     }
