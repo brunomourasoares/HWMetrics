@@ -14,6 +14,7 @@
     <PackageReference Include="HidSharp" Version="2.1.0" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources/Images/rise-mode.png" />
     <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf">
       <Link>Resources\Fonts\DSEG7Classic-Regular.ttf</Link>
     </Resource>
