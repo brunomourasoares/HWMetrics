@@ -207,14 +207,46 @@ public partial class MainWindow : Window
 
     public bool StartHidden { get => _startHidden; set => _startHidden = value; }
 
+    private System.Drawing.Icon CreateTrayIcon()
+    {
+        using var bitmap = new System.Drawing.Bitmap(32, 32);
+        using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
+        using (var background = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(18, 25, 39)))
+        using (var accent = new System.Drawing.SolidBrush(System.Drawing.Color.FromArgb(45, 212, 191)))
+        using (var font = new System.Drawing.Font("Segoe UI", 11, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel))
+        using (var format = new System.Drawing.StringFormat { Alignment = System.Drawing.StringAlignment.Center, LineAlignment = System.Drawing.StringAlignment.Center })
+        {
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            graphics.Clear(System.Drawing.Color.Transparent);
+            graphics.FillRoundedRectangle(background, new System.Drawing.Rectangle(1, 1, 30, 30), 7);
+            graphics.FillRoundedRectangle(accent, new System.Drawing.Rectangle(5, 5, 22, 3), 1);
+            graphics.DrawString("HW", font, System.Drawing.Brushes.White, new System.Drawing.RectangleF(1, 7, 30, 23), format);
+        }
+
+        var handle = bitmap.GetHicon();
+        try
+        {
+            return (System.Drawing.Icon)System.Drawing.Icon.FromHandle(handle).Clone();
+        }
+        finally
+        {
+            DestroyIcon(handle);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(nint handle);
+
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
         menu.Items.Add(T("Open HW Metrics", "Abrir HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
         menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        _trayApplicationIcon = CreateTrayIcon();
         _trayIcon = new NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Application,
+            Icon = _trayApplicationIcon,
             Text = "HW Metrics — Hardware Studio",
             ContextMenuStrip = menu,
             Visible = true
@@ -966,5 +998,7 @@ public partial class MainWindow : Window
             _trayIcon.Dispose();
             _trayIcon = null;
         }
+        _trayApplicationIcon?.Dispose();
+        _trayApplicationIcon = null;
     }
 }
