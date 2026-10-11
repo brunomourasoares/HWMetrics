@@ -846,8 +846,26 @@ public partial class MainWindow : Window
             if (StartWithWindowsCheckBox.IsChecked == true)
             {
                 var executable = Environment.ProcessPath;
-                if (!string.IsNullOrWhiteSpace(executable))
-                    key.SetValue("AquaCore", $"\"{executable}\" --tray");
+                if (string.IsNullOrWhiteSpace(executable))
+                    throw new InvalidOperationException("Could not determine the current executable path.");
+
+                // When launched through the .NET host, Windows must run dotnet.exe with
+                // the app assembly before passing the application-specific --tray argument.
+                string startupCommand;
+                if (string.Equals(Path.GetFileNameWithoutExtension(executable), "dotnet", StringComparison.OrdinalIgnoreCase))
+                {
+                    var assemblyPath = typeof(App).Assembly.Location;
+                    if (string.IsNullOrWhiteSpace(assemblyPath))
+                        throw new InvalidOperationException("Could not determine the application assembly path.");
+
+                    startupCommand = $"\"{executable}\" \"{assemblyPath}\" --tray";
+                }
+                else
+                {
+                    startupCommand = $"\"{executable}\" --tray";
+                }
+
+                key.SetValue("AquaCore", startupCommand);
             }
             else
             {
