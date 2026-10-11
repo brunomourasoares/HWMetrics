@@ -10,7 +10,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\\HW-Metrics-SingleInstance", createdNew: out var createdNew);
+        _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\HW-Metrics-SingleInstance", createdNew: out var createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)
         {
