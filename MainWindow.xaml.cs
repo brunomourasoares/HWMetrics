@@ -6,6 +6,17 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.IO;
 using System.Text.Json;
+using NotifyIcon = System.Windows.Forms.NotifyIcon;
+using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
+using Button = System.Windows.Controls.Button;
+using ProgressBar = System.Windows.Controls.ProgressBar;
+using Control = System.Windows.Controls.Control;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
+using Point = System.Windows.Point;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
@@ -24,6 +35,7 @@ public partial class MainWindow : Window
     private DateTime _lastPersistedSnapshotAt = DateTime.MinValue;
     private TimeSpan _historyRetention = TelemetryHistoryStore.DefaultRetention;
     private HardwareMonitoringService? _monitor;
+    private readonly DisplayTransportService _displayTransport = new();
     private bool _reading;
     private bool _closing;
     private string _language = "pt";
@@ -32,6 +44,10 @@ public partial class MainWindow : Window
     private string? _selectedStorageDriveName;
     private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
+    private NotifyIcon? _trayIcon;
+    private bool _allowExit;
+    private bool _closePromptAnswered;
+    private bool _startHidden;
 
     private sealed class AppPreferences
     {
@@ -40,6 +56,9 @@ public partial class MainWindow : Window
         public int LanguageIndex { get; set; } = 1;
         public int CoolerModelIndex { get; set; }
         public int HistoryRetentionIndex { get; set; }
+        public bool MinimizeToTrayOnClose { get; set; }
+        public bool StartWithWindows { get; set; }
+        public bool ClosePromptAnswered { get; set; }
     }
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
@@ -48,8 +67,15 @@ public partial class MainWindow : Window
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
+        ["HID display connected"] = "Display HID conectado", ["Telemetry sent to physical display"] = "Telemetria enviada ao display físico",
+        ["HID display not found"] = "Display HID não encontrado", ["CPU temperature unavailable · not sent"] = "Temperatura da CPU indisponível · não enviado",
+        ["HID report incompatible"] = "Relatório HID incompatível", ["Could not open HID display"] = "Não foi possível abrir o display HID",
+        ["HID write failed"] = "Falha ao transmitir por HID", ["Preview only · HID not connected"] = "Somente prévia · HID não conectado",
+        ["HID telemetry active · fan/pump control disabled"] = "Telemetria HID ativa · controle de bomba/ventoinha desativado",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
-        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
+        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA",
+        ["Minimize to tray on close"] = "Minimizar para a bandeja ao fechar", ["Keep Aqua Core running in the notification area"] = "Manter o Aqua Core em execução na área de notificação",
+        ["Start with Windows"] = "Iniciar com o Windows", ["Launch automatically in the tray when you sign in"] = "Abrir automaticamente na bandeja ao entrar no Windows", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
         ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
@@ -102,6 +128,7 @@ public partial class MainWindow : Window
         ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
+        InitializeTrayIcon();
     }
 
     private void LoadPreferences()
@@ -117,6 +144,9 @@ public partial class MainWindow : Window
             LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
             CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
             HistoryRetentionSelector.SelectedIndex = Math.Clamp(preferences.HistoryRetentionIndex, 0, HistoryRetentionSelector.Items.Count - 1);
+            CloseToTrayCheckBox.IsChecked = preferences.MinimizeToTrayOnClose;
+            StartWithWindowsCheckBox.IsChecked = preferences.StartWithWindows;
+            _closePromptAnswered = preferences.ClosePromptAnswered;
         }
         catch (Exception)
         {
@@ -125,6 +155,9 @@ public partial class MainWindow : Window
             LanguageSelector.SelectedIndex = 1;
             CoolerModelSelector.SelectedIndex = 0;
             HistoryRetentionSelector.SelectedIndex = 0;
+            CloseToTrayCheckBox.IsChecked = false;
+            StartWithWindowsCheckBox.IsChecked = false;
+            _closePromptAnswered = false;
         }
         finally
         {
@@ -143,7 +176,10 @@ public partial class MainWindow : Window
                 PollIntervalIndex = Math.Max(0, PollIntervalSelector.SelectedIndex),
                 LanguageIndex = Math.Max(0, LanguageSelector.SelectedIndex),
                 CoolerModelIndex = Math.Max(0, CoolerModelSelector.SelectedIndex),
-                HistoryRetentionIndex = Math.Max(0, HistoryRetentionSelector.SelectedIndex)
+                HistoryRetentionIndex = Math.Max(0, HistoryRetentionSelector.SelectedIndex),
+                MinimizeToTrayOnClose = CloseToTrayCheckBox.IsChecked == true,
+                StartWithWindows = StartWithWindowsCheckBox.IsChecked == true,
+                ClosePromptAnswered = _closePromptAnswered
             };
             var directory = Path.GetDirectoryName(_preferencesPath)!;
             Directory.CreateDirectory(directory);
@@ -157,11 +193,45 @@ public partial class MainWindow : Window
         }
     }
 
+    public bool StartHidden { get => _startHidden; set => _startHidden = value; }
+
+    private void InitializeTrayIcon()
+    {
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("Open Aqua Core", null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        _trayIcon = new NotifyIcon
+        {
+            Icon = System.Drawing.SystemIcons.Application,
+            Text = "Aqua Core — Hardware Studio",
+            ContextMenuStrip = menu,
+            Visible = true
+        };
+        _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(RestoreFromTray);
+    }
+
+    private void RestoreFromTray()
+    {
+        Opacity = 1;
+        ShowInTaskbar = true;
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void HideToTray()
+    {
+        if (_trayIcon is not null) _trayIcon.Visible = true;
+        ShowInTaskbar = false;
+        Hide();
+    }
+
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         // Apply the default model after InitializeComponent has created every named control.
         CoolerModelSelector_SelectionChanged(CoolerModelSelector, null!);
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
+        if (_startHidden) HideToTray();
         try
         {
             _historyRetention = GetSelectedHistoryRetention();
@@ -188,7 +258,7 @@ public partial class MainWindow : Window
             }
 
             _monitor = monitor;
-            DeviceStatusText.Text = T("Display transmission disabled", "Transmissão para o display desativada");
+            UpdateDisplayStatus(DisplayTransportStatus.DeviceNotFound);
             _pollTimer.Start();
             _storageCycleTimer.Start();
             await RefreshSensorsAsync();
@@ -208,7 +278,10 @@ public partial class MainWindow : Window
         try
         {
             var snapshot = await Task.Run(monitor.Read);
-            if (!_closing) Render(snapshot);
+            if (_closing) return;
+            Render(snapshot);
+            var displayStatus = await Task.Run(() => _displayTransport.Send(snapshot));
+            if (!_closing) UpdateDisplayStatus(displayStatus);
         }
         catch (Exception ex)
         {
@@ -218,6 +291,51 @@ public partial class MainWindow : Window
         {
             _reading = false;
         }
+    }
+
+    private void UpdateDisplayStatus(DisplayTransportStatus status)
+    {
+        var (title, detail, connected) = status switch
+        {
+            DisplayTransportStatus.Sent => (
+                T("HID display connected", "Display HID conectado"),
+                T("Telemetry sent to physical display", "Telemetria enviada ao display físico"),
+                true),
+            DisplayTransportStatus.InvalidTelemetry => (
+                T("Waiting for device", "Aguardando dispositivo"),
+                T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado"),
+                false),
+            DisplayTransportStatus.IncompatibleReport => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("HID report incompatible", "Relatório HID incompatível"),
+                false),
+            DisplayTransportStatus.OpenFailed => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("Could not open HID display", "Não foi possível abrir o display HID"),
+                false),
+            DisplayTransportStatus.Error => (
+                T("HID display not found", "Display HID não encontrado"),
+                T("HID write failed", "Falha ao transmitir por HID"),
+                false),
+            _ => (
+                T("Waiting for device", "Aguardando dispositivo"),
+                T("HID display not found", "Display HID não encontrado"),
+                false)
+        };
+
+        DisplayConnectionTitleText.Text = title;
+        DisplayConnectionStatusText.Text = detail;
+        DisplayConnectionIndicator.Fill = connected
+            ? (Brush)FindResource("AccentBrush")
+            : (Brush)FindResource("WarningBrush");
+        DeviceStatusText.Text = connected
+            ? T("HID display connected", "Display HID conectado")
+            : status == DisplayTransportStatus.InvalidTelemetry
+                ? T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado")
+                : T("HID display not found", "Display HID não encontrado");
+        DisplayModeText.Text = connected
+            ? T("HID telemetry active · fan/pump control disabled", "Telemetria HID ativa · controle de bomba/ventoinha desativado")
+            : T("Preview only · HID not connected", "Somente prévia · HID não conectado");
     }
 
     private void RotateStorageDrive()
@@ -669,6 +787,85 @@ public partial class MainWindow : Window
         Close();
     }
 
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_allowExit) return;
+        e.Cancel = true;
+
+        if (!_closePromptAnswered)
+        {
+            var choice = MessageBox.Show(
+                T("Would you like to exit Aqua Core or keep it running in the system tray?",
+                  "Deseja fechar o Aqua Core ou mantê-lo em execução na bandeja do sistema?"),
+                T("Close Aqua Core", "Fechar Aqua Core"),
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question,
+                MessageBoxResult.Cancel);
+            if (choice == MessageBoxResult.Cancel) return;
+
+            _closePromptAnswered = true;
+            CloseToTrayCheckBox.IsChecked = choice == MessageBoxResult.No;
+            SavePreferences();
+            if (choice == MessageBoxResult.No)
+            {
+                HideToTray();
+                return;
+            }
+
+            _allowExit = true;
+            e.Cancel = false;
+            Close();
+            return;
+        }
+
+        if (CloseToTrayCheckBox.IsChecked == true)
+        {
+            HideToTray();
+            return;
+        }
+
+        _allowExit = true;
+        e.Cancel = false;
+        Close();
+    }
+
+    private void CloseToTrayCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        SavePreferences();
+    }
+
+    private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingPreferences) return;
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true)
+                ?? Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Run");
+            if (StartWithWindowsCheckBox.IsChecked == true)
+            {
+                var executable = Environment.ProcessPath;
+                if (!string.IsNullOrWhiteSpace(executable))
+                    key.SetValue("AquaCore", $"\"{executable}\" --tray");
+            }
+            else
+            {
+                key.DeleteValue("AquaCore", throwOnMissingValue: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                T("Could not update Windows startup settings.", "Não foi possível alterar a inicialização do Windows.") + Environment.NewLine + ex.Message,
+                T("Startup setting failed", "Falha na configuração de inicialização"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+        SavePreferences();
+    }
+
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
@@ -685,5 +882,12 @@ public partial class MainWindow : Window
         _storageCycleTimer.Stop();
         _historyStore.Save(_storedHistory, DateTime.Now, _historyRetention);
         _monitor?.Dispose();
+        _displayTransport.Dispose();
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            _trayIcon = null;
+        }
     }
 }
