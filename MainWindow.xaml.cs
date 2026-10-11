@@ -33,7 +33,7 @@ public partial class MainWindow : Window
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
-        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["Interface theme"] = "Tema da interface", ["APPEARANCE"] = "APARÊNCIA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
+        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
         ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
