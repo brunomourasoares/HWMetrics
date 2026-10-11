@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Forms;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
@@ -33,6 +34,10 @@ public partial class MainWindow : Window
     private string? _selectedStorageDriveName;
     private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
+    private NotifyIcon? _trayIcon;
+    private bool _allowExit;
+    private bool _closePromptAnswered;
+    private bool _startHidden;
 
     private sealed class AppPreferences
     {
@@ -41,6 +46,9 @@ public partial class MainWindow : Window
         public int LanguageIndex { get; set; } = 1;
         public int CoolerModelIndex { get; set; }
         public int HistoryRetentionIndex { get; set; }
+        public bool MinimizeToTrayOnClose { get; set; }
+        public bool StartWithWindows { get; set; }
+        public bool ClosePromptAnswered { get; set; }
     }
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
@@ -108,6 +116,7 @@ public partial class MainWindow : Window
         ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
+        InitializeTrayIcon();
     }
 
     private void LoadPreferences()
@@ -123,6 +132,9 @@ public partial class MainWindow : Window
             LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
             CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
             HistoryRetentionSelector.SelectedIndex = Math.Clamp(preferences.HistoryRetentionIndex, 0, HistoryRetentionSelector.Items.Count - 1);
+            CloseToTrayCheckBox.IsChecked = preferences.MinimizeToTrayOnClose;
+            StartWithWindowsCheckBox.IsChecked = preferences.StartWithWindows;
+            _closePromptAnswered = preferences.ClosePromptAnswered;
         }
         catch (Exception)
         {
@@ -131,6 +143,9 @@ public partial class MainWindow : Window
             LanguageSelector.SelectedIndex = 1;
             CoolerModelSelector.SelectedIndex = 0;
             HistoryRetentionSelector.SelectedIndex = 0;
+            CloseToTrayCheckBox.IsChecked = false;
+            StartWithWindowsCheckBox.IsChecked = false;
+            _closePromptAnswered = false;
         }
         finally
         {
@@ -149,7 +164,10 @@ public partial class MainWindow : Window
                 PollIntervalIndex = Math.Max(0, PollIntervalSelector.SelectedIndex),
                 LanguageIndex = Math.Max(0, LanguageSelector.SelectedIndex),
                 CoolerModelIndex = Math.Max(0, CoolerModelSelector.SelectedIndex),
-                HistoryRetentionIndex = Math.Max(0, HistoryRetentionSelector.SelectedIndex)
+                HistoryRetentionIndex = Math.Max(0, HistoryRetentionSelector.SelectedIndex),
+                MinimizeToTrayOnClose = CloseToTrayCheckBox.IsChecked == true,
+                StartWithWindows = StartWithWindowsCheckBox.IsChecked == true,
+                ClosePromptAnswered = _closePromptAnswered
             };
             var directory = Path.GetDirectoryName(_preferencesPath)!;
             Directory.CreateDirectory(directory);
@@ -163,11 +181,44 @@ public partial class MainWindow : Window
         }
     }
 
+    public bool StartHidden { get => _startHidden; set => _startHidden = value; }
+
+    private void InitializeTrayIcon()
+    {
+        var menu = new ContextMenuStrip();
+        menu.Items.Add("Open Aqua Core", null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        _trayIcon = new NotifyIcon
+        {
+            Icon = System.Drawing.SystemIcons.Application,
+            Text = "Aqua Core — Hardware Studio",
+            ContextMenuStrip = menu,
+            Visible = true
+        };
+        _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(RestoreFromTray);
+    }
+
+    private void RestoreFromTray()
+    {
+        ShowInTaskbar = true;
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void HideToTray()
+    {
+        if (_trayIcon is not null) _trayIcon.Visible = true;
+        ShowInTaskbar = false;
+        Hide();
+    }
+
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         // Apply the default model after InitializeComponent has created every named control.
         CoolerModelSelector_SelectionChanged(CoolerModelSelector, null!);
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
+        if (_startHidden) HideToTray();
         try
         {
             _historyRetention = GetSelectedHistoryRetention();
@@ -723,6 +774,85 @@ public partial class MainWindow : Window
         Close();
     }
 
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (_allowExit) return;
+        e.Cancel = true;
+
+        if (!_closePromptAnswered)
+        {
+            var choice = MessageBox.Show(
+                T("Would you like to exit Aqua Core or keep it running in the system tray?",
+                  "Deseja fechar o Aqua Core ou mantê-lo em execução na bandeja do sistema?"),
+                T("Close Aqua Core", "Fechar Aqua Core"),
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Question,
+                MessageBoxResult.Cancel);
+            if (choice == MessageBoxResult.Cancel) return;
+
+            _closePromptAnswered = true;
+            CloseToTrayCheckBox.IsChecked = choice == MessageBoxResult.No;
+            SavePreferences();
+            if (choice == MessageBoxResult.No)
+            {
+                HideToTray();
+                return;
+            }
+
+            _allowExit = true;
+            e.Cancel = false;
+            Close();
+            return;
+        }
+
+        if (CloseToTrayCheckBox.IsChecked == true)
+        {
+            HideToTray();
+            return;
+        }
+
+        _allowExit = true;
+        e.Cancel = false;
+        Close();
+    }
+
+    private void CloseToTrayCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        SavePreferences();
+    }
+
+    private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingPreferences) return;
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\\Microsoft\\Windows\\CurrentVersion\\Run", writable: true)
+                ?? Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
+                    @"Software\\Microsoft\\Windows\\CurrentVersion\\Run");
+            if (StartWithWindowsCheckBox.IsChecked == true)
+            {
+                var executable = Environment.ProcessPath;
+                if (!string.IsNullOrWhiteSpace(executable))
+                    key.SetValue("AquaCore", $"\\"{executable}\\" --tray");
+            }
+            else
+            {
+                key.DeleteValue("AquaCore", throwOnMissingValue: false);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                T("Could not update Windows startup settings.", "Não foi possível alterar a inicialização do Windows.") + Environment.NewLine + ex.Message,
+                T("Startup setting failed", "Falha na configuração de inicialização"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+        SavePreferences();
+    }
+
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
@@ -740,5 +870,11 @@ public partial class MainWindow : Window
         _historyStore.Save(_storedHistory, DateTime.Now, _historyRetention);
         _monitor?.Dispose();
         _displayTransport.Dispose();
+        if (_trayIcon is not null)
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            _trayIcon = null;
+        }
     }
 }
