@@ -1,11 +1,23 @@
+using System.Threading;
 using System.Windows;
 
 namespace WaterCoolerApp;
 
 public partial class App : System.Windows.Application
 {
+    private static Mutex? _instanceMutex;
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\\HW-Metrics-SingleInstance", createdNew: out var createdNew);
+        if (!createdNew)
+        {
+            // Another instance already owns the mutex. Do not initialize a second window,
+            // sensor poller, tray icon, or HID connection.
+            Shutdown();
+            return;
+        }
+
         base.OnStartup(e);
         var window = new MainWindow
         {
@@ -19,5 +31,13 @@ public partial class App : System.Windows.Application
             window.ShowInTaskbar = false;
         }
         window.Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _instanceMutex?.ReleaseMutex();
+        _instanceMutex?.Dispose();
+        _instanceMutex = null;
+        base.OnExit(e);
     }
 }
