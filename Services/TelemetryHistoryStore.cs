@@ -33,7 +33,7 @@ public sealed class TelemetryHistoryStore
             if (snapshots is null) return Array.Empty<SensorSnapshot>();
             var cutoff = now - Retention;
             return snapshots
-                .Where(snapshot => snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now.AddMinutes(1))
+                .Where(snapshot => snapshot is not null && snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now.AddMinutes(1))
                 .OrderBy(snapshot => snapshot.UpdatedAt)
                 .ToArray();
         }
