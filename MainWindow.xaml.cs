@@ -65,7 +65,7 @@ public partial class MainWindow : Window
     {
         ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
-        ["Close"] = "Fechar", ["Close settings"] = "Fechar configurações",
+        ["Close settings"] = "Fechar configurações",
         ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
@@ -303,7 +303,6 @@ public partial class MainWindow : Window
     private async void RefreshNow_Click(object sender, RoutedEventArgs e)
     {
         if (_closing) return;
-        var originalContent = RefreshNowButton.Content;
         RefreshNowButton.IsEnabled = false;
         RefreshNowButton.Content = T("Refreshing…", "Atualizando…");
         try
@@ -312,7 +311,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            RefreshNowButton.Content = originalContent;
+            RefreshNowButton.Content = T("Refresh now", "Atualizar agora");
             RefreshNowButton.IsEnabled = !_closing;
         }
     }
