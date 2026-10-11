@@ -912,6 +912,7 @@ public partial class MainWindow : Window
             }
             else
             {
+                key.DeleteValue("HWMetrics", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
         }
