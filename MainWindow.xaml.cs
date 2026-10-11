@@ -78,8 +78,7 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         // Apply the default model after InitializeComponent has created every named control.
-        CoolerModelSelector_SelectionChanged(CoolerModelSelector, new SelectionChangedEventArgs(
-            Selector.SelectionChangedEvent, new object(), new object()));
+        CoolerModelSelector_SelectionChanged(CoolerModelSelector, null!);
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
         try
         {
