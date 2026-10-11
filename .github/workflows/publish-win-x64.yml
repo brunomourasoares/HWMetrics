@@ -22,10 +22,10 @@ jobs:
         run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
 
       - name: Restore Windows x64 runtime assets
-        run: dotnet restore WaterCoolerApp.csproj --runtime win-x64
+        run: dotnet restore HWMetrics.csproj --runtime win-x64
 
       - name: Publish self-contained Windows x64
-        run: dotnet publish WaterCoolerApp.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/HW-Metrics-win-x64
+        run: dotnet publish HWMetrics.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/HW-Metrics-win-x64
 
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
