@@ -32,10 +32,11 @@ public sealed class HardwareMonitoringService : IDisposable
             ObjectDisposedException.ThrowIf(_disposed, this);
             double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
             double? usedGiB = null, totalGiB = null, driveTemp = null;
+            string? cpuModel = null, gpuModel = null, storageModel = null;
     
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
-                    ref usedGiB, ref totalGiB, ref driveTemp);
+                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     
             // LibreHardwareMonitor does not expose physical memory consistently on every system.
             // Use the Windows memory API as a reliable fallback for the RAM card.
@@ -52,7 +53,7 @@ public sealed class HardwareMonitoringService : IDisposable
             var storage = ReadStorage();
             return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
-                driveTemp, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
+                driveTemp, cpuModel, gpuModel, storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
                 DateTime.Now, "Leitura concluída");
         }
@@ -60,10 +61,13 @@ public sealed class HardwareMonitoringService : IDisposable
 
     private static void Visit(IHardware hardware, ref double? cpuTemp, ref double? cpuLoad,
         ref double? gpuTemp, ref double? gpuLoad, ref double? usedGiB, ref double? totalGiB,
-        ref double? driveTemp)
+        ref double? driveTemp, ref string? cpuModel, ref string? gpuModel, ref string? storageModel)
     {
         try
         {
+            if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
+            else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
+            else if (hardware.HardwareType == HardwareType.Storage) storageModel ??= CleanModel(hardware.Name);
             hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
@@ -116,9 +120,12 @@ public sealed class HardwareMonitoringService : IDisposable
 
         foreach (var child in hardware.SubHardware)
             Visit(child, ref cpuTemp, ref cpuLoad, ref gpuTemp, ref gpuLoad,
-                ref usedGiB, ref totalGiB, ref driveTemp);
+                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
+
+    private static string? CleanModel(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : name.Trim();
 
     private static (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
         double? FreeGiB, double? UsedPercent, string VolumesSummary,
