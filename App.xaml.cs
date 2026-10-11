@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
 
@@ -8,14 +9,25 @@ public partial class App : System.Windows.Application
     private static Mutex? _instanceMutex;
     private static bool _ownsMutex;
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern nint FindWindow(string? lpClassName, string lpWindowName);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(nint hWnd);
+
+    private const int SwRestore = 9;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\HW-Metrics-SingleInstance", createdNew: out var createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)
         {
-            // Another instance already owns the mutex. Do not initialize a second window,
-            // sensor poller, tray icon, or HID connection.
+            // Reuse the existing UI instead of silently doing nothing when launched twice.
+            ActivateExistingWindow();
             Shutdown();
             return;
         }
@@ -33,6 +45,20 @@ public partial class App : System.Windows.Application
             window.ShowInTaskbar = false;
         }
         window.Show();
+    }
+
+    private static void ActivateExistingWindow()
+    {
+        // The title follows the selected UI language. Check both supported translations.
+        foreach (var title in new[] { "HW Metrics — Hardware Studio", "HW Metrics — Central de Hardware" })
+        {
+            var handle = FindWindow(null, title);
+            if (handle == 0) continue;
+
+            ShowWindow(handle, SwRestore);
+            SetForegroundWindow(handle);
+            return;
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
