@@ -12,7 +12,7 @@ public sealed class WindowsStartupCommandTests
             @"C:\Program Files\Aqua Core\WaterCoolerApp.exe",
             @"C:\Program Files\Aqua Core\WaterCoolerApp.dll");
 
-        Assert.Equal("\\\"C:\\Program Files\\Aqua Core\\WaterCoolerApp.exe\\\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\Aqua Core\\WaterCoolerApp.exe\" --tray", command);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class WindowsStartupCommandTests
             @"C:\Program Files\dotnet\dotnet.exe",
             @"C:\Program Files\Aqua Core\WaterCoolerApp.dll");
 
-        Assert.Equal("\\\"C:\\Program Files\\dotnet\\dotnet.exe\\\" \\\"C:\\Program Files\\Aqua Core\\WaterCoolerApp.dll\\\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\Aqua Core\\WaterCoolerApp.dll\" --tray", command);
     }
 
     [Fact]
