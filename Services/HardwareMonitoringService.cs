@@ -191,7 +191,7 @@ public sealed class HardwareMonitoringService : IDisposable
             Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                 ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                 ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
 
