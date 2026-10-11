@@ -366,11 +366,28 @@ public partial class MainWindow : Window
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
         var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
         CoolerModelBadge.Text = model;
-        // Todos os modelos Aura Ice usam o mesmo visor e o mesmo aro ARGB;
-        // os códigos RM-WAI são brancos e RM-WAIB são pretos.
-        var accent = Color.FromRgb(112, 232, 208);
-        CoolerDisplayTemp.Foreground = new SolidColorBrush(accent);
-        CoolerModelBadge.Foreground = new SolidColorBrush(accent);
+        // O seletor altera apenas a prévia visual; não envia comandos ao hardware.
+        bool blackModel = model.StartsWith("RM-WAIB-", StringComparison.OrdinalIgnoreCase);
+        var bodyColor = blackModel ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
+        var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
+        CoolerBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
+
+        // Simula o gradiente ARGB azul -> violeta -> vermelho usando um gradiente cônico
+        // aproximado por pequenos segmentos coloridos no aro externo.
+        var ringBrush = new LinearGradientBrush();
+        ringBrush.StartPoint = new Point(0, 0.5);
+        ringBrush.EndPoint = new Point(1, 0.5);
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(42, 151, 255), 0.0));
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(145, 95, 255), 0.5));
+        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 76, 92), 1.0));
+        CoolerArgbRing.Stroke = ringBrush;
+        CoolerDisplayTemp.Foreground = new SolidColorBrush(blackModel
+            ? Color.FromRgb(112, 232, 208)
+            : Color.FromRgb(63, 191, 183));
+        CoolerModelBadge.Foreground = new SolidColorBrush(blackModel
+            ? Color.FromRgb(112, 232, 208)
+            : Color.FromRgb(63, 191, 183));
     }
 
     private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
