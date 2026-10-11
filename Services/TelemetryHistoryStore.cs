@@ -15,12 +15,15 @@ public sealed class TelemetryHistoryStore
     public static readonly TimeSpan DefaultRetention = TimeSpan.FromMinutes(30);
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
     private readonly string _filePath;
+    private readonly string? _legacyFilePath;
 
     public TelemetryHistoryStore(string? filePath = null)
     {
-        _filePath = filePath ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "AquaCore", "telemetry-history.json");
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        _filePath = filePath ?? Path.Combine(localAppData, "HWMetrics", "telemetry-history.json");
+        _legacyFilePath = filePath is null
+            ? Path.Combine(localAppData, "AquaCore", "telemetry-history.json")
+            : null;
     }
 
     public IReadOnlyList<SensorSnapshot> Load(DateTime now, TimeSpan? retention = null)
@@ -28,8 +31,13 @@ public sealed class TelemetryHistoryStore
         var window = NormalizeRetention(retention);
         try
         {
-            if (!File.Exists(_filePath)) return Array.Empty<SensorSnapshot>();
-            var snapshots = JsonSerializer.Deserialize<List<SensorSnapshot>>(File.ReadAllText(_filePath), JsonOptions);
+            var sourcePath = File.Exists(_filePath)
+                ? _filePath
+                : _legacyFilePath is not null && File.Exists(_legacyFilePath)
+                    ? _legacyFilePath
+                    : null;
+            if (sourcePath is null) return Array.Empty<SensorSnapshot>();
+            var snapshots = JsonSerializer.Deserialize<List<SensorSnapshot>>(File.ReadAllText(sourcePath), JsonOptions);
             if (snapshots is null)
             {
                 WriteSnapshots(Array.Empty<SensorSnapshot>());
@@ -37,9 +45,8 @@ public sealed class TelemetryHistoryStore
             }
 
             var recent = Filter(snapshots, now, window);
-            // Rewrite the file when it contains expired, future-dated, or null entries so
-            // unwanted records do not remain on disk between normal save cycles.
-            if (recent.Count != snapshots.Count)
+            // Migrate legacy history into the new branded directory and prune invalid entries.
+            if (sourcePath != _filePath || recent.Count != snapshots.Count)
                 WriteSnapshots(recent);
 
             return recent;

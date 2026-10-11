@@ -23,10 +23,10 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore WaterCoolerApp.csproj
+        run: dotnet restore HWMetrics.csproj
 
       - name: Build Release
-        run: dotnet build WaterCoolerApp.csproj --configuration Release --no-restore
+        run: dotnet build HWMetrics.csproj --configuration Release --no-restore
 
       - name: Run telemetry tests
         run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release

@@ -42,7 +42,8 @@ public partial class MainWindow : Window
     private SensorSnapshot? _lastSnapshot;
     private int _storageDriveIndex = -1;
     private string? _selectedStorageDriveName;
-    private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
+    private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HWMetrics", "preferences.json");
+    private readonly string _legacyPreferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
     private NotifyIcon? _trayIcon;
     private bool _allowExit;
@@ -63,7 +64,7 @@ public partial class MainWindow : Window
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
-        ["Aqua Core — Hardware Studio"] = "Aqua Core — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
+        ["HW Metrics — Hardware Studio"] = "HW Metrics — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
         ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
         ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
@@ -71,7 +72,7 @@ public partial class MainWindow : Window
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
         ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
-        ["Open Aqua Core"] = "Abrir Aqua Core", ["Exit"] = "Sair",
+        ["Open HW Metrics"] = "Abrir HW Metrics", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
         ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
@@ -82,7 +83,7 @@ public partial class MainWindow : Window
         ["HID telemetry active · fan/pump control disabled"] = "Telemetria HID ativa · controle de bomba/ventoinha desativado",
         ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
         ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA",
-        ["Minimize to tray on close"] = "Minimizar para a bandeja ao fechar", ["Keep Aqua Core running in the notification area"] = "Manter o Aqua Core em execução na área de notificação",
+        ["Minimize to tray on close"] = "Minimizar para a bandeja ao fechar", ["Keep HW Metrics running in the notification area"] = "Manter o HW Metrics em execução na área de notificação",
         ["Start with Windows"] = "Iniciar com o Windows", ["Launch automatically in the tray when you sign in"] = "Abrir automaticamente na bandeja ao entrar no Windows", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
@@ -103,7 +104,7 @@ public partial class MainWindow : Window
         ["Drive temperature, if exposed"] = "Temperatura do disco, se disponível",
         ["Storage volumes will appear here."] = "Os volumes de armazenamento aparecerão aqui.",
         ["Fan and pump control will appear after protocol validation."] = "O controle de ventoinhas e bomba será disponibilizado após validar o protocolo.",
-        ["AQUA CORE  /  SYSTEM MONITOR"] = "AQUA CORE  /  MONITOR DO SISTEMA",
+        ["HW METRICS  /  SYSTEM MONITOR"] = "HW METRICS  /  MONITOR DO SISTEMA",
         ["All temperatures in °C"] = "Todas as temperaturas em °C",
         ["No local volumes detected"] = "Nenhum volume local detectado",
         ["Monitoring active · unsupported sensors remain N/D"] = "Monitoramento ativo · sensores não suportados aparecem como N/D",
@@ -144,8 +145,11 @@ public partial class MainWindow : Window
         _loadingPreferences = true;
         try
         {
-            var preferences = File.Exists(_preferencesPath)
-                ? JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(_preferencesPath)) ?? new AppPreferences()
+            var preferencesFile = File.Exists(_preferencesPath)
+                ? _preferencesPath
+                : _legacyPreferencesPath;
+            var preferences = File.Exists(preferencesFile)
+                ? JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(preferencesFile)) ?? new AppPreferences()
                 : new AppPreferences();
             ThemeSelector.SelectedIndex = Math.Clamp(preferences.ThemeIndex, 0, 1);
             PollIntervalSelector.SelectedIndex = Math.Clamp(preferences.PollIntervalIndex, 0, 2);
@@ -206,12 +210,12 @@ public partial class MainWindow : Window
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add(T("Open Aqua Core", "Abrir Aqua Core"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add(T("Open HW Metrics", "Abrir HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
         menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
         _trayIcon = new NotifyIcon
         {
             Icon = System.Drawing.SystemIcons.Application,
-            Text = "Aqua Core — Hardware Studio",
+            Text = "HW Metrics — Hardware Studio",
             ContextMenuStrip = menu,
             Visible = true
         };
@@ -489,7 +493,7 @@ public partial class MainWindow : Window
             Filter = "JSON files (*.json)|*.json",
             DefaultExt = ".json",
             AddExtension = true,
-            FileName = $"aqua-core-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
+            FileName = $"hw-metrics-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
         };
 
         if (dialog.ShowDialog(this) != true) return;
@@ -748,13 +752,13 @@ public partial class MainWindow : Window
         _language = language;
         var reverse = Portuguese.GroupBy(pair => pair.Value, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
         TranslateTree(this, language == "pt" ? Portuguese : reverse);
-        Title = language == "pt" ? Portuguese["Aqua Core — Hardware Studio"] : "Aqua Core — Hardware Studio";
+        Title = language == "pt" ? Portuguese["HW Metrics — Hardware Studio"] : "HW Metrics — Hardware Studio";
         if (_trayIcon is not null)
         {
-            _trayIcon.Text = T("Aqua Core — Hardware Studio", "Aqua Core — Central de Hardware");
+            _trayIcon.Text = T("HW Metrics — Hardware Studio", "HW Metrics — Central de Hardware");
             if (_trayIcon.ContextMenuStrip is ContextMenuStrip trayMenu && trayMenu.Items.Count >= 2)
             {
-                trayMenu.Items[0].Text = T("Open Aqua Core", "Abrir Aqua Core");
+                trayMenu.Items[0].Text = T("Open HW Metrics", "Abrir HW Metrics");
                 trayMenu.Items[1].Text = T("Exit", "Sair");
             }
         }
@@ -830,9 +834,9 @@ public partial class MainWindow : Window
         if (!_closePromptAnswered)
         {
             var choice = MessageBox.Show(
-                T("Would you like to exit Aqua Core or keep it running in the system tray?",
-                  "Deseja fechar o Aqua Core ou mantê-lo em execução na bandeja do sistema?"),
-                T("Close Aqua Core", "Fechar Aqua Core"),
+                T("Would you like to exit HW Metrics or keep it running in the system tray?",
+                  "Deseja fechar o HW Metrics ou mantê-lo em execução na bandeja do sistema?"),
+                T("Close HW Metrics", "Fechar HW Metrics"),
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question,
                 MessageBoxResult.Cancel);
@@ -903,10 +907,12 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException("Could not determine the current executable path.");
 
                 var startupCommand = BuildWindowsStartupCommand(executable, typeof(App).Assembly.Location);
-                key.SetValue("AquaCore", startupCommand);
+                key.SetValue("HWMetrics", startupCommand);
+                key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
             else
             {
+                key.DeleteValue("HWMetrics", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
         }

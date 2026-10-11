@@ -1,4 +1,4 @@
-# Aqua Core — Water Cooler App
+# HW Metrics
 
 A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **Portuguese and English**, dark/light themes, animated transitions, live sensor polling, and a rolling temperature history chart. Temperatures are displayed in Celsius only.
 
@@ -25,22 +25,22 @@ A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **
 ## Restore, build, run / Restaurar, compilar e executar
 
 ```powershell
-dotnet restore .\WaterCoolerApp.csproj
-dotnet build .\WaterCoolerApp.csproj -c Release
-dotnet run --project .\WaterCoolerApp.csproj -c Release
+dotnet restore .\HWMetrics.csproj
+dotnet build .\HWMetrics.csproj -c Release
+dotnet run --project .\HWMetrics.csproj -c Release
 ```
 
 ## Publish self-contained x64 / Publicar independente x64
 
 ```powershell
-dotnet publish .\WaterCoolerApp.csproj -c Release -r win-x64 --self-contained true
+dotnet publish .\HWMetrics.csproj -c Release -r win-x64 --self-contained true
 ```
 
 ## Windows x64 CI artifact / Artefato Windows x64 pela CI
 
-To create a downloadable self-contained Windows x64 build, open **Actions → Publish Windows x64 artifact → Run workflow** on GitHub. The workflow runs the test suite, publishes the app for `win-x64`, and uploads an artifact named `WaterCoolerApp-win-x64` retained for 14 days. Download and extract the artifact, then launch `WaterCoolerApp.exe` on Windows 10/11. This is a portable publish folder, not an installer.
+To create a downloadable self-contained Windows x64 build, open **Actions → Publish Windows x64 artifact → Run workflow** on GitHub. The workflow runs the test suite, publishes the app for `win-x64`, and uploads an artifact named `HW-Metrics-win-x64` retained for 14 days. Download and extract the artifact, then launch `HWMetrics.exe` on Windows 10/11. This is a portable publish folder, not an installer.
 
-Para gerar uma compilação independente para Windows x64, abra **Actions → Publish Windows x64 artifact → Run workflow** no GitHub. O workflow executa os testes, publica o aplicativo para `win-x64` e envia um artefato chamado `WaterCoolerApp-win-x64`, mantido por 14 dias. Baixe e extraia o artefato e execute `WaterCoolerApp.exe` no Windows 10/11. O resultado é uma pasta portátil publicada, não um instalador.
+Para gerar uma compilação independente para Windows x64, abra **Actions → Publish Windows x64 artifact → Run workflow** no GitHub. O workflow executa os testes, publica o aplicativo para `win-x64` e envia um artefato chamado `HW-Metrics-win-x64`, mantido por 14 dias. Baixe e extraia o artefato e execute `HWMetrics.exe` no Windows 10/11. O resultado é uma pasta portátil publicada, não um instalador.
 
 ## Storage notes / Observações sobre armazenamento
 
@@ -50,9 +50,9 @@ O cartão Armazenamento mostra a capacidade do sistema de arquivos dos volumes f
 
 ## Telemetry history storage / Armazenamento do histórico de telemetria
 
-The app stores a bounded rolling history at `%LocalAppData%\\AquaCore\\telemetry-history.json`. By default, only the latest 30 minutes are retained; Settings can extend retention to 1, 6, or 24 hours. The file is periodically rewritten with only snapshots inside the selected window, and invalid future-dated or expired records are discarded. This bounds the automatic local history rather than accumulating an unbounded log. **Save history / Salvar histórico** exports a separate JSON copy to a location selected by the user; that exported copy is not automatically pruned by the app.
+The app stores a bounded rolling history at `%LocalAppData%\\HWMetrics\\telemetry-history.json`. By default, only the latest 30 minutes are retained; Settings can extend retention to 1, 6, or 24 hours. The file is periodically rewritten with only snapshots inside the selected window, and invalid future-dated or expired records are discarded. This bounds the automatic local history rather than accumulating an unbounded log. **Save history / Salvar histórico** exports a separate JSON copy to a location selected by the user; that exported copy is not automatically pruned by the app.
 
-O aplicativo mantém um histórico local rotativo em `%LocalAppData%\\AquaCore\\telemetry-history.json`. Por padrão, guarda apenas os últimos 30 minutos; em Configurações, a retenção pode ser ampliada para 1, 6 ou 24 horas. O arquivo é regravado periodicamente apenas com os registros dentro do período selecionado, descartando registros expirados ou com data futura. Assim, o histórico automático não cresce indefinidamente. **Salvar histórico** exporta uma cópia JSON separada para o local escolhido pelo usuário; essa cópia exportada não é apagada automaticamente pelo aplicativo.
+O aplicativo mantém um histórico local rotativo em `%LocalAppData%\\HWMetrics\\telemetry-history.json`. Por padrão, guarda apenas os últimos 30 minutos; em Configurações, a retenção pode ser ampliada para 1, 6 ou 24 horas. O arquivo é regravado periodicamente apenas com os registros dentro do período selecionado, descartando registros expirados ou com data futura. Assim, o histórico automático não cresce indefinidamente. **Salvar histórico** exporta uma cópia JSON separada para o local escolhido pelo usuário; essa cópia exportada não é apagada automaticamente pelo aplicativo.
 
 ## Safety / Segurança
 
