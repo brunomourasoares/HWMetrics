@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
     private readonly Queue<SensorSnapshot> _storedHistory = new();
     private readonly TelemetryHistoryStore _historyStore = new();
+    private readonly TelemetryHistoryWriter _historyWriter;
     private DateTime _lastHistorySaveAt = DateTime.MinValue;
     private DateTime _lastPersistedSnapshotAt = DateTime.MinValue;
     private TimeSpan _historyRetention = TelemetryHistoryStore.DefaultRetention;
@@ -134,6 +135,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _historyWriter = new TelemetryHistoryWriter(_historyStore);
         ApplyApplicationIcon();
         LoadPreferences();
         ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
@@ -563,7 +565,7 @@ public partial class MainWindow : Window
 
         if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
         {
-            _historyStore.Save(_storedHistory, s.UpdatedAt, _historyRetention);
+            _historyWriter.Enqueue(_storedHistory, s.UpdatedAt, _historyRetention);
             _lastHistorySaveAt = s.UpdatedAt;
         }
     }
@@ -623,7 +625,7 @@ public partial class MainWindow : Window
         var retained = _storedHistory.Where(snapshot => snapshot.UpdatedAt >= cutoff && snapshot.UpdatedAt <= now).ToArray();
         _storedHistory.Clear();
         foreach (var snapshot in retained) _storedHistory.Enqueue(snapshot);
-        _historyStore.Save(_storedHistory, now, _historyRetention);
+        _historyWriter.Enqueue(_storedHistory, now, _historyRetention);
         _lastHistorySaveAt = now;
     }
 
@@ -1039,12 +1041,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Window_Closed(object? sender, EventArgs e)
+    private async void Window_Closed(object? sender, EventArgs e)
     {
         _closing = true;
         _pollTimer.Stop();
         _storageCycleTimer.Stop();
-        _historyStore.Save(_storedHistory, DateTime.Now, _historyRetention);
+        _historyWriter.Enqueue(_storedHistory, DateTime.Now, _historyRetention);
+        await _historyWriter.DisposeAsync();
         _monitor?.Dispose();
         _displayTransport.Dispose();
         if (_trayIcon is not null)
