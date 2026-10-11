@@ -4,6 +4,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.IO;
+using System.Text.Json;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
@@ -25,6 +27,16 @@ public partial class MainWindow : Window
     private SensorSnapshot? _lastSnapshot;
     private int _storageDriveIndex = -1;
     private string? _selectedStorageDriveName;
+    private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
+    private bool _loadingPreferences;
+
+    private sealed class AppPreferences
+    {
+        public int ThemeIndex { get; set; }
+        public int PollIntervalIndex { get; set; } = 1;
+        public int LanguageIndex { get; set; } = 1;
+        public int CoolerModelIndex { get; set; }
+    }
 
     private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
     {
@@ -70,9 +82,60 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        ApplyLanguage("pt");
+        LoadPreferences();
+        ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
+    }
+
+    private void LoadPreferences()
+    {
+        _loadingPreferences = true;
+        try
+        {
+            var preferences = File.Exists(_preferencesPath)
+                ? JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(_preferencesPath)) ?? new AppPreferences()
+                : new AppPreferences();
+            ThemeSelector.SelectedIndex = Math.Clamp(preferences.ThemeIndex, 0, 1);
+            PollIntervalSelector.SelectedIndex = Math.Clamp(preferences.PollIntervalIndex, 0, 2);
+            LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
+            CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
+        }
+        catch (Exception)
+        {
+            ThemeSelector.SelectedIndex = 0;
+            PollIntervalSelector.SelectedIndex = 1;
+            LanguageSelector.SelectedIndex = 1;
+            CoolerModelSelector.SelectedIndex = 0;
+        }
+        finally
+        {
+            _loadingPreferences = false;
+        }
+    }
+
+    private void SavePreferences()
+    {
+        if (_loadingPreferences || !IsLoaded) return;
+        try
+        {
+            var preferences = new AppPreferences
+            {
+                ThemeIndex = Math.Max(0, ThemeSelector.SelectedIndex),
+                PollIntervalIndex = Math.Max(0, PollIntervalSelector.SelectedIndex),
+                LanguageIndex = Math.Max(0, LanguageSelector.SelectedIndex),
+                CoolerModelIndex = Math.Max(0, CoolerModelSelector.SelectedIndex)
+            };
+            var directory = Path.GetDirectoryName(_preferencesPath)!;
+            Directory.CreateDirectory(directory);
+            var temporaryPath = _preferencesPath + ".tmp";
+            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true }));
+            File.Move(temporaryPath, _preferencesPath, overwrite: true);
+        }
+        catch (Exception)
+        {
+            // Preference persistence is best-effort; UI interaction should remain available.
+        }
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -356,6 +419,7 @@ public partial class MainWindow : Window
         var dictionaries = Application.Current.Resources.MergedDictionaries;
         dictionaries.Clear();
         dictionaries.Add(new ResourceDictionary { Source = new Uri(source, UriKind.Relative) });
+        SavePreferences();
     }
 
     private void PollIntervalSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -364,6 +428,7 @@ public partial class MainWindow : Window
         var seconds = PollIntervalSelector.SelectedIndex switch { 0 => 1, 2 => 5, _ => 2 };
         _pollTimer.Interval = TimeSpan.FromSeconds(seconds);
         if (_monitor is not null && !_pollTimer.IsEnabled) _pollTimer.Start();
+        SavePreferences();
     }
 
     private void HideSettingsPanel()
@@ -427,15 +492,15 @@ public partial class MainWindow : Window
         CoolerArgbRing.Stroke = ringBrush;
         // Display digits and thermometer glyph use an ice-white treatment on both case colors.
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
-        CoolerModelBadge.Foreground = new SolidColorBrush(blackModel
-            ? Color.FromRgb(244, 251, 255)
-            : Color.FromRgb(244, 251, 255));
+        CoolerModelBadge.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
+        SavePreferences();
     }
 
     private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || LanguageSelector.SelectedIndex < 0) return;
         ApplyLanguage(LanguageSelector.SelectedIndex == 1 ? "pt" : "en");
+        SavePreferences();
     }
 
     private void ApplyLanguage(string language)
