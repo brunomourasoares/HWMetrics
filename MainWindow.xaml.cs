@@ -73,6 +73,12 @@ public partial class MainWindow : Window
         ["Storage capacity unavailable"] = "Capacidade do armazenamento indisponível", ["Drive"] = "Unidade",
         ["used"] = "em uso", ["used of"] = "em uso de", ["total"] = "Total", ["free"] = "livres", ["Disk"] = "Disco",
         ["Language changed"] = "Idioma alterado",
+        ["Save history"] = "Salvar histórico",
+        ["Save telemetry history"] = "Salvar histórico de telemetria",
+        ["Telemetry history saved successfully."] = "Histórico de telemetria salvo com sucesso.",
+        ["History saved"] = "Histórico salvo",
+        ["Could not save telemetry history."] = "Não foi possível salvar o histórico de telemetria.",
+        ["Save failed"] = "Falha ao salvar",
         ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
         ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
     };
@@ -141,6 +147,7 @@ public partial class MainWindow : Window
         // Apply the default model after InitializeComponent has created every named control.
         CoolerModelSelector_SelectionChanged(CoolerModelSelector, null!);
         if (FindResource("IntroStoryboard") is Storyboard intro) intro.Begin(this, true);
+        RemoveLegacyAutomaticHistoryFile();
         try
         {
             var monitor = await Task.Run(() => new HardwareMonitoringService());
@@ -289,6 +296,29 @@ public partial class MainWindow : Window
 
 
 
+    }
+
+    private static void RemoveLegacyAutomaticHistoryFile()
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AquaCore");
+
+        foreach (var path in new[]
+        {
+            Path.Combine(directory, "telemetry-history.json"),
+            Path.Combine(directory, "telemetry-history.json.tmp")
+        })
+        {
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainWindow] Legacy history cleanup failed: {ex}");
+            }
+        }
     }
 
     private void SaveHistory_Click(object sender, RoutedEventArgs e)
