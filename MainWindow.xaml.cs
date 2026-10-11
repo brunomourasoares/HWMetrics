@@ -468,10 +468,19 @@ public partial class MainWindow : Window
         {
             // Select the Windows system volume on first render; subsequent reads keep the
             // selected volume stable instead of snapping back to C: every polling cycle.
-            var selectedIndex = _selectedStorageDriveName is null
-                ? -1
-                : s.StorageVolumes.ToList().FindIndex(volume =>
-                    string.Equals(volume.Name, _selectedStorageDriveName, StringComparison.OrdinalIgnoreCase));
+            var selectedIndex = -1;
+            if (_selectedStorageDriveName is not null)
+            {
+                for (var i = 0; i < s.StorageVolumes.Count; i++)
+                {
+                    if (!string.Equals(s.StorageVolumes[i].Name, _selectedStorageDriveName,
+                            StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    selectedIndex = i;
+                    break;
+                }
+            }
             if (selectedIndex >= 0)
             {
                 _storageDriveIndex = selectedIndex;
