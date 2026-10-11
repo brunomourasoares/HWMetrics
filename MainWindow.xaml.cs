@@ -30,7 +30,7 @@ public partial class MainWindow : Window
         ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
         ["Your hardware, at a glance."] = "Seu hardware em um só lugar.", ["LIVE TELEMETRY"] = "TELEMETRIA AO VIVO",
         ["Refresh now"] = "Atualizar agora", ["PROCESSOR"] = "PROCESSADOR", ["Load --%"] = "Carga --%",
-        ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Capacity unavailable"] = "Capacidade indisponível",
+        ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Memory model unavailable"] = "Modelo de memória indisponível", ["Capacity unavailable"] = "Capacidade indisponível",
         ["STORAGE"] = "ARMAZENAMENTO", ["Waiting for disk data"] = "Aguardando dados do disco",
         ["Thermal performance"] = "Desempenho térmico", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
         ["Rolling 30 minutes · data since launch"] = "Últimos 30 minutos · dados desde a inicialização",
