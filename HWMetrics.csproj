@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>WaterCoolerApp</RootNamespace>
+    <AssemblyName>HWMetrics</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+    <PackageReference Include="HidSharp" Version="2.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf">
+      <Link>Resources\Fonts\DSEG7Classic-Regular.ttf</Link>
+    </Resource>
+  </ItemGroup>
+  <UsingTask TaskName="DecodeDsegBase64Font" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <InputFile ParameterType="System.String" Required="true" />
+      <OutputFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(Path.GetDirectoryName(OutputFile)!);
+        File.WriteAllBytes(OutputFile, Convert.FromBase64String(File.ReadAllText(InputFile).Trim()));
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="DecodeDsegBase64Font" BeforeTargets="PrepareResources;MarkupCompilePass1">
+    <DecodeDsegBase64Font InputFile="$(MSBuildProjectDirectory)/Resources/Fonts/DSEG7Classic-Regular.ttf.base64" OutputFile="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf" />
+  </Target>
+  <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
+    <EmbeddedResource Remove="tests/**" />
+    <None Remove="tests/**" />
+  </ItemGroup>
+</Project>
