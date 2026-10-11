@@ -212,6 +212,7 @@ public partial class MainWindow : Window
 
     private void RestoreFromTray()
     {
+        Opacity = 1;
         ShowInTaskbar = true;
         Show();
         WindowState = WindowState.Normal;
