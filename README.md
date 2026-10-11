@@ -8,13 +8,13 @@ A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **
 - **CPU and GPU:** temperatures and utilization when exposed by the hardware/driver / temperaturas e utilização quando disponíveis.
 - **RAM:** usage and total capacity via Windows memory API fallback / uso e capacidade total com alternativa pela API do Windows.
 - **CPU telemetry fallback:** CPU temperature prefers package/die/core sensors and can fall back to a motherboard/Super I/O sensor explicitly labelled CPU or processor. CPU utilization falls back to Windows system-time counters when LibreHardwareMonitor does not provide a CPU load sensor. Temperature still depends on firmware/driver sensor exposure; some systems do not expose a readable CPU temperature.
-- **Cooler display:** the temperature shown inside the app is a software preview driven by CPU telemetry. Physical USB/HID transmission to the cooler remains disabled until the device protocol is validated; the preview does not send data to the hardware.
+- **Cooler display:** CPU/GPU temperature and CPU/GPU/RAM utilization are encoded into the 11-byte telemetry payload recovered from the original software and sent directly over USB/HID to VID `AA88`, PID `8666` when the matching device is present and exposes a sufficiently large output report. CPU temperature must be valid before any report is sent. The app preview mirrors the same telemetry snapshot; fan and pump control remain disabled. Actual display behavior still requires validation on the physical cooler.
 - **Storage:** system drive usage percentage, used/total/free capacity, and a summary of detected fixed volumes. Drive temperature is shown separately only when exposed by the controller / percentual usado, capacidade usada/total/livre e resumo dos volumes detectados. A temperatura do disco é separada e depende do controlador.
 - **Telemetry history:** local rolling history with a 30-minute default retention, configurable to 1, 6, or 24 hours in Settings. Expired and future-dated snapshots are removed from the local JSON file. Use **Save history / Salvar histórico** to export a separate JSON copy / histórico local com retenção padrão de 30 minutos, configurável para 1, 6 ou 24 horas em Configurações. Registros expirados ou com data futura são removidos do arquivo JSON local. Use **Salvar histórico** para exportar uma cópia JSON separada.
 - **Live charts:** temperature and utilization charts show the latest 30 minutes; longer local retention is available for history export / os gráficos mostram os últimos 30 minutos; retenções locais maiores ficam disponíveis para exportação.
 - Manual refresh and polling intervals of 1, 2, or 5 seconds / atualização manual e intervalos de 1, 2 ou 5 segundos.
 - Dark and light themes / temas claro e escuro.
-- UI-only water cooler display preview. **No USB/HID writes are enabled** / prévia visual do display. **Nenhum comando USB/HID é enviado**.
+- Direct USB/HID telemetry output to the matching cooler; fan/pump control remains disabled / envio direto da telemetria USB/HID ao water cooler compatível; o controle da bomba/ventoinha continua desativado.
 
 ## Requirements / Requisitos
 
@@ -56,4 +56,4 @@ O aplicativo mantém um histórico local rotativo em `%LocalAppData%\\AquaCore\\
 
 ## Safety / Segurança
 
-The app currently reads telemetry only. HID output, pump control, and fan control remain disabled until the device protocol is physically validated. Do not assume a visual preview means the cooler hardware has received data.
+The app sends only the reconstructed telemetry report to a matching HID device after checking its output-report length. Fan and pump control commands are not implemented. A successful HID write confirms that Windows accepted the report, not that the physical display rendered it correctly; test with the actual cooler before relying on the display.
