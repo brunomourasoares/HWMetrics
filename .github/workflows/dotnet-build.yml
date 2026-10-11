@@ -2,9 +2,9 @@ name: .NET 10 build
 
 on:
   push:
-    branches: [ main, feature/dashboard-polish ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, feature/dashboard-polish ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
