@@ -79,7 +79,6 @@
     </Grid>
    </Grid></ScrollViewer>
   </Grid>
- </Grid>
   <Grid Grid.RowSpan="2" x:Name="SettingsDialogOverlay" Visibility="Collapsed" Panel.ZIndex="100" Background="#99060B12">
    <Border Width="430" MaxWidth="90%" Padding="24" CornerRadius="18" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource StrokeBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
     <StackPanel>
@@ -93,4 +92,5 @@
     </StackPanel>
    </Border>
   </Grid>
+ </Grid>
 </Window>
