@@ -800,13 +800,6 @@
                              Margin="0,4,0,0"/>
                   <StackPanel Orientation="Horizontal"
                               Margin="0,8,0,1">
-                    <TextBlock x:Name="StorageDriveNameText"
-                               Text="Local disk"
-                               TextTrimming="CharacterEllipsis"
-                               MaxWidth="150"
-                               FontSize="20"
-                               FontWeight="Bold"
-                               Margin="0,0,7,0"/>
                     <TextBlock x:Name="StorageUsedPercentText"
                                Text="--%"
                                FontSize="29"
