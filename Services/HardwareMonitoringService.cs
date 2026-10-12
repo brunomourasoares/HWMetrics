@@ -65,7 +65,11 @@ public sealed class HardwareMonitoringService : IDisposable
             // Some motherboards expose the CPU thermistor through Super I/O instead of
             // the CPU hardware node. Visit() accepts those explicitly labelled CPU sensors
             // as a lower-priority fallback. CPU utilization also has a Windows API fallback.
-            cpuLoad ??= ReadCpuLoadPercent();
+            // LHM can expose no usable aggregate CPU load sensor on some systems.
+            // Prime the Windows API baseline even if a core sensor was found, then use
+            // the API on the next poll whenever aggregate CPU utilization is unavailable.
+            var windowsCpuLoad = ReadCpuLoadPercent();
+            cpuLoad ??= windowsCpuLoad;
 
             if (cpuTemp is null)
                 Debug.WriteLine("[HardwareMonitoring] Nenhum sensor de temperatura da CPU forneceu um valor válido nesta leitura.");
