@@ -70,12 +70,11 @@ public partial class MainWindow : Window
     {
         ["HW Metrics — Hardware Studio"] = "HW Metrics — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
-        ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
+        ["Close settings"] = "Fechar configurações",
         ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
         ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
-        ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
         ["Open HW Metrics"] = "Abrir HW Metrics", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
@@ -409,22 +408,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void RefreshNow_Click(object sender, RoutedEventArgs e)
-    {
-        if (_closing) return;
-        RefreshNowButton.IsEnabled = false;
-        RefreshNowButton.Content = T("Refreshing…", "Atualizando…");
-        try
-        {
-            await RefreshSensorsAsync();
-        }
-        finally
-        {
-            RefreshNowButton.Content = T("Refresh now", "Atualizar agora");
-            RefreshNowButton.IsEnabled = !_closing;
-        }
-    }
-
     private void UpdateDisplayStatus(DisplayTransportStatus status)
     {
         var (title, detail, connected) = status switch
@@ -476,8 +459,9 @@ public partial class MainWindow : Window
         _selectedStorageDriveName = volume.Name;
         // StorageModel describes physical disks globally, not the physical disk backing
         // this logical volume. Avoid presenting an unrelated/combined model as a match.
-        StorageModelText.Text = volume.Name;
-        StorageDriveNameText.Text = volume.Name;
+        StorageModelText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
+            ? T("Local volume", "Volume local")
+            : volume.VolumeLabel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
             $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
@@ -540,7 +524,6 @@ public partial class MainWindow : Window
         {
             // Keep a safe fallback for snapshots with legacy aggregate storage data.
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageDriveNameText.Text = s.SystemDriveName ?? string.Empty;
             StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total", "Total")}" +
                 (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free", "livres")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
@@ -549,7 +532,6 @@ public partial class MainWindow : Window
         else
         {
             StorageUsedPercentText.Text = "N/D";
-            StorageDriveNameText.Text = string.Empty;
             StorageCapacityText.Text = T("Storage capacity unavailable", "Capacidade do armazenamento indisponível");
             StorageUsageBar.Value = 0;
             StorageVolumesText.Text = T("No local volumes detected", "Nenhum volume local detectado");
@@ -681,10 +663,6 @@ public partial class MainWindow : Window
         GpuHistoryPath.Data = showGpu
             ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC), _history.Count)
             : Geometry.Empty;
-        var parts = new List<string>();
-        if (showCpu) parts.Add($"CPU {FullTemp(current.CpuTemperatureC)}");
-        if (showGpu) parts.Add($"GPU {FullTemp(current.GpuTemperatureC)}");
-        GraphCaption.Text = parts.Count > 0 ? string.Join(" · ", parts) : T("No series selected", "Nenhuma série selecionada");
     }
 
     private void UpdateUtilizationHistoryChart(SensorSnapshot current)
@@ -1060,13 +1038,7 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.F5)
-        {
-            e.Handled = true;
-            if (RefreshNowButton.IsEnabled)
-                RefreshNow_Click(this, new RoutedEventArgs());
-        }
-        else if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
+        if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
         {
             HideSettingsPanel();
             e.Handled = true;
