@@ -224,8 +224,27 @@ public partial class MainWindow : Window
             var directory = Path.GetDirectoryName(_preferencesPath)!;
             Directory.CreateDirectory(directory);
             var temporaryPath = _preferencesPath + ".tmp";
-            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(temporaryPath, _preferencesPath, overwrite: true);
+            try
+            {
+                File.WriteAllText(temporaryPath, JsonSerializer.Serialize(preferences, new JsonSerializerOptions { WriteIndented = true }));
+                File.Move(temporaryPath, _preferencesPath, overwrite: true);
+            }
+            finally
+            {
+                try
+                {
+                    if (File.Exists(temporaryPath))
+                        File.Delete(temporaryPath);
+                }
+                catch (IOException)
+                {
+                    // Cleanup is best-effort; preference persistence must not affect UI availability.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Cleanup is best-effort; preference persistence must not affect UI availability.
+                }
+            }
         }
         catch (Exception)
         {
