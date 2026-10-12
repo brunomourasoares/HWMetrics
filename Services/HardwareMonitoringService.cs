@@ -116,7 +116,11 @@ public sealed class HardwareMonitoringService : IDisposable
                 var candidate = CleanModel(hardware.Name);
                 if (IsUsefulStorageModel(candidate))
                 {
-                    storageModel ??= candidate;
+                    if (storageModel is null)
+                        storageModel = candidate;
+                    else if (!storageModel.Split(" · ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                                 .Contains(candidate, StringComparer.OrdinalIgnoreCase))
+                        storageModel = $"{storageModel} · {candidate}";
                 }
             }
             hardware.Update();

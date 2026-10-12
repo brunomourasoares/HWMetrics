@@ -346,7 +346,6 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[MainWindow] Sensor initialization failed: {ex}");
-            DeviceStatusText.Text = T("Sensors unavailable", "Sensores indisponíveis");
         }
     }
 
@@ -424,14 +423,6 @@ public partial class MainWindow : Window
         DisplayConnectionIndicator.Fill = connected
             ? (Brush)FindResource("AccentBrush")
             : (Brush)FindResource("WarningBrush");
-        DeviceStatusText.Text = connected
-            ? T("HID display connected", "Display HID conectado")
-            : status == DisplayTransportStatus.InvalidTelemetry
-                ? T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado")
-                : T("HID display not found", "Display HID não encontrado");
-        DisplayModeText.Text = connected
-            ? T("HID telemetry active · fan/pump control disabled", "Telemetria HID ativa · controle de bomba/ventoinha desativado")
-            : T("Preview only · HID not connected", "Somente prévia · HID não conectado");
     }
 
     private void RotateStorageDrive()
@@ -808,7 +799,7 @@ public partial class MainWindow : Window
         var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
         CoolerModelBadge.Text = model;
         // O seletor altera apenas a prévia visual; não envia comandos ao hardware.
-        bool blackModel = model.StartsWith("RM-WAIB-", StringComparison.OrdinalIgnoreCase);
+        bool blackModel = model.Contains("RM-WAIB-", StringComparison.OrdinalIgnoreCase);
         var bodyColor = blackModel ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
         var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
         CoolerBody.Fill = new SolidColorBrush(bodyColor);
@@ -825,7 +816,7 @@ public partial class MainWindow : Window
         CoolerArgbRing.Stroke = ringBrush;
         // Display digits and thermometer glyph use an ice-white treatment on both case colors.
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
-        CoolerModelBadge.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
+        CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
     }
 

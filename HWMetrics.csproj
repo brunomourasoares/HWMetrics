@@ -15,11 +15,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
-    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf">
-      <Link>Resources\Fonts\DSEG7Classic-Regular.ttf</Link>
+    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)fs-sevegment.ttf">
+      <Link>Resources\Fonts\fs-sevegment.ttf</Link>
     </Resource>
   </ItemGroup>
-  <UsingTask TaskName="DecodeDsegBase64Font" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+  <UsingTask TaskName="DecodeDsegBase64Font" TaskFactory="RoslynCodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <InputFile ParameterType="System.String" Required="true" />
       <OutputFile ParameterType="System.String" Required="true" />
@@ -34,7 +35,9 @@
     </Task>
   </UsingTask>
   <Target Name="DecodeDsegBase64Font" BeforeTargets="PrepareResources;MarkupCompilePass1">
-    <DecodeDsegBase64Font InputFile="$(MSBuildProjectDirectory)/Resources/Fonts/DSEG7Classic-Regular.ttf.base64" OutputFile="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)DSEG7Classic-Regular.ttf" />
+    <DecodeDsegBase64Font
+      InputFile="$(MSBuildProjectDirectory)/Resources/Fonts/fs-sevegment.ttf.base64"
+      OutputFile="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)fs-sevegment.ttf" />
   </Target>
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
