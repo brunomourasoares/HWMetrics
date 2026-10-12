@@ -13,12 +13,9 @@ public partial class App : System.Windows.Application
     private static extern nint FindWindow(string? lpClassName, string lpWindowName);
 
     [DllImport("user32.dll")]
-    private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+    private static extern nint SendMessage(nint hWnd, int message, nint wParam, nint lParam);
 
-    [DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(nint hWnd);
-
-    private const int SwRestore = 9;
+    private const int WmActivateExistingInstance = 0x8001;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -55,8 +52,9 @@ public partial class App : System.Windows.Application
             var handle = FindWindow(null, title);
             if (handle == 0) continue;
 
-            ShowWindow(handle, SwRestore);
-            SetForegroundWindow(handle);
+            // Ask the existing WPF window to restore itself so tray-specific state
+            // (Opacity and ShowInTaskbar) is reset through its normal UI path.
+            SendMessage(handle, WmActivateExistingInstance, 0, 0);
             return;
         }
     }
