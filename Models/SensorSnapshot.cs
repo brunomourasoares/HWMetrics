@@ -5,7 +5,8 @@ public sealed record StorageVolumeSnapshot(
     double UsedGiB,
     double TotalGiB,
     double FreeGiB,
-    double UsedPercent);
+    double UsedPercent,
+    string VolumeLabel = "");
 
 public sealed record SensorSnapshot(
     double? CpuTemperatureC,
