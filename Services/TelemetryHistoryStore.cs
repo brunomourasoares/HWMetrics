@@ -101,8 +101,28 @@ public sealed class TelemetryHistoryStore
             Directory.CreateDirectory(directory);
 
         var temporaryPath = _filePath + ".tmp";
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(snapshots, JsonOptions));
-        File.Move(temporaryPath, _filePath, overwrite: true);
+        try
+        {
+            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(snapshots, JsonOptions));
+            File.Move(temporaryPath, _filePath, overwrite: true);
+        }
+        finally
+        {
+            // A failed serialization or move must not leave stale temporary data behind.
+            try
+            {
+                if (File.Exists(temporaryPath))
+                    File.Delete(temporaryPath);
+            }
+            catch (IOException)
+            {
+                // Cleanup is best-effort; the next save will overwrite the temporary file.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Cleanup is best-effort; persistence failures must not stop monitoring.
+            }
+        }
     }
 
     private static TimeSpan NormalizeRetention(TimeSpan? retention) =>
