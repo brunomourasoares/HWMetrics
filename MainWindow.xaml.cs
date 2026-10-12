@@ -565,7 +565,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void SaveHistory_Click(object sender, RoutedEventArgs e)
+    private async void SaveHistory_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
@@ -578,12 +578,14 @@ public partial class MainWindow : Window
 
         if (dialog.ShowDialog(this) != true) return;
 
+        // Snapshot the UI-owned queue before leaving the dispatcher thread.
+        var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
         try
         {
-            var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
-            File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(
+            var json = await Task.Run(() => JsonSerializer.Serialize(
                 snapshots,
                 new JsonSerializerOptions { WriteIndented = true }));
+            await Task.Run(() => File.WriteAllText(dialog.FileName, json));
             MessageBox.Show(
                 T("Telemetry history saved successfully.", "Histórico de telemetria salvo com sucesso."),
                 T("History saved", "Histórico salvo"),
