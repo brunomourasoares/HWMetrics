@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
@@ -58,7 +59,18 @@ public sealed class TelemetryHistoryWriter : IAsyncDisposable
     private async Task ProcessQueueAsync()
     {
         await foreach (var request in _requests.Reader.ReadAllAsync().ConfigureAwait(false))
-            _store.Save(request.Snapshots, request.Now, request.Retention);
+        {
+            try
+            {
+                _store.Save(request.Snapshots, request.Now, request.Retention);
+            }
+            catch (Exception ex)
+            {
+                // A transient disk or serialization error must not terminate the worker.
+                // Later snapshots should still be persisted when storage becomes available.
+                Debug.WriteLine($"[TelemetryHistoryWriter] Failed to persist telemetry history: {ex}");
+            }
+        }
     }
 
     private sealed record WriteRequest(
