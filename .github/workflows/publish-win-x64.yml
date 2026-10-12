@@ -27,6 +27,34 @@ jobs:
       - name: Publish self-contained Windows x64
         run: dotnet publish HWMetrics.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/HW-Metrics-win-x64
 
+      - name: Audit published output for legacy WinRing0 indicators
+        shell: pwsh
+        run: |
+          $root = Resolve-Path "artifacts/HW-Metrics-win-x64"
+          $sysFiles = @(Get-ChildItem $root -Recurse -File -Filter "*.sys")
+          if ($sysFiles.Count -gt 0) {
+            Write-Host "Driver files found in publish output:"
+            $sysFiles | ForEach-Object { Write-Host $_.FullName }
+          }
+          $matches = @()
+          Get-ChildItem $root -Recurse -File | ForEach-Object {
+            $path = $_.FullName
+            try {
+              $bytes = [System.IO.File]::ReadAllBytes($path)
+              $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+              if ($text -match "WinRing0|WinRing0x64|WinRing0_1_2") {
+                $matches += $path
+              }
+            } catch {
+              Write-Warning "Could not inspect $path : $_"
+            }
+          }
+          if ($matches.Count -gt 0) {
+            Write-Error ("Legacy WinRing0 indicators found in published files: " + ($matches -join ", "))
+            exit 1
+          }
+          Write-Host "No legacy WinRing0 string indicators found in published output."
+          
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
         with:
