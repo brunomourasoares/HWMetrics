@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
+    <Resource Include="Resources/Images/icon.png" />
 	<Resource Include="Resources/Images/logo-vertical.png" />
 	<Resource Include="Resources/Images/logo-square.png" />
     <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)fs-sevegment.ttf">

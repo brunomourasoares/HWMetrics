@@ -38,5 +38,12 @@ public sealed class WpfResourcePackagingTests
                 key,
                 "resources/images/rise-mode.png",
                 StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(
+            resourceKeys,
+            key => string.Equals(
+                key,
+                "resources/images/icon.png",
+                StringComparison.OrdinalIgnoreCase));
     }
 }
