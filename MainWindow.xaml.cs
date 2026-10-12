@@ -462,9 +462,6 @@ public partial class MainWindow : Window
         StorageModelText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
             ? T("Local volume", "Volume local")
             : volume.VolumeLabel;
-        StorageDriveNameText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
-            ? T("Local disk", "Disco local")
-            : volume.VolumeLabel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
             $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
@@ -536,7 +533,6 @@ public partial class MainWindow : Window
         else
         {
             StorageUsedPercentText.Text = "N/D";
-            StorageDriveNameText.Text = string.Empty;
             StorageCapacityText.Text = T("Storage capacity unavailable", "Capacidade do armazenamento indisponível");
             StorageUsageBar.Value = 0;
             StorageVolumesText.Text = T("No local volumes detected", "Nenhum volume local detectado");
