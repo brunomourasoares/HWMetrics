@@ -629,18 +629,6 @@
                   <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB"/>
                   <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB"/>
                 </ComboBox>
-                <Button x:Name="RefreshNowButton"
-                        Content="Refresh now"
-                        ToolTip="Refresh sensor readings (F5)"
-                        AutomationProperties.Name="Refresh now"
-                        Click="RefreshNow_Click"
-                        Height="34"
-                        MinWidth="96"
-                        Padding="10,4"
-                        Margin="8,0,0,0"
-                        FontSize="11"
-                        Background="{DynamicResource PanelRaisedBrush}"
-                        BorderBrush="{DynamicResource StrokeBrush}"/>
               </StackPanel>
             </StackPanel>
           </Grid>
@@ -665,7 +653,6 @@
                              Margin="0,4,0,0"/>
                   <TextBlock x:Name="CpuTempText"
                              Text="--°"
-                             FontFamily="Consolas"
                              FontSize="31"
                              FontWeight="Bold"
                              Margin="0,12,0,1"/>
@@ -713,7 +700,6 @@
                              Margin="0,4,0,0"/>
                   <TextBlock x:Name="GpuTempText"
                              Text="--°"
-                             FontFamily="Consolas"
                              FontSize="31"
                              FontWeight="Bold"
                              Margin="0,12,0,1"/>
@@ -815,8 +801,10 @@
                   <StackPanel Orientation="Horizontal"
                               Margin="0,8,0,1">
                     <TextBlock x:Name="StorageDriveNameText"
-                               Text="C:"
-                               FontSize="29"
+                               Text="Local disk"
+                               TextTrimming="CharacterEllipsis"
+                               MaxWidth="150"
+                               FontSize="20"
                                FontWeight="Bold"
                                Margin="0,0,7,0"/>
                     <TextBlock x:Name="StorageUsedPercentText"
@@ -872,7 +860,8 @@
                 <RowDefinition Height="16"/>
                 <RowDefinition Height="*"/>
               </Grid.RowDefinitions>
-              <Border Grid.Row="0"
+              <Border x:Name="TemperatureHistoryCard"
+                      Grid.Row="0"
                       Style="{StaticResource CardStyle}"
                       ClipToBounds="True">
                 <Grid>
@@ -896,8 +885,10 @@
                                  Margin="0,4,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Right"
                                 VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                       <CheckBox x:Name="TemperatureCpuFilter"
                                 Content="CPU"
                                 IsChecked="True"
@@ -915,6 +906,8 @@
                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                 FontSize="10"
                                 VerticalAlignment="Center"/>
+                      </StackPanel>
+                      <Button Content="Save history" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
                     </StackPanel>
                   </Grid>
                   <Grid Grid.Row="1"
@@ -929,12 +922,12 @@
                       <ColumnDefinition Width="35"/>
                       <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="90°"
+                    <TextBlock Text="100°"
                                Grid.Row="0"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Top"/>
-                    <TextBlock Text="70°"
+                    <TextBlock Text="75°"
                                Grid.Row="1"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
@@ -944,7 +937,7 @@
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Center"/>
-                    <TextBlock Text="30°"
+                    <TextBlock Text="25°"
                                Grid.Row="3"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
@@ -1007,21 +1000,9 @@
                     <TextBlock Text="Rolling 30 minutes · data since launch"
                                FontSize="10"
                                Foreground="{DynamicResource TextSecondaryBrush}"/>
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                      <TextBlock x:Name="GraphCaption"
-                                 Text="Waiting for sensor data"
-                                 FontSize="10"
-                                 Foreground="{DynamicResource TextSecondaryBrush}"
-                                 Margin="0,0,10,0"/>
-                      <Button Content="Save history"
-                              Click="SaveHistory_Click"
-                              Padding="10,4"
-                              FontSize="10"
-                              Cursor="Hand"
-                              Background="{DynamicResource PanelRaisedBrush}"
-                              BorderBrush="{DynamicResource StrokeBrush}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" Margin="0,0,4,0"/><TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBlueBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
                     </StackPanel>
                   </Grid>
                 </Grid>
@@ -1050,8 +1031,10 @@
                                  Margin="0,4,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
+                                Orientation="Vertical"
+                                HorizontalAlignment="Right"
                                 VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                       <CheckBox x:Name="UtilizationCpuFilter"
                                 Content="CPU"
                                 IsChecked="True"
@@ -1078,6 +1061,8 @@
                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                 FontSize="10"
                                 VerticalAlignment="Center"/>
+                      </StackPanel>
+                      <Button Content="Save history" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
                     </StackPanel>
                   </Grid>
                   <Grid Grid.Row="1"
@@ -1177,44 +1162,11 @@
                       <ColumnDefinition Width="*"/>
                       <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Rolling 30 minutes · data since launch"
-                               FontSize="10"
-                               Foreground="{DynamicResource TextSecondaryBrush}"/>
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center">
-                      <StackPanel Orientation="Horizontal"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,10,0">
-                        <Ellipse Width="7"
-                                 Height="7"
-                                 Fill="#70E8D0"
-                                 Margin="0,0,4,0"/>
-                        <TextBlock Text="CPU"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                      </StackPanel>
-                      <StackPanel Orientation="Horizontal"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,10,0">
-                        <Ellipse Width="7"
-                                 Height="7"
-                                 Fill="#69BFFF"
-                                 Margin="0,0,4,0"/>
-                        <TextBlock Text="GPU"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                      </StackPanel>
-                      <StackPanel Orientation="Horizontal"
-                                  VerticalAlignment="Center">
-                        <Ellipse Width="7"
-                                 Height="7"
-                                 Fill="#BDA3FF"
-                                 Margin="0,0,4,0"/>
-                        <TextBlock Text="RAM"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                      </StackPanel>
+                    <TextBlock Text="Rolling 30 minutes · data since launch" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" Margin="0,0,4,0"/><TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBlueBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Ellipse Width="7" Height="7" Fill="#BDA3FF" Margin="0,0,4,0"/><TextBlock Text="RAM" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
                     </StackPanel>
                   </Grid>
                 </Grid>
@@ -1228,6 +1180,7 @@
               </Grid.RowDefinitions>
               <Border x:Name="CoolerCard"
                       Grid.Row="0"
+                      Height="{Binding ActualHeight, ElementName=TemperatureHistoryCard}"
                       Style="{StaticResource CardStyle}"
                       ClipToBounds="True">
                 <Grid>
@@ -1275,7 +1228,7 @@
                         Height="230"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Margin="0,20,0,0">
+                        Margin="0,32,0,0">
                     <Ellipse x:Name="CoolerBody"
                              Width="192"
                              Height="192"
@@ -1310,11 +1263,11 @@
                              Stroke="#2C4651"
                              StrokeThickness="1"/>
                     <Image Source="/Resources/Images/rise-mode.png"
-                           Width="34"
-                           Height="34"
+                           Width="29"
+                           Height="29"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Top"
-                           Margin="0,44,0,0"
+                           Margin="0,52,0,0"
                            Stretch="Uniform"
                            ToolTip="HW Metrics"
                            AutomationProperties.Name="Ícone do modo de refrigeração"/>
