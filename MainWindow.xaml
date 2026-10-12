@@ -1297,7 +1297,7 @@
                            Height="34"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Top"
-                           Margin="0,50,0,0"
+                           Margin="0,44,0,0"
                            Stretch="Uniform"
                            ToolTip="HW Metrics"
                            AutomationProperties.Name="Ícone do modo de refrigeração"/>
@@ -1316,7 +1316,7 @@
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Bottom"
-                               Margin="0,0,0,68"/>
+                               Margin="0,0,0,62"/>
                   </Grid>
                 </Grid>
               </Border>
