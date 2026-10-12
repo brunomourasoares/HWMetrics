@@ -605,12 +605,12 @@
                           FontSize="11"
                           Style="{StaticResource ThemedComboBox}"
                           ItemContainerStyle="{StaticResource ThemedComboBoxItem}">
-                  <ComboBoxItem Content="RM-WAI-01-ARGB"/>
-                  <ComboBoxItem Content="RM-WAI-02-ARGB"/>
-                  <ComboBoxItem Content="RM-WAI-03-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-04-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-05-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-06-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB"/>
                 </ComboBox>
                 <Button x:Name="RefreshNowButton"
                         Content="Refresh now"
@@ -1318,30 +1318,6 @@
                                VerticalAlignment="Bottom"
                                Margin="0,0,0,68"/>
                   </Grid>
-                  <StackPanel VerticalAlignment="Bottom"
-                              Margin="0,0,0,0">
-                    <Border Background="{DynamicResource PanelRaisedBrush}"
-                            CornerRadius="10"
-                            Padding="10">
-                      <StackPanel Orientation="Horizontal"
-                                  HorizontalAlignment="Center">
-                        <Ellipse Width="7"
-                                 Height="7"
-                                 Fill="{DynamicResource WarningBrush}"
-                                 Margin="0,0,8,0"/>
-                        <TextBlock x:Name="DeviceStatusText"
-                                   Text="Hardware link not connected"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                      </StackPanel>
-                    </Border>
-                    <TextBlock x:Name="DisplayModeText"
-                               Text="Preview only · HID not connected"
-                               FontSize="9"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,10,0,0"/>
-                  </StackPanel>
                 </Grid>
               </Border>
               <Border x:Name="ThermalComponentsCard"
