@@ -468,10 +468,19 @@ public partial class MainWindow : Window
         {
             // Select the Windows system volume on first render; subsequent reads keep the
             // selected volume stable instead of snapping back to C: every polling cycle.
-            var selectedIndex = _selectedStorageDriveName is null
-                ? -1
-                : s.StorageVolumes.ToList().FindIndex(volume =>
-                    string.Equals(volume.Name, _selectedStorageDriveName, StringComparison.OrdinalIgnoreCase));
+            var selectedIndex = -1;
+            if (_selectedStorageDriveName is not null)
+            {
+                for (var i = 0; i < s.StorageVolumes.Count; i++)
+                {
+                    if (!string.Equals(s.StorageVolumes[i].Name, _selectedStorageDriveName,
+                            StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    selectedIndex = i;
+                    break;
+                }
+            }
             if (selectedIndex >= 0)
             {
                 _storageDriveIndex = selectedIndex;
@@ -479,8 +488,16 @@ public partial class MainWindow : Window
             else if (_storageDriveIndex < 0 || _storageDriveIndex >= s.StorageVolumes.Count ||
                      _selectedStorageDriveName is not null)
             {
-                var systemIndex = s.StorageVolumes.ToList().FindIndex(volume =>
-                    string.Equals(volume.Name, s.SystemDriveName, StringComparison.OrdinalIgnoreCase));
+                var systemIndex = -1;
+                for (var i = 0; i < s.StorageVolumes.Count; i++)
+                {
+                    if (!string.Equals(s.StorageVolumes[i].Name, s.SystemDriveName,
+                            StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    systemIndex = i;
+                    break;
+                }
                 _storageDriveIndex = systemIndex >= 0 ? systemIndex : 0;
             }
             RenderStorageVolume(s.StorageVolumes[_storageDriveIndex]);
@@ -624,10 +641,10 @@ public partial class MainWindow : Window
         CpuHistoryPath.Visibility = showCpu ? Visibility.Visible : Visibility.Collapsed;
         GpuHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
         CpuHistoryPath.Data = showCpu
-            ? BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC))
+            ? BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC), _history.Count)
             : Geometry.Empty;
         GpuHistoryPath.Data = showGpu
-            ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC))
+            ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC), _history.Count)
             : Geometry.Empty;
         var parts = new List<string>();
         if (showCpu) parts.Add($"CPU {FullTemp(current.CpuTemperatureC)}");
@@ -644,69 +661,73 @@ public partial class MainWindow : Window
         GpuUtilizationHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
         MemoryUtilizationHistoryPath.Visibility = showRam ? Visibility.Visible : Visibility.Collapsed;
         CpuUtilizationHistoryPath.Data = showCpu
-            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent))
+            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent), _utilizationHistory.Count)
             : Geometry.Empty;
         GpuUtilizationHistoryPath.Data = showGpu
-            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent))
+            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent), _utilizationHistory.Count)
             : Geometry.Empty;
         MemoryUtilizationHistoryPath.Data = showRam
             ? BuildUtilizationGeometry(_utilizationHistory.Select(point =>
                 point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
-                    ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null))
+                    ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null),
+                _utilizationHistory.Count)
             : Geometry.Empty;
         // The utilization card uses a fixed color legend in its footer, so no
         // separate caption control is required here.
     }
 
-    private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source)
-    {
-        var values = source.ToList();
-        var points = new List<Point>();
-        for (var i = 0; i < values.Count; i++)
-        {
-            if (values[i] is not double percent || !double.IsFinite(percent)) continue;
-            var x = values.Count <= 1 ? 0 : i * 900d / (values.Count - 1);
-            var y = 128d - Math.Clamp(percent, 0d, 100d) * 1.2d;
-            points.Add(new Point(x, y));
-        }
-        if (points.Count == 0) return Geometry.Empty;
-        if (points.Count == 1) points.Add(new Point(Math.Min(900, points[0].X + 2), points[0].Y));
-        var geometry = new StreamGeometry();
-        using (var context = geometry.Open())
-        {
-            context.BeginFigure(points[0], isFilled: false, isClosed: false);
-            for (var i = 1; i < points.Count; i++) context.LineTo(points[i], isStroked: true, isSmoothJoin: true);
-        }
-        geometry.Freeze();
-        return geometry;
-    }
+    private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source, int sampleCount) =>
+        BuildHistoryGeometry(source, sampleCount, static percent =>
+            128d - Math.Clamp(percent, 0d, 100d) * 1.2d);
 
-    private static Geometry BuildTemperatureGeometry(IEnumerable<double?> source)
-    {
-        var values = source.ToList();
-        var points = new List<Point>();
-        for (var i = 0; i < values.Count; i++)
+    private static Geometry BuildTemperatureGeometry(IEnumerable<double?> source, int sampleCount) =>
+        BuildHistoryGeometry(source, sampleCount, static temperature =>
         {
-            if (values[i] is not double temperature || !double.IsFinite(temperature)) continue;
-            var x = values.Count <= 1 ? 0 : i * 900d / (values.Count - 1);
             var normalized = Math.Clamp((temperature - 30d) / 60d, 0d, 1d);
-            var y = 128d - normalized * 120d;
-            points.Add(new Point(x, y));
-        }
+            return 128d - normalized * 120d;
+        });
 
-        if (points.Count == 0) return Geometry.Empty;
-        if (points.Count == 1)
-        {
-            var point = points[0];
-            points.Add(new Point(Math.Min(900, point.X + 2), point.Y));
-        }
+    private static Geometry BuildHistoryGeometry(
+        IEnumerable<double?> source,
+        int sampleCount,
+        Func<double, double> getY)
+    {
+        if (sampleCount == 0) return Geometry.Empty;
 
         var geometry = new StreamGeometry();
         using (var context = geometry.Open())
         {
-            context.BeginFigure(points[0], isFilled: false, isClosed: false);
-            for (var i = 1; i < points.Count; i++) context.LineTo(points[i], isStroked: true, isSmoothJoin: true);
+            var index = 0;
+            var pointCount = 0;
+            Point firstPoint = default;
+            foreach (var value in source)
+            {
+                if (value is double number && double.IsFinite(number))
+                {
+                    var x = sampleCount <= 1 ? 0d : index * 900d / (sampleCount - 1);
+                    var point = new Point(x, getY(number));
+                    if (pointCount == 0)
+                    {
+                        firstPoint = point;
+                        context.BeginFigure(point, isFilled: false, isClosed: false);
+                    }
+                    else
+                    {
+                        context.LineTo(point, isStroked: true, isSmoothJoin: true);
+                    }
+
+                    pointCount++;
+                }
+
+                index++;
+            }
+
+            if (pointCount == 0) return Geometry.Empty;
+            if (pointCount == 1)
+                context.LineTo(new Point(Math.Min(900d, firstPoint.X + 2d), firstPoint.Y),
+                    isStroked: true, isSmoothJoin: true);
         }
+
         geometry.Freeze();
         return geometry;
     }

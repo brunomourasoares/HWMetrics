@@ -18,6 +18,10 @@ public sealed class HardwareMonitoringService : IDisposable
     private long? _previousIdleTime;
     private long? _previousKernelTime;
     private long? _previousUserTime;
+    private DateTime _lastStorageReadAt = DateTime.MinValue;
+    private (string? SystemDriveName, double? UsedGiB, double? TotalGiB,
+        double? FreeGiB, double? UsedPercent, string VolumesSummary,
+        IReadOnlyList<StorageVolumeSnapshot> Volumes)? _cachedStorage;
 
     public HardwareMonitoringService()
     {
@@ -40,22 +44,23 @@ public sealed class HardwareMonitoringService : IDisposable
             double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
             double? usedGiB = null, totalGiB = null, driveTemp = null;
             string? cpuModel = null, gpuModel = null, storageModel = null;
-            var storageModels = new List<string>();
             var cpuTempPriority = -1;
             var cpuLoadPriority = -1;
             var gpuTempPriority = -1;
             var gpuLoadPriority = -1;
-            var cpuCoreLoads = new List<double>();
+            double cpuCoreLoadSum = 0;
+            var cpuCoreLoadCount = 0;
 
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
-                    cpuCoreLoads, ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+                    ref cpuCoreLoadSum, ref cpuCoreLoadCount,
+                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
 
             // If no aggregate CPU load sensor exists, report the mean of the per-core
             // readings rather than whichever core happened to appear first.
-            if (cpuLoad is null && cpuCoreLoads.Count > 0)
-                cpuLoad = cpuCoreLoads.Average();
+            if (cpuLoad is null && cpuCoreLoadCount > 0)
+                cpuLoad = cpuCoreLoadSum / cpuCoreLoadCount;
 
             // Some motherboards expose the CPU thermistor through Super I/O instead of
             // the CPU hardware node. Visit() accepts those explicitly labelled CPU sensors
@@ -77,22 +82,30 @@ public sealed class HardwareMonitoringService : IDisposable
                 totalGiB ??= memory.TotalGiB;
             }
     
-            var storage = ReadStorage();
+            var now = DateTime.Now;
+            if (_cachedStorage is null || now - _lastStorageReadAt >= TimeSpan.FromSeconds(5))
+            {
+                _cachedStorage = ReadStorage();
+                _lastStorageReadAt = now;
+            }
+
+            var storage = _cachedStorage.Value;
             return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
-                driveTemp, cpuModel, gpuModel, storageModels.FirstOrDefault() ?? storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
+                driveTemp, cpuModel, gpuModel, storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
-                DateTime.Now, "Leitura concluída");
+                now, "Leitura concluída");
         }
     }
 
     private void Visit(IHardware hardware,
         ref double? cpuTemp, ref int cpuTempPriority,
-        ref double? cpuLoad, ref int cpuLoadPriority, List<double> cpuCoreLoads,
+        ref double? cpuLoad, ref int cpuLoadPriority,
+        ref double cpuCoreLoadSum, ref int cpuCoreLoadCount,
         ref double? gpuTemp, ref int gpuTempPriority,
         ref double? gpuLoad, ref int gpuLoadPriority,
         ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
-        ref string? cpuModel, ref string? gpuModel, ref string? storageModel, List<string> storageModels)
+        ref string? cpuModel, ref string? gpuModel, ref string? storageModel)
     {
         try
         {
@@ -104,7 +117,6 @@ public sealed class HardwareMonitoringService : IDisposable
                 if (IsUsefulStorageModel(candidate))
                 {
                     storageModel ??= candidate;
-                    if (!storageModels.Contains(candidate!, StringComparer.OrdinalIgnoreCase)) storageModels.Add(candidate!);
                 }
             }
             hardware.Update();
@@ -118,7 +130,7 @@ public sealed class HardwareMonitoringService : IDisposable
                     Debug.WriteLine($"[HardwareMonitoring] Sensor encontrado: hardware={hardware.HardwareType}, nome='{hardware.Name}', tipo={sensor.SensorType}, sensor='{sensor.Name}', valorInicial={loggedValue}");
                 }
                 if (rawValue is not float value || !float.IsFinite(value)) continue;
-                var name = sensor.Name.ToLowerInvariant();
+                var name = sensor.Name;
                 switch (sensor.SensorType)
                 {
                     case SensorType.Temperature:
@@ -143,7 +155,10 @@ public sealed class HardwareMonitoringService : IDisposable
                         {
                             var priority = GetCpuLoadPriority(name);
                             if (priority == 30)
-                                cpuCoreLoads.Add(value);
+                            {
+                                cpuCoreLoadSum += value;
+                                cpuCoreLoadCount++;
+                            }
                             else if (priority >= 70 && priority > cpuLoadPriority)
                             {
                                 cpuLoad = value;
@@ -158,8 +173,8 @@ public sealed class HardwareMonitoringService : IDisposable
                         break;
 
                     case SensorType.Data when hardware.HardwareType == HardwareType.Memory:
-                        if (name.Contains("used")) usedGiB ??= value;
-                        if (name.Contains("total")) totalGiB ??= value;
+                        if (name.Contains("used", StringComparison.OrdinalIgnoreCase)) usedGiB ??= value;
+                        if (name.Contains("total", StringComparison.OrdinalIgnoreCase)) totalGiB ??= value;
                         break;
                 }
             }
@@ -172,9 +187,10 @@ public sealed class HardwareMonitoringService : IDisposable
         }
 
         foreach (var child in hardware.SubHardware)
-            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority, cpuCoreLoads,
+            Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                 ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel, storageModels);
+                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
 
@@ -186,12 +202,12 @@ public sealed class HardwareMonitoringService : IDisposable
         // Prefer direct CPU package/die/core sensors whenever available.
         if (hardwareType == HardwareType.Cpu)
         {
-            if (name.Contains("package")) return 100;
-            if (name.Contains("tdie")) return 95;
-            if (name.Contains("tctl")) return 90;
-            if (name.Contains("core max")) return 85;
-            if (name.Contains("core average") || name.Contains("average")) return 80;
-            if (name.Contains("core")) return 70;
+            if (name.Contains("package", StringComparison.OrdinalIgnoreCase)) return 100;
+            if (name.Contains("tdie", StringComparison.OrdinalIgnoreCase)) return 95;
+            if (name.Contains("tctl", StringComparison.OrdinalIgnoreCase)) return 90;
+            if (name.Contains("core max", StringComparison.OrdinalIgnoreCase)) return 85;
+            if (name.Contains("core average", StringComparison.OrdinalIgnoreCase) || name.Contains("average", StringComparison.OrdinalIgnoreCase)) return 80;
+            if (name.Contains("core", StringComparison.OrdinalIgnoreCase)) return 70;
             return 60;
         }
 
@@ -199,10 +215,10 @@ public sealed class HardwareMonitoringService : IDisposable
         // or Super I/O. Do not mistake generic motherboard/VRM temperatures for CPU.
         if (hardwareType is HardwareType.Motherboard or HardwareType.SuperIO)
         {
-            if (!name.Contains("cpu") && !name.Contains("processor")) return -1;
-            if (name.Contains("package")) return 55;
-            if (name.Contains("core")) return 50;
-            if (name.Contains("socket")) return 45;
+            if (!name.Contains("cpu", StringComparison.OrdinalIgnoreCase) && !name.Contains("processor", StringComparison.OrdinalIgnoreCase)) return -1;
+            if (name.Contains("package", StringComparison.OrdinalIgnoreCase)) return 55;
+            if (name.Contains("core", StringComparison.OrdinalIgnoreCase)) return 50;
+            if (name.Contains("socket", StringComparison.OrdinalIgnoreCase)) return 45;
             return 40;
         }
 
@@ -211,12 +227,12 @@ public sealed class HardwareMonitoringService : IDisposable
 
     internal static int GetCpuLoadPriority(string name)
     {
-        if (name.Contains("total")) return 100;
-        if (name.Contains("average")) return 70;
+        if (name.Contains("total", StringComparison.OrdinalIgnoreCase)) return 100;
+        if (name.Contains("average", StringComparison.OrdinalIgnoreCase)) return 70;
         // Test "core" before "cpu": names such as "CPU Core #1" are per-core
         // values and must not outrank an aggregate CPU utilization sensor.
-        if (name.Contains("core")) return 30;
-        if (name.Contains("cpu")) return 80;
+        if (name.Contains("core", StringComparison.OrdinalIgnoreCase)) return 30;
+        if (name.Contains("cpu", StringComparison.OrdinalIgnoreCase)) return 80;
         return -1;
     }
 
@@ -225,19 +241,19 @@ public sealed class HardwareMonitoringService : IDisposable
 
     private static int GetGpuTemperaturePriority(string name)
     {
-        if (name.Contains("gpu core") || name.Contains("core temperature")) return 100;
-        if (name.Contains("gpu temperature") || name == "temperature") return 90;
-        if (name.Contains("core")) return 80;
-        if (name.Contains("junction") || name.Contains("hot spot") || name.Contains("hotspot")) return 50;
-        if (name.Contains("memory")) return 20;
+        if (name.Contains("gpu core", StringComparison.OrdinalIgnoreCase) || name.Contains("core temperature", StringComparison.OrdinalIgnoreCase)) return 100;
+        if (name.Contains("gpu temperature", StringComparison.OrdinalIgnoreCase) || name.Equals("temperature", StringComparison.OrdinalIgnoreCase)) return 90;
+        if (name.Contains("core", StringComparison.OrdinalIgnoreCase)) return 80;
+        if (name.Contains("junction", StringComparison.OrdinalIgnoreCase) || name.Contains("hot spot", StringComparison.OrdinalIgnoreCase) || name.Contains("hotspot", StringComparison.OrdinalIgnoreCase)) return 50;
+        if (name.Contains("memory", StringComparison.OrdinalIgnoreCase)) return 20;
         return 10;
     }
 
     private static int GetGpuLoadPriority(string name)
     {
-        if (name.Contains("total")) return 100;
-        if (name.Contains("core")) return 80;
-        if (name.Contains("gpu")) return 70;
+        if (name.Contains("total", StringComparison.OrdinalIgnoreCase)) return 100;
+        if (name.Contains("core", StringComparison.OrdinalIgnoreCase)) return 80;
+        if (name.Contains("gpu", StringComparison.OrdinalIgnoreCase)) return 70;
         return 10;
     }
 
