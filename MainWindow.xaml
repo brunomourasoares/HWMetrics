@@ -910,6 +910,7 @@
                       <RowDefinition Height="*"/>
                       <RowDefinition Height="*"/>
                       <RowDefinition Height="*"/>
+                      <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="35"/>
@@ -936,7 +937,7 @@
                                FontSize="9"
                                VerticalAlignment="Bottom"/>
                     <Viewbox Grid.Column="1"
-                             Grid.RowSpan="4"
+                             Grid.RowSpan="5"
                              Stretch="Fill"
                              ClipToBounds="True">
                       <Canvas x:Name="ThermalChartCanvas"
@@ -1087,6 +1088,11 @@
                                VerticalAlignment="Center"/>
                     <TextBlock Text="25%"
                                Grid.Row="3"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="9"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="0%"
+                               Grid.Row="4"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Bottom"/>
