@@ -16,32 +16,10 @@
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
     <Resource Include="Resources/Images/icon.png" />
-	<Resource Include="Resources/Images/logo-vertical.png" />
-	<Resource Include="Resources/Images/logo-square.png" />
-    <Resource Include="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)fs-sevegment.ttf">
-      <Link>Resources\Fonts\fs-sevegment.ttf</Link>
-    </Resource>
+    <Resource Include="Resources/Images/logo-vertical.png" />
+    <Resource Include="Resources/Images/logo-square.png" />
+    <Resource Include="Resources/Fonts/7SegmentNumber.ttf" />
   </ItemGroup>
-  <UsingTask TaskName="DecodeDsegBase64Font" TaskFactory="RoslynCodeTaskFactory"
-    AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
-    <ParameterGroup>
-      <InputFile ParameterType="System.String" Required="true" />
-      <OutputFile ParameterType="System.String" Required="true" />
-    </ParameterGroup>
-    <Task>
-      <Using Namespace="System" />
-      <Using Namespace="System.IO" />
-      <Code Type="Fragment" Language="cs"><![CDATA[
-        Directory.CreateDirectory(Path.GetDirectoryName(OutputFile)!);
-        File.WriteAllBytes(OutputFile, Convert.FromBase64String(File.ReadAllText(InputFile).Trim()));
-      ]]></Code>
-    </Task>
-  </UsingTask>
-  <Target Name="DecodeDsegBase64Font" BeforeTargets="PrepareResources;MarkupCompilePass1">
-    <DecodeDsegBase64Font
-      InputFile="$(MSBuildProjectDirectory)/Resources/Fonts/fs-sevegment.ttf.base64"
-      OutputFile="$(MSBuildProjectDirectory)\$(IntermediateOutputPath)fs-sevegment.ttf" />
-  </Target>
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
     <EmbeddedResource Remove="tests/**" />
