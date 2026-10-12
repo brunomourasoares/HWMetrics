@@ -181,6 +181,7 @@ public partial class MainWindow : Window
                 : new AppPreferences();
             ThemeSelector.SelectedIndex = Math.Clamp(preferences.ThemeIndex, 0, 1);
             PollIntervalSelector.SelectedIndex = Math.Clamp(preferences.PollIntervalIndex, 0, 2);
+            _pollTimer.Interval = GetSelectedPollInterval();
             LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
             CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
             HistoryRetentionSelector.SelectedIndex = Math.Clamp(preferences.HistoryRetentionIndex, 0, HistoryRetentionSelector.Items.Count - 1);
@@ -750,11 +751,19 @@ public partial class MainWindow : Window
         SavePreferences();
     }
 
+    private static TimeSpan GetSelectedPollInterval(int selectedIndex) => selectedIndex switch
+    {
+        0 => TimeSpan.FromSeconds(1),
+        2 => TimeSpan.FromSeconds(5),
+        _ => TimeSpan.FromSeconds(2)
+    };
+
+    private TimeSpan GetSelectedPollInterval() => GetSelectedPollInterval(PollIntervalSelector.SelectedIndex);
+
     private void PollIntervalSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || PollIntervalSelector.SelectedIndex < 0) return;
-        var seconds = PollIntervalSelector.SelectedIndex switch { 0 => 1, 2 => 5, _ => 2 };
-        _pollTimer.Interval = TimeSpan.FromSeconds(seconds);
+        _pollTimer.Interval = GetSelectedPollInterval();
         if (_monitor is not null && !_pollTimer.IsEnabled) _pollTimer.Start();
         SavePreferences();
     }
