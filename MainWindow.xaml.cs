@@ -70,12 +70,11 @@ public partial class MainWindow : Window
     {
         ["HW Metrics — Hardware Studio"] = "HW Metrics — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
         ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
-        ["Close settings"] = "Fechar configurações", ["Refresh sensor readings (F5)"] = "Atualizar leituras dos sensores (F5)",
+        ["Close settings"] = "Fechar configurações",
         ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
         ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
         ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
         ["Utilization --%"] = "Utilização --%",
-        ["Refresh now"] = "Atualizar agora", ["Refreshing…"] = "Atualizando…",
         ["Open HW Metrics"] = "Abrir HW Metrics", ["Exit"] = "Sair",
         ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
         ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
@@ -409,22 +408,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void RefreshNow_Click(object sender, RoutedEventArgs e)
-    {
-        if (_closing) return;
-        RefreshNowButton.IsEnabled = false;
-        RefreshNowButton.Content = T("Refreshing…", "Atualizando…");
-        try
-        {
-            await RefreshSensorsAsync();
-        }
-        finally
-        {
-            RefreshNowButton.Content = T("Refresh now", "Atualizar agora");
-            RefreshNowButton.IsEnabled = !_closing;
-        }
-    }
-
     private void UpdateDisplayStatus(DisplayTransportStatus status)
     {
         var (title, detail, connected) = status switch
@@ -476,8 +459,12 @@ public partial class MainWindow : Window
         _selectedStorageDriveName = volume.Name;
         // StorageModel describes physical disks globally, not the physical disk backing
         // this logical volume. Avoid presenting an unrelated/combined model as a match.
-        StorageModelText.Text = volume.Name;
-        StorageDriveNameText.Text = volume.Name;
+        StorageModelText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
+            ? T("Local volume", "Volume local")
+            : volume.VolumeLabel;
+        StorageDriveNameText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
+            ? T("Local disk", "Disco local")
+            : volume.VolumeLabel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
             $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
@@ -1060,13 +1047,7 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == Key.F5)
-        {
-            e.Handled = true;
-            if (RefreshNowButton.IsEnabled)
-                RefreshNow_Click(this, new RoutedEventArgs());
-        }
-        else if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
+        if (e.Key == Key.Escape && SettingsDialogOverlay.Visibility == Visibility.Visible)
         {
             HideSettingsPanel();
             e.Handled = true;
