@@ -8,7 +8,7 @@ namespace WaterCoolerApp.Tests;
 public sealed class WpfResourcePackagingTests
 {
     [Fact]
-    public void Dseg7Font_IsPackagedAtExpectedLogicalPath()
+    public void FsSevegmentFont_IsPackagedAtExpectedLogicalPath()
     {
         var assembly = typeof(MainWindow).Assembly;
         var resourceName = assembly.GetManifestResourceNames()
@@ -29,7 +29,7 @@ public sealed class WpfResourcePackagingTests
             resourceKeys,
             key => string.Equals(
                 key,
-                "resources/fonts/dseg7classic-regular.ttf",
+                "resources/fonts/fs-sevegment.ttf",
                 StringComparison.OrdinalIgnoreCase));
 
         Assert.Contains(
