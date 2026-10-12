@@ -1069,17 +1069,25 @@ public partial class MainWindow : Window
         _closing = true;
         _pollTimer.Stop();
         _storageCycleTimer.Stop();
-        _historyWriter.Enqueue(_storedHistory, DateTime.Now, _historyRetention);
-        await _historyWriter.DisposeAsync();
-        _monitor?.Dispose();
-        _displayTransport.Dispose();
-        if (_trayIcon is not null)
+
+        try
         {
-            _trayIcon.Visible = false;
-            _trayIcon.Dispose();
-            _trayIcon = null;
+            _historyWriter.Enqueue(_storedHistory, DateTime.Now, _historyRetention);
+            await _historyWriter.DisposeAsync();
         }
-        _trayApplicationIcon?.Dispose();
-        _trayApplicationIcon = null;
+        finally
+        {
+            // Resource cleanup must run even if final history persistence fails.
+            _monitor?.Dispose();
+            _displayTransport.Dispose();
+            if (_trayIcon is not null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+            _trayApplicationIcon?.Dispose();
+            _trayApplicationIcon = null;
+        }
     }
 }
