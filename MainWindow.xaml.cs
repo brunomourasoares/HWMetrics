@@ -524,7 +524,6 @@ public partial class MainWindow : Window
         {
             // Keep a safe fallback for snapshots with legacy aggregate storage data.
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageDriveNameText.Text = s.SystemDriveName ?? string.Empty;
             StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total", "Total")}" +
                 (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free", "livres")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
@@ -664,10 +663,6 @@ public partial class MainWindow : Window
         GpuHistoryPath.Data = showGpu
             ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC), _history.Count)
             : Geometry.Empty;
-        var parts = new List<string>();
-        if (showCpu) parts.Add($"CPU {FullTemp(current.CpuTemperatureC)}");
-        if (showGpu) parts.Add($"GPU {FullTemp(current.GpuTemperatureC)}");
-        GraphCaption.Text = parts.Count > 0 ? string.Join(" · ", parts) : T("No series selected", "Nenhuma série selecionada");
     }
 
     private void UpdateUtilizationHistoryChart(SensorSnapshot current)
