@@ -1273,7 +1273,7 @@
                     <TextBlock x:Name="CoolerDisplayTemp"
                                Text="--"
                                Foreground="#FFFFFF"
-                               FontFamily="pack://application:,,,/Resources/Fonts/#FS Sevegment Regular"
+                               FontFamily="pack://application:,,,/Resources/Fonts/#7SegmentNumber"
                                FontSize="46"
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
