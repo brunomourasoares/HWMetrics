@@ -437,6 +437,10 @@ public partial class MainWindow : Window
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
         _selectedStorageDriveName = volume.Name;
+        var storageModel = _lastSnapshot?.StorageModel;
+        StorageModelText.Text = string.IsNullOrWhiteSpace(storageModel)
+            ? volume.Name
+            : $"{volume.Name} · {storageModel}";
         StorageDriveNameText.Text = volume.Name;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =

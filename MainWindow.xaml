@@ -85,20 +85,43 @@
       </Style.Triggers>
     </Style>
     <Style TargetType="Button">
-      <Setter Property="Cursor"
-              Value="Hand"/>
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver"
-                 Value="True">
-          <Setter Property="Opacity"
-                  Value="0.9"/>
-        </Trigger>
-        <Trigger Property="IsPressed"
-                 Value="True">
-          <Setter Property="Opacity"
-                  Value="0.76"/>
-        </Trigger>
-      </Style.Triggers>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+      <Setter Property="Background" Value="{DynamicResource PanelRaisedBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="10,5"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="ButtonBorder"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="7"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                RecognizesAccessKey="True"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource PanelBrush}"/>
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource AccentForegroundBrush}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.55"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
     <Style x:Key="WindowControlButton"
            TargetType="Button">
@@ -271,7 +294,7 @@
                         Property="Background"
                         Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="Foreground"
-                        Value="#FFFFFF"/>
+                        Value="{DynamicResource AccentForegroundBrush}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -605,12 +628,12 @@
                           FontSize="11"
                           Style="{StaticResource ThemedComboBox}"
                           ItemContainerStyle="{StaticResource ThemedComboBoxItem}">
-                  <ComboBoxItem Content="RM-WAI-01-ARGB"/>
-                  <ComboBoxItem Content="RM-WAI-02-ARGB"/>
-                  <ComboBoxItem Content="RM-WAI-03-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-04-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-05-ARGB"/>
-                  <ComboBoxItem Content="RM-WAIB-06-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB"/>
                 </ComboBox>
                 <Button x:Name="RefreshNowButton"
                         Content="Refresh now"
@@ -1297,7 +1320,7 @@
                            Height="34"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Top"
-                           Margin="0,50,0,0"
+                           Margin="0,44,0,0"
                            Stretch="Uniform"
                            ToolTip="HW Metrics"
                            AutomationProperties.Name="Ícone do modo de refrigeração"/>
@@ -1316,32 +1339,8 @@
                                FontWeight="Bold"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Bottom"
-                               Margin="0,0,0,68"/>
+                               Margin="0,0,0,62"/>
                   </Grid>
-                  <StackPanel VerticalAlignment="Bottom"
-                              Margin="0,0,0,0">
-                    <Border Background="{DynamicResource PanelRaisedBrush}"
-                            CornerRadius="10"
-                            Padding="10">
-                      <StackPanel Orientation="Horizontal"
-                                  HorizontalAlignment="Center">
-                        <Ellipse Width="7"
-                                 Height="7"
-                                 Fill="{DynamicResource WarningBrush}"
-                                 Margin="0,0,8,0"/>
-                        <TextBlock x:Name="DeviceStatusText"
-                                   Text="Hardware link not connected"
-                                   FontSize="10"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                      </StackPanel>
-                    </Border>
-                    <TextBlock x:Name="DisplayModeText"
-                               Text="Preview only · HID not connected"
-                               FontSize="9"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               HorizontalAlignment="Center"
-                               Margin="0,10,0,0"/>
-                  </StackPanel>
                 </Grid>
               </Border>
               <Border x:Name="ThermalComponentsCard"
