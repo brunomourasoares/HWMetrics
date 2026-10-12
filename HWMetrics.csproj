@@ -10,8 +10,8 @@
     <AssemblyName>HWMetrics</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
-    <PackageReference Include="HidSharp" Version="2.1.0" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
+    <PackageReference Include="HidSharp" Version="2.6.4" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
