@@ -437,10 +437,9 @@ public partial class MainWindow : Window
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
         _selectedStorageDriveName = volume.Name;
-        var storageModel = _lastSnapshot?.StorageModel;
-        StorageModelText.Text = string.IsNullOrWhiteSpace(storageModel)
-            ? volume.Name
-            : $"{volume.Name} · {storageModel}";
+        // StorageModel describes physical disks globally, not the physical disk backing
+        // this logical volume. Avoid presenting an unrelated/combined model as a match.
+        StorageModelText.Text = volume.Name;
         StorageDriveNameText.Text = volume.Name;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
