@@ -58,7 +58,17 @@ public sealed class TelemetryHistoryWriter : IAsyncDisposable
     private async Task ProcessQueueAsync()
     {
         await foreach (var request in _requests.Reader.ReadAllAsync().ConfigureAwait(false))
-            _store.Save(request.Snapshots, request.Now, request.Retention);
+        {
+            try
+            {
+                _store.Save(request.Snapshots, request.Now, request.Retention);
+            }
+            catch (Exception ex)
+            {
+                // Keep the worker alive so later snapshots can be persisted.
+                System.Diagnostics.Debug.WriteLine($"[TelemetryHistoryWriter] Failed to persist telemetry history: {ex}");
+            }
+        }
     }
 
     private sealed record WriteRequest(
