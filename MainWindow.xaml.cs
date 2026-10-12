@@ -4,6 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Windows.Interop;
 using System.IO;
 using System.Text.Json;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
@@ -25,6 +26,7 @@ namespace WaterCoolerApp;
 public partial class MainWindow : Window
 {
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromMinutes(30);
+    private const int WmActivateExistingInstance = 0x8001;
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
@@ -135,6 +137,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        SourceInitialized += MainWindow_SourceInitialized;
         _historyWriter = new TelemetryHistoryWriter(_historyStore);
         ApplyApplicationIcon();
         LoadPreferences();
@@ -307,6 +310,21 @@ public partial class MainWindow : Window
             Visible = true
         };
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(RestoreFromTray);
+    }
+
+    private void MainWindow_SourceInitialized(object? sender, EventArgs e)
+    {
+        if (PresentationSource.FromVisual(this) is HwndSource source)
+            source.AddHook(WindowMessageHook);
+    }
+
+    private nint WindowMessageHook(nint hwnd, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if (message != WmActivateExistingInstance) return 0;
+
+        RestoreFromTray();
+        handled = true;
+        return 0;
     }
 
     private void RestoreFromTray()
