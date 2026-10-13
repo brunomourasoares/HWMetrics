@@ -616,19 +616,39 @@
               <StackPanel Orientation="Horizontal">
                 <ComboBox x:Name="CoolerModelSelector"
                           ToolTip="Changes the preview appearance only; it does not control the hardware."
-                          Width="210"
+                          Width="300"
                           Height="34"
                           SelectedIndex="0"
                           SelectionChanged="CoolerModelSelector_SelectionChanged"
                           FontSize="11"
                           Style="{StaticResource ThemedComboBox}"
                           ItemContainerStyle="{StaticResource ThemedComboBoxItem}">
-                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB" Tag="RM-WAI-01-ARGB|white|display"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB" Tag="RM-WAI-02-ARGB|white|display"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB" Tag="RM-WAI-03-ARGB|white|display"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB" Tag="RM-WAIB-04-ARGB|black|display"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB" Tag="RM-WAIB-05-ARGB|black|display"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB" Tag="RM-WAIB-06-ARGB|black|display"/>
+                  <ComboBoxItem Content="RM-WCZ-01-RGB — Frost RGB 120" Tag="RM-WCZ-01-RGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WCZ-02-RGB — Frost RGB 240" Tag="RM-WCZ-02-RGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WCF-04-RGB — Frost RGB 360" Tag="RM-WCF-04-RGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WCB-01-RGB — Black RGB 120" Tag="RM-WCB-01-RGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-02-RGB — Black RGB 240" Tag="RM-WCB-02-RGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-03-RGB — Black RGB 360" Tag="RM-WCB-03-RGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-04-ARGB — Black ARGB 240" Tag="RM-WCB-04-ARGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-05-ARGB — Black ARGB 120" Tag="RM-WCB-05-ARGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-07-ARGB — Black ARGB 360" Tag="RM-WCB-07-ARGB|black|plain"/>
+                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain"/>
+                  <ComboBoxItem Content="RM-WC-AB-240 — All Black 240" Tag="RM-WC-AB-240|black|plain"/>
+                  <ComboBoxItem Content="RM-WC-AB-360 — All Black 360" Tag="RM-WC-AB-360|black|plain"/>
+                  <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain"/>
+                  <ComboBoxItem Content="RM-WCZ-02-RBW — Frost Rainbow 240" Tag="RM-WCZ-02-RBW|white|plain"/>
+                  <ComboBoxItem Content="RM-WCF-04-RBW — Frost Rainbow 360" Tag="RM-WCF-04-RBW|white|plain"/>
+                  <ComboBoxItem Content="RM-WCB-01-RBW — Black Rainbow 120" Tag="RM-WCB-01-RBW|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-02-RBW — Black Rainbow 240" Tag="RM-WCB-02-RBW|black|plain"/>
+                  <ComboBoxItem Content="RM-WCB-03-RBW — Black Rainbow 360" Tag="RM-WCB-03-RBW|black|plain"/>
                 </ComboBox>
               </StackPanel>
             </StackPanel>
