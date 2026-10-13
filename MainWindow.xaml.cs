@@ -968,6 +968,8 @@ public partial class MainWindow : Window
         CoolerDisplayTemp.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
         StartRingAnimation(RingRotation, 7.5);
         StartRingAnimation(ProRingRotation, 6.5);
+        StartRingAnimation(ProMirrorOuterRotation, 10.5);
+        StartRingAnimation(ProMirrorInnerRotation, 5.8);
         StartRingAnimation(ClassicRingRotation, 9.0);
         CoolerDisplayLabel.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
 
@@ -982,6 +984,8 @@ public partial class MainWindow : Window
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
         CoolerArgbRing.Stroke = ringBrush;
         CoolerProLight.Stroke = CreateArgbBrush();
+        CoolerProMirrorOuter.Stroke = CreateArgbBrush();
+        CoolerProMirrorInner.Stroke = CreateArgbBrush();
         CoolerClassicLight.Stroke = CreateArgbBrush();
         CoolerProLight.Opacity = 1;
         CoolerClassicLight.Opacity = 1;
