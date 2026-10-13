@@ -632,17 +632,17 @@
                   <ComboBoxItem Content="RM-WCB-04-ARGB — Black ARGB 240" Tag="RM-WCB-04-ARGB|black|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WCB-05-ARGB — Black ARGB 120" Tag="RM-WCB-05-ARGB|black|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WCB-07-ARGB — Black ARGB 360" Tag="RM-WCB-07-ARGB|black|plain|classic|argb"/>
-                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain|aurafrostpro|argb"/>
-                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain|aurafrostpro|argb"/>
-                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain|aurafrostpro|argb"/>
+                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain|classic|argb"/>
+                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain|classic|argb"/>
+                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WC-AB-240 — All Black 240" Tag="RM-WC-AB-240|black|plain|allblack|none"/>
                   <ComboBoxItem Content="RM-WC-AB-360 — All Black 360" Tag="RM-WC-AB-360|black|plain|allblack|none"/>
-                  <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain|classic|rainbow"/>
-                  <ComboBoxItem Content="RM-WCZ-02-RBW — Frost Rainbow 240" Tag="RM-WCZ-02-RBW|white|plain|classic|rainbow"/>
-                  <ComboBoxItem Content="RM-WCF-04-RBW — Frost Rainbow 360" Tag="RM-WCF-04-RBW|white|plain|classic|rainbow"/>
-                  <ComboBoxItem Content="RM-WCB-01-RBW — Black Rainbow 120" Tag="RM-WCB-01-RBW|black|plain|classic|rainbow"/>
-                  <ComboBoxItem Content="RM-WCB-02-RBW — Black Rainbow 240" Tag="RM-WCB-02-RBW|black|plain|classic|rainbow"/>
-                  <ComboBoxItem Content="RM-WCB-03-RBW — Black Rainbow 360" Tag="RM-WCB-03-RBW|black|plain|classic|rainbow"/>
+                  <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain|square|rainbow"/>
+                  <ComboBoxItem Content="RM-WCZ-02-RBW — Frost Rainbow 240" Tag="RM-WCZ-02-RBW|white|plain|square|rainbow"/>
+                  <ComboBoxItem Content="RM-WCF-04-RBW — Frost Rainbow 360" Tag="RM-WCF-04-RBW|white|plain|square|rainbow"/>
+                  <ComboBoxItem Content="RM-WCB-01-RBW — Black Rainbow 120" Tag="RM-WCB-01-RBW|black|plain|square|rainbow"/>
+                  <ComboBoxItem Content="RM-WCB-02-RBW — Black Rainbow 240" Tag="RM-WCB-02-RBW|black|plain|square|rainbow"/>
+                  <ComboBoxItem Content="RM-WCB-03-RBW — Black Rainbow 360" Tag="RM-WCB-03-RBW|black|plain|square|rainbow"/>
                 </ComboBox>
               </StackPanel>
             </StackPanel>
@@ -1282,6 +1282,17 @@
                         <Ellipse.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="19" ShadowDepth="0" Opacity="0.8"/></Ellipse.Effect>
                       </Ellipse>
                       <Ellipse Width="106" Height="106" Stroke="#344653" StrokeThickness="2"/>
+                      <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
+                    </Grid>
+                    <!-- Frost Rainbow: bloco quadrado, cor central estática e LEDs nas bordas. -->
+                    <Grid x:Name="CoolerSquareVisual" Visibility="Collapsed">
+                      <Rectangle x:Name="CoolerSquareBody" Width="184" Height="184" RadiusX="30" RadiusY="30" Fill="#EFF2F5" Stroke="#B1BCC7" StrokeThickness="7"/>
+                      <Rectangle Width="158" Height="158" RadiusX="24" RadiusY="24" Fill="#10151D" Stroke="#344653" StrokeThickness="4"/>
+                      <Rectangle x:Name="CoolerSquareLight" Width="143" Height="143" RadiusX="20" RadiusY="20" Fill="#0C121A" StrokeThickness="7" RenderTransformOrigin="0.5,0.5">
+                        <Rectangle.RenderTransform><RotateTransform x:Name="SquareRingRotation" Angle="0"/></Rectangle.RenderTransform>
+                        <Rectangle.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="19" ShadowDepth="0" Opacity="0.8"/></Rectangle.Effect>
+                      </Rectangle>
+                      <Rectangle Width="119" Height="119" RadiusX="16" RadiusY="16" Fill="#203B3A" Stroke="#344653" StrokeThickness="2"/>
                       <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
                     <!-- All Black: bloco circular preto, sem aro RGB nem efeitos luminosos. -->
