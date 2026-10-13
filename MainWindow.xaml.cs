@@ -923,17 +923,25 @@ public partial class MainWindow : Window
             ? string.Equals(parts[2], "display", StringComparison.OrdinalIgnoreCase)
             : modelCode.Contains("WAI-", StringComparison.OrdinalIgnoreCase)
                 || modelCode.Contains("WAIB-", StringComparison.OrdinalIgnoreCase);
+        var family = parts.Length > 3 ? parts[3] : (hasNumericDisplay ? "auraice" : "classic");
 
         CoolerModelBadge.Text = modelCode;
+        CoolerAuraIceVisual.Visibility = family == "auraice" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerAuraFrostProVisual.Visibility = family == "aurafrostpro" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerClassicVisual.Visibility = family == "classic" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerAllBlackVisual.Visibility = family == "allblack" ? Visibility.Visible : Visibility.Collapsed;
+
         var bodyColor = blackModel ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
         var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
         CoolerBody.Fill = new SolidColorBrush(bodyColor);
         CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
+        CoolerProBody.Background = new SolidColorBrush(bodyColor);
+        CoolerProBody.BorderBrush = new SolidColorBrush(bodyStroke);
+        CoolerClassicBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
 
         CoolerDisplayTemp.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
         CoolerDisplayLabel.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
-        CoolerLogo.VerticalAlignment = hasNumericDisplay ? VerticalAlignment.Top : VerticalAlignment.Center;
-        CoolerLogo.Margin = hasNumericDisplay ? new Thickness(0, 52, 0, 0) : new Thickness(0);
 
         // Shared ARGB ring: only the block shell and its display vary by model.
         var ringBrush = new LinearGradientBrush
@@ -945,6 +953,8 @@ public partial class MainWindow : Window
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 255, 0), 0.5));
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
         CoolerArgbRing.Stroke = ringBrush;
+        CoolerProLight.BorderBrush = new SolidColorBrush(Color.FromRgb(98, 230, 197));
+        CoolerClassicLight.Stroke = new SolidColorBrush(Color.FromRgb(98, 230, 197));
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
