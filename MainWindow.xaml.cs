@@ -457,10 +457,9 @@ public partial class MainWindow : Window
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
         _selectedStorageDriveName = volume.Name;
-        // StorageModel describes physical disks globally, not the physical disk backing
-        // this logical volume. Avoid presenting an unrelated/combined model as a match.
+        // VolumeLabel is a filesystem label, not the physical storage product model.
         StorageModelText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
-            ? T("Local volume", "Volume local")
+            ? T("Drive model unavailable", "Modelo do disco indisponível")
             : volume.VolumeLabel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
