@@ -1005,11 +1005,11 @@ public partial class MainWindow : Window
 
     private static void StartRingAnimation(RotateTransform transform, double seconds)
     {
-        if (transform.HasAnimatedProperties) return;
+        // Replace the previous clock when switching models so each series applies its own timing.
         transform.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(0, 360, TimeSpan.FromSeconds(seconds))
         {
             RepeatBehavior = RepeatBehavior.Forever
-        });
+        }, HandoffBehavior.SnapshotAndReplace);
     }
 
     private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
