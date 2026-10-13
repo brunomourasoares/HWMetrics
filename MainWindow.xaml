@@ -1286,8 +1286,20 @@
                       </Ellipse>
                       <Ellipse Width="114" Height="114" Fill="#101923" Stroke="#25313D" StrokeThickness="2"/>
                       <Ellipse Width="94" Height="94" Fill="#0B1119" Stroke="#344653" StrokeThickness="1.5"/>
-                      <Path Data="M 0,-37 C 25,-18 28,4 10,20 C 2,27 -8,29 -16,24 C -5,23 4,15 5,5 C 6,-5 -2,-14 -10,-19 C -5,-26 -2,-32 0,-37 Z" Fill="#42D9CF" HorizontalAlignment="Center" VerticalAlignment="Center" Width="43" Height="50" Stretch="Uniform"/>
-                      <Path Data="M -3,-22 C 13,-7 17,7 6,17 C -2,24 -13,20 -16,12 C -7,14 -1,7 -3,0 C -5,-7 -9,-13 -3,-22 Z" Fill="#86FFF0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="25" Height="32" Stretch="Uniform" Opacity="0.9"/>
+                      <!-- Stylized iridescent vortex, inspired by the real circular mirror-face models. -->
+                      <Ellipse Width="78" Height="78" Fill="#11131B" Stroke="#2D3541" StrokeThickness="1"/>
+                      <Path Data="M 0,-37 C 25,-18 28,4 10,20 C 2,27 -8,29 -16,24 C -5,23 4,15 5,5 C 6,-5 -2,-14 -10,-19 C -5,-26 -2,-32 0,-37 Z" HorizontalAlignment="Center" VerticalAlignment="Center" Width="43" Height="50" Stretch="Uniform">
+                        <Path.Fill>
+                          <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#F72585" Offset="0"/>
+                            <GradientStop Color="#8A2BE2" Offset="0.28"/>
+                            <GradientStop Color="#4361EE" Offset="0.48"/>
+                            <GradientStop Color="#06D6A0" Offset="0.72"/>
+                            <GradientStop Color="#F9C74F" Offset="1"/>
+                          </LinearGradientBrush>
+                        </Path.Fill>
+                      </Path>
+                      <Path Data="M -3,-22 C 13,-7 17,7 6,17 C -2,24 -13,20 -16,12 C -7,14 -1,7 -3,0 C -5,-7 -9,-13 -3,-22 Z" Fill="#F7F7FF" HorizontalAlignment="Center" VerticalAlignment="Center" Width="19" Height="25" Stretch="Uniform" Opacity="0.92"/>
                     </Grid>
                     <!-- Frost Rainbow: bloco quadrado, cor central estática e LEDs nas bordas. -->
                     <Grid x:Name="CoolerSquareVisual" Visibility="Collapsed">
