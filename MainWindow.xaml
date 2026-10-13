@@ -654,7 +654,7 @@
                              Margin="0,4,0,0"/>
                   <TextBlock x:Name="CpuTempText"
                              Text="--°"
-                             FontSize="31"
+                             FontSize="29"
                              FontWeight="Bold"
                              Margin="0,12,0,1"/>
                   <TextBlock x:Name="CpuLoadText"
@@ -701,7 +701,7 @@
                              Margin="0,4,0,0"/>
                   <TextBlock x:Name="GpuTempText"
                              Text="--°"
-                             FontSize="31"
+                             FontSize="29"
                              FontWeight="Bold"
                              Margin="0,12,0,1"/>
                   <TextBlock x:Name="GpuLoadText"

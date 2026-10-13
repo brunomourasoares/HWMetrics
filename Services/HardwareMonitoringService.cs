@@ -14,6 +14,7 @@ public sealed class HardwareMonitoringService : IDisposable
     private readonly Computer _computer;
     private readonly object _sync = new();
     private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _loggedHardware = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
     private long? _previousIdleTime;
@@ -32,9 +33,28 @@ public sealed class HardwareMonitoringService : IDisposable
             IsGpuEnabled = true,
             IsMemoryEnabled = true,
             IsStorageEnabled = true,
-            IsMotherboardEnabled = true
+            IsMotherboardEnabled = true,
+            // Match LibreHardwareMonitor's default sensor-category coverage.
+            IsControllerEnabled = true,
+            IsNetworkEnabled = true,
+            IsPowerMonitorEnabled = true,
+            IsPsuEnabled = true,
+            IsBatteryEnabled = true
         };
-        _computer.Open();
+        try
+        {
+            _computer.Open();
+        }
+        catch
+        {
+            // Open may initialize some hardware groups before a later group fails.
+            try { _computer.Close(); }
+            catch (Exception cleanupException)
+            {
+                Debug.WriteLine($"[HardwareMonitoring] Cleanup after initialization failure failed: {cleanupException}");
+            }
+            throw;
+        }
     }
 
     public SensorSnapshot Read()
@@ -117,6 +137,10 @@ public sealed class HardwareMonitoringService : IDisposable
     {
         try
         {
+            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+            if (_loggedHardware.Add(hardwareKey))
+                Debug.WriteLine($"[HardwareMonitoring] Hardware encontrado: tipo={hardware.HardwareType}, nome='{hardware.Name}', identificador='{hardware.Identifier}'.");
+
             if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType == HardwareType.Storage)
@@ -327,7 +351,9 @@ public sealed class HardwareMonitoringService : IDisposable
             {
                 if (!drive.IsReady || drive.DriveType is not (DriveType.Fixed or DriveType.Removable) || drive.TotalSize <= 0) continue;
                 var total = drive.TotalSize / bytesPerGiB;
-                var free = drive.AvailableFreeSpace / bytesPerGiB;
+                // Use volume-wide free space so the card reflects filesystem capacity,
+                // not the current user's quota-limited available space.
+                var free = drive.TotalFreeSpace / bytesPerGiB;
                 drives.Add((drive, total, free, Math.Max(0, total - free)));
             }
             catch (IOException) { }
@@ -375,36 +401,54 @@ public sealed class HardwareMonitoringService : IDisposable
                 "SELECT DeviceID, Model FROM Win32_DiskDrive");
 
             var partitionsByDrive = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject association in logicalToPartition.Get())
+            using (var associations = logicalToPartition.Get())
             {
-                var logicalPath = association["Dependent"]?.ToString();
-                var partitionPath = association["Antecedent"]?.ToString();
-                var drive = ExtractWmiKey(logicalPath, "DeviceID");
-                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
-                if (drive is null || partitionId is null) continue;
-                if (!partitionsByDrive.TryGetValue(drive, out var list))
-                    partitionsByDrive[drive] = list = new List<string>();
-                list.Add(partitionId);
+                foreach (ManagementObject association in associations)
+                {
+                    using (association)
+                    {
+                        var logicalPath = association["Dependent"]?.ToString();
+                        var partitionPath = association["Antecedent"]?.ToString();
+                        var drive = ExtractWmiKey(logicalPath, "DeviceID");
+                        var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                        if (drive is null || partitionId is null) continue;
+                        if (!partitionsByDrive.TryGetValue(drive, out var list))
+                            partitionsByDrive[drive] = list = new List<string>();
+                        list.Add(partitionId);
+                    }
+                }
             }
 
             var diskByPartition = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject association in diskToPartition.Get())
+            using (var associations = diskToPartition.Get())
             {
-                var diskPath = association["Antecedent"]?.ToString();
-                var partitionPath = association["Dependent"]?.ToString();
-                var diskId = ExtractWmiKey(diskPath, "DeviceID");
-                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
-                if (diskId is not null && partitionId is not null)
-                    diskByPartition[partitionId] = diskId;
+                foreach (ManagementObject association in associations)
+                {
+                    using (association)
+                    {
+                        var diskPath = association["Antecedent"]?.ToString();
+                        var partitionPath = association["Dependent"]?.ToString();
+                        var diskId = ExtractWmiKey(diskPath, "DeviceID");
+                        var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                        if (diskId is not null && partitionId is not null)
+                            diskByPartition[partitionId] = diskId;
+                    }
+                }
             }
 
             var modelByDisk = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject disk in diskDrives.Get())
+            using (var disks = diskDrives.Get())
             {
-                var id = disk["DeviceID"]?.ToString();
-                var model = disk["Model"]?.ToString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(model))
-                    modelByDisk[id] = model;
+                foreach (ManagementObject disk in disks)
+                {
+                    using (disk)
+                    {
+                        var id = disk["DeviceID"]?.ToString();
+                        var model = disk["Model"]?.ToString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(model))
+                            modelByDisk[id] = model;
+                    }
+                }
             }
 
             foreach (var (drive, partitions) in partitionsByDrive)
@@ -525,7 +569,15 @@ public sealed class HardwareMonitoringService : IDisposable
         {
             if (_disposed) return;
             _disposed = true;
-            _computer.Close();
+            try
+            {
+                _computer.Close();
+            }
+            catch (Exception ex)
+            {
+                // Disposal is best-effort; one faulty hardware provider must not crash shutdown.
+                Debug.WriteLine($"[HardwareMonitoring] Failed to close hardware providers: {ex}");
+            }
         }
     }
 }

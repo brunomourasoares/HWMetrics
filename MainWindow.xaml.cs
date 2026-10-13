@@ -1066,17 +1066,33 @@ public partial class MainWindow : Window
         }
         finally
         {
-            // Always release hardware and tray resources if final persistence fails.
-            _monitor?.Dispose();
-            _displayTransport.Dispose();
+            // Isolate cleanup failures so one provider cannot prevent releasing later resources.
+            try { _monitor?.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MainWindow] Hardware cleanup failed: {ex}"); }
+
+            try { _displayTransport.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MainWindow] HID cleanup failed: {ex}"); }
+
             if (_trayIcon is not null)
             {
-                _trayIcon.Visible = false;
-                _trayIcon.Dispose();
-                _trayIcon = null;
+                try
+                {
+                    _trayIcon.Visible = false;
+                    _trayIcon.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MainWindow] Tray icon cleanup failed: {ex}");
+                }
+                finally
+                {
+                    _trayIcon = null;
+                }
             }
-            _trayApplicationIcon?.Dispose();
-            _trayApplicationIcon = null;
+
+            try { _trayApplicationIcon?.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MainWindow] Application icon cleanup failed: {ex}"); }
+            finally { _trayApplicationIcon = null; }
         }
     }
 }
