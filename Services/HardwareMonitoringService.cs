@@ -157,7 +157,7 @@ public sealed class HardwareMonitoringService : IDisposable
             else if (hardware.HardwareType == HardwareType.Storage)
             {
                 var candidate = CleanModel(hardware.Name);
-                if (IsUsefulStorageModel(candidate) && _storageModelCandidates.Add(candidate))
+                if (candidate is not null && IsUsefulStorageModel(candidate) && _storageModelCandidates.Add(candidate))
                     storageModel = storageModel is null ? candidate : $"{storageModel} · {candidate}";
             }
             foreach (var sensor in hardware.Sensors)
