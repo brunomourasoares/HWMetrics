@@ -311,7 +311,9 @@ public sealed class HardwareMonitoringService : IDisposable
             var used = Math.Clamp(item.Used, 0d, item.Total);
             var free = Math.Clamp(item.Free, 0d, item.Total);
             var percent = item.Total <= 0 ? 0d : Math.Clamp(used / item.Total * 100d, 0d, 100d);
-            return new StorageVolumeSnapshot(item.Drive.Name.TrimEnd('\\'), used, item.Total, free, percent, item.Drive.VolumeLabel);
+            var driveName = item.Drive.Name.TrimEnd('\\');
+            physicalModels.TryGetValue(driveName.ToUpperInvariant(), out var productModel);
+            return new StorageVolumeSnapshot(driveName, used, item.Total, free, percent, productModel ?? string.Empty);
         }).ToArray();
 
         var systemRoot = Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.System));
