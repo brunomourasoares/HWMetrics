@@ -33,10 +33,12 @@ jobs:
         shell: pwsh
         run: |
           $root = Resolve-Path "artifacts/HW-Metrics-win-x64"
-          $sysFiles = @(Get-ChildItem $root -Recurse -File -Filter "*.sys")
-          if ($sysFiles.Count -gt 0) {
-            $paths = $sysFiles.FullName -join ", "
-            throw "Unexpected kernel driver files found in publish output: $paths"
+          $driverFiles = @(Get-ChildItem $root -Recurse -File | Where-Object {
+            $_.Extension -in @(".sys", ".inf", ".cat") -or $_.Name -match "^(WinRing0|WinRing0x64|WinRing0_1_2)(\.|$)"
+          })
+          if ($driverFiles.Count -gt 0) {
+            $paths = $driverFiles.FullName -join ", "
+            throw "Unexpected legacy kernel driver artifacts found in publish output: $paths"
           }
 
           $matchedFiles = @()
@@ -47,7 +49,12 @@ jobs:
               $bytes = [System.IO.File]::ReadAllBytes($path)
               $text = [System.Text.Encoding]::ASCII.GetString($bytes)
               if ($text -match "WinRing0|WinRing0x64|WinRing0_1_2") {
-                $matchedFiles += $path
+                # RAMSPDToolkit-NDD is the upstream "No Default Drivers" build.
+                # It retains API/enum identifiers but excludes the WinRing0 implementation and embedded driver binaries.
+                # Keep auditing every other published file for legacy driver indicators.
+                if ($_.Name -ne "RAMSPDToolkit-NDD.dll") {
+                  $matchedFiles += $path
+                }
               }
             } catch {
               $inspectionErrors += "${path}: $($_.Exception.Message)"
@@ -59,7 +66,7 @@ jobs:
           if ($matchedFiles.Count -gt 0) {
             throw ("Legacy WinRing0 indicators found in published files: " + ($matchedFiles -join ", "))
           }
-          Write-Host "No .sys driver files or legacy WinRing0 string indicators found in published output."
+          Write-Host "No legacy driver files found; all published files except the reviewed RAMSPDToolkit-NDD assembly are free of WinRing0 string indicators."
           
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
