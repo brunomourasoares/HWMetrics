@@ -380,10 +380,11 @@ public sealed class HardwareMonitoringService : IDisposable
                 var logicalPath = association["Dependent"]?.ToString();
                 var partitionPath = association["Antecedent"]?.ToString();
                 var drive = ExtractWmiKey(logicalPath, "DeviceID");
-                if (drive is null || partitionPath is null) continue;
+                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                if (drive is null || partitionId is null) continue;
                 if (!partitionsByDrive.TryGetValue(drive, out var list))
                     partitionsByDrive[drive] = list = new List<string>();
-                list.Add(partitionPath);
+                list.Add(partitionId);
             }
 
             var diskByPartition = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -392,8 +393,9 @@ public sealed class HardwareMonitoringService : IDisposable
                 var diskPath = association["Antecedent"]?.ToString();
                 var partitionPath = association["Dependent"]?.ToString();
                 var diskId = ExtractWmiKey(diskPath, "DeviceID");
-                if (diskId is not null && partitionPath is not null)
-                    diskByPartition[partitionPath] = diskId;
+                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                if (diskId is not null && partitionId is not null)
+                    diskByPartition[partitionId] = diskId;
             }
 
             var modelByDisk = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -425,6 +427,10 @@ public sealed class HardwareMonitoringService : IDisposable
         catch (UnauthorizedAccessException ex)
         {
             Debug.WriteLine($"[HardwareMonitoring] Acesso negado ao consultar modelos dos discos: {ex.Message}");
+        }
+        catch (COMException ex)
+        {
+            Debug.WriteLine($"[HardwareMonitoring] Falha de COM ao consultar modelos dos discos: {ex.Message}");
         }
 
         return models;
