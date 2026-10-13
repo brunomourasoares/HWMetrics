@@ -628,7 +628,7 @@ public partial class MainWindow : Window
         var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
         try
         {
-            var csv = await Task.Run(() => BuildHistoryCsv(
+            var csv = await Task.Run(() => TelemetryHistoryCsvExporter.Build(
                 snapshots, exportTemperature, showCpu, showGpu, showRam));
             await Task.Run(() => File.WriteAllText(
                 dialog.FileName,
@@ -649,57 +649,6 @@ public partial class MainWindow : Window
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
-    }
-
-    private static string BuildHistoryCsv(
-        IReadOnlyList<SensorSnapshot> snapshots,
-        bool exportTemperature,
-        bool showCpu,
-        bool showGpu,
-        bool showRam)
-    {
-        var csv = new System.Text.StringBuilder();
-        csv.AppendLine("Tipo;Horário;Componente;Valor;Unidade");
-
-        foreach (var snapshot in snapshots)
-        {
-            var timestamp = snapshot.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-            if (exportTemperature)
-            {
-                if (showCpu && snapshot.CpuTemperatureC is double cpuTemperature)
-                    AppendHistoryCsvRow(csv, "Temperatura", timestamp, "CPU", cpuTemperature, "°C");
-                if (showGpu && snapshot.GpuTemperatureC is double gpuTemperature)
-                    AppendHistoryCsvRow(csv, "Temperatura", timestamp, "GPU", gpuTemperature, "°C");
-            }
-            else
-            {
-                if (showCpu && snapshot.CpuLoadPercent is double cpuLoad)
-                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "CPU", cpuLoad, "%");
-                if (showGpu && snapshot.GpuLoadPercent is double gpuLoad)
-                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "GPU", gpuLoad, "%");
-                if (showRam && snapshot.MemoryUsedGiB is double memoryUsed &&
-                    snapshot.MemoryTotalGiB is double memoryTotal && memoryTotal > 0)
-                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "Memória", memoryUsed / memoryTotal * 100d, "%");
-            }
-        }
-
-        return csv.ToString();
-    }
-
-    private static void AppendHistoryCsvRow(
-        System.Text.StringBuilder csv,
-        string type,
-        string timestamp,
-        string component,
-        double value,
-        string unit)
-    {
-        // All text fields are controlled labels/timestamps and contain no CSV delimiters.
-        csv.Append(type).Append(';')
-            .Append(timestamp).Append(';')
-            .Append(component).Append(';')
-            .Append(value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append(';')
-            .AppendLine(unit);
     }
 
     private TimeSpan GetSelectedHistoryRetention() => HistoryRetentionSelector.SelectedIndex switch
