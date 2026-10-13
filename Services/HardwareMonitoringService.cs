@@ -20,6 +20,7 @@ public sealed class HardwareMonitoringService : IDisposable
     private readonly ConditionalWeakTable<ISensor, LoggedMarker> _loggedSensors = new();
     private readonly ConditionalWeakTable<IHardware, LoggedMarker> _loggedHardware = new();
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _storageModelCandidates = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
     private long? _previousIdleTime;
     private long? _previousKernelTime;
@@ -76,6 +77,9 @@ public sealed class HardwareMonitoringService : IDisposable
             var gpuLoadPriority = -1;
             double cpuCoreLoadSum = 0;
             var cpuCoreLoadCount = 0;
+
+            // Reuse the set to avoid allocating/splitting model strings during every poll.
+            _storageModelCandidates.Clear();
 
             // Refresh the complete hardware tree once using the same visitor lifecycle as LibreHardwareMonitor.
             _computer.Accept(_updateVisitor);
@@ -153,14 +157,8 @@ public sealed class HardwareMonitoringService : IDisposable
             else if (hardware.HardwareType == HardwareType.Storage)
             {
                 var candidate = CleanModel(hardware.Name);
-                if (IsUsefulStorageModel(candidate))
-                {
-                    if (storageModel is null)
-                        storageModel = candidate;
-                    else if (!storageModel.Split(" · ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                                 .Contains(candidate, StringComparer.OrdinalIgnoreCase))
-                        storageModel = $"{storageModel} · {candidate}";
-                }
+                if (IsUsefulStorageModel(candidate) && _storageModelCandidates.Add(candidate))
+                    storageModel = storageModel is null ? candidate : $"{storageModel} · {candidate}";
             }
             foreach (var sensor in hardware.Sensors)
             {
