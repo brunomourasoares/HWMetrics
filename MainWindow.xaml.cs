@@ -55,6 +55,91 @@ public partial class MainWindow : Window
     private bool _closePromptAnswered;
     private bool _startHidden;
 
+    // One profile per pump-block series/lighting family. Keeping palettes and timing here
+    // makes user-selectable ARGB colors a future extension rather than a visual rewrite.
+    private enum CoolerLightingMode { None, Rgb, Argb, Rainbow }
+    private sealed record CoolerVisualProfile(
+        string Family,
+        bool IsBlack,
+        bool HasNumericDisplay,
+        CoolerLightingMode LightingMode,
+        double RingSeconds,
+        double OuterMirrorSeconds,
+        double InnerMirrorSeconds,
+        Color[] Palette);
+
+    private static readonly Color[] DefaultArgbPalette =
+    [
+        Color.FromRgb(255, 42, 104),
+        Color.FromRgb(255, 194, 54),
+        Color.FromRgb(68, 255, 190),
+        Color.FromRgb(45, 150, 255),
+        Color.FromRgb(190, 74, 255)
+    ];
+
+    private static readonly Color[] RainbowPalette =
+    [
+        Color.FromRgb(255, 0, 0),
+        Color.FromRgb(255, 150, 0),
+        Color.FromRgb(255, 255, 0),
+        Color.FromRgb(0, 255, 80),
+        Color.FromRgb(0, 150, 255),
+        Color.FromRgb(90, 0, 255),
+        Color.FromRgb(255, 0, 180)
+    ];
+
+    private static CoolerVisualProfile CreateCoolerProfile(string[] parts, string modelCode)
+    {
+        var family = parts.Length > 3 ? parts[3] : "classic";
+        var finish = parts.Length > 1 ? parts[1] : "white";
+        var display = parts.Length > 2 && parts[2].Equals("display", StringComparison.OrdinalIgnoreCase);
+        var lighting = parts.Length > 4 && Enum.TryParse<CoolerLightingMode>(parts[4], true, out var parsed)
+            ? parsed
+            : modelCode.Contains("WC-AB-", StringComparison.OrdinalIgnoreCase)
+                ? CoolerLightingMode.None
+                : modelCode.Contains("-RBW", StringComparison.OrdinalIgnoreCase)
+                    ? CoolerLightingMode.Rainbow
+                    : modelCode.Contains("-RGB", StringComparison.OrdinalIgnoreCase)
+                        ? CoolerLightingMode.Rgb
+                        : CoolerLightingMode.Argb;
+
+        // Profiles are intentionally series-specific; model size (120/240/360) does not
+        // alter the pump face, while finish/display and lighting technology do.
+        return family switch
+        {
+            "auraice" => new(family, finish.Equals("black", StringComparison.OrdinalIgnoreCase), display,
+                CoolerLightingMode.Argb, 7.5, 0, 0, DefaultArgbPalette),
+            "aurafrostpro" => new(family, finish.Equals("black", StringComparison.OrdinalIgnoreCase), false,
+                CoolerLightingMode.Argb, 6.5, 10.5, 5.8, DefaultArgbPalette),
+            "allblack" => new(family, true, false, CoolerLightingMode.None, 0, 0, 0, Array.Empty<Color>()),
+            _ => new("classic", finish.Equals("black", StringComparison.OrdinalIgnoreCase), false,
+                lighting, 9.0, 0, 0,
+                lighting == CoolerLightingMode.Rainbow ? RainbowPalette :
+                lighting == CoolerLightingMode.Rgb ? [Color.FromRgb(255, 0, 0), Color.FromRgb(0, 255, 0), Color.FromRgb(0, 0, 255)] :
+                lighting == CoolerLightingMode.None ? Array.Empty<Color>() : DefaultArgbPalette)
+        };
+    }
+
+    private static LinearGradientBrush CreatePaletteBrush(IReadOnlyList<Color> palette)
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0.5),
+            EndPoint = new Point(1, 0.5),
+            MappingMode = BrushMappingMode.RelativeToBoundingBox
+        };
+        if (palette.Count == 0)
+        {
+            brush.GradientStops.Add(new GradientStop(Color.FromRgb(45, 55, 65), 0));
+            brush.GradientStops.Add(new GradientStop(Color.FromRgb(45, 55, 65), 1));
+            return brush;
+        }
+
+        for (var i = 0; i < palette.Count; i++)
+            brush.GradientStops.Add(new GradientStop(palette[i], palette.Count == 1 ? 0 : (double)i / (palette.Count - 1)));
+        return brush;
+    }
+
     private sealed class AppPreferences
     {
         public int ThemeIndex { get; set; }
@@ -902,28 +987,105 @@ public partial class MainWindow : Window
         HideSettingsPanel();
     }
 
+    private static LinearGradientBrush CreateArgbBrush()
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0.5),
+            EndPoint = new Point(1, 0.5),
+            MappingMode = BrushMappingMode.RelativeToBoundingBox
+        };
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 42, 104), 0.0));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 194, 54), 0.22));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(68, 255, 190), 0.48));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(45, 150, 255), 0.72));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(190, 74, 255), 1.0));
+        return brush;
+    }
+
+    private static void StartRingAnimation(RotateTransform transform, double seconds)
+    {
+        // Replace the previous clock when switching models so each series applies its own timing.
+        transform.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(0, 360, TimeSpan.FromSeconds(seconds))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
+        }, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private static void StopRingAnimation(RotateTransform transform)
+    {
+        // Non-addressable 12 V RGB is shown as a static color blend, not a moving ARGB effect.
+        transform.BeginAnimation(RotateTransform.AngleProperty, null, HandoffBehavior.SnapshotAndReplace);
+        transform.Angle = 0;
+    }
+
     private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
-        var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
-        CoolerModelBadge.Text = model;
-        // O seletor altera apenas a prévia visual; não envia comandos ao hardware.
-        bool blackModel = model.Contains("RM-WAIB-", StringComparison.OrdinalIgnoreCase);
-        var bodyColor = blackModel ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
-        var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
+
+        // The selected profile only changes the visual preview; it never controls hardware.
+        var selectedItem = CoolerModelSelector.SelectedItem as ComboBoxItem;
+        var tag = selectedItem?.Tag?.ToString() ?? string.Empty;
+        var parts = tag.Split('|');
+        var modelCode = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0])
+            ? parts[0]
+            : selectedItem?.Content?.ToString() ?? "Rise Mode";
+        var profile = CreateCoolerProfile(parts, modelCode);
+
+        CoolerModelBadge.Text = modelCode;
+        CoolerAuraIceVisual.Visibility = profile.Family == "auraice" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerAuraFrostProVisual.Visibility = profile.Family == "aurafrostpro" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerClassicVisual.Visibility = profile.Family == "classic" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerAllBlackVisual.Visibility = profile.Family == "allblack" ? Visibility.Visible : Visibility.Collapsed;
+
+        var bodyColor = profile.IsBlack ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
+        var bodyStroke = profile.IsBlack ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
         CoolerBody.Fill = new SolidColorBrush(bodyColor);
         CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
+        CoolerProBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerProBody.Stroke = new SolidColorBrush(bodyStroke);
+        CoolerClassicBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
 
-        // Simula o gradiente ARGB azul -> violeta -> vermelho usando um gradiente cônico
-        // aproximado por pequenos segmentos coloridos no aro externo.
-        var ringBrush = new LinearGradientBrush();
-        ringBrush.StartPoint = new Point(0, 0.5);
-        ringBrush.EndPoint = new Point(1, 0.5);
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 0, 0), 0.0));
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 255, 0), 0.5));
-        ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
-        CoolerArgbRing.Stroke = ringBrush;
-        // Display digits and thermometer glyph use an ice-white treatment on both case colors.
+        CoolerDisplayTemp.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
+        CoolerDisplayLabel.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
+
+        // Stop clocks from the previously selected family before starting this profile.
+        // Hidden visuals should not keep running animations in the background.
+        StopRingAnimation(RingRotation);
+        StopRingAnimation(ProRingRotation);
+        StopRingAnimation(ProMirrorOuterRotation);
+        StopRingAnimation(ProMirrorInnerRotation);
+        StopRingAnimation(ClassicRingRotation);
+
+        if (profile.Family == "auraice")
+            StartRingAnimation(RingRotation, profile.RingSeconds);
+        if (profile.Family == "aurafrostpro")
+        {
+            StartRingAnimation(ProRingRotation, profile.RingSeconds);
+            StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
+            StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
+        }
+        if (profile.Family == "classic" &&
+            profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
+            StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
+
+        // The palette is centralized by series: ARGB is configurable later, RGB and
+        // Rainbow have distinct palettes, and All Black remains intentionally unlit.
+        var palette = profile.Palette;
+        var paletteBrush = CreatePaletteBrush(palette);
+        CoolerArgbRing.Stroke = paletteBrush;
+        CoolerProLight.Stroke = paletteBrush;
+        CoolerProMirrorOuter.Stroke = paletteBrush;
+        CoolerProMirrorInner.Stroke = paletteBrush;
+        CoolerClassicLight.Stroke = paletteBrush;
+
+        var lightingEnabled = profile.LightingMode != CoolerLightingMode.None;
+        CoolerArgbRing.Opacity = lightingEnabled ? 1 : 0;
+        CoolerProLight.Opacity = lightingEnabled ? 1 : 0;
+        CoolerProMirrorOuter.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.78 : 0;
+        CoolerProMirrorInner.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.62 : 0;
+        CoolerClassicLight.Opacity = lightingEnabled ? 1 : 0;
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
