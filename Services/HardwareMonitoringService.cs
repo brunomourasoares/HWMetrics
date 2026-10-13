@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using LibreHardwareMonitor.Hardware;
 using WaterCoolerApp.Models;
 using System.IO;
@@ -12,10 +13,14 @@ namespace WaterCoolerApp.Services;
 public sealed class HardwareMonitoringService : IDisposable
 {
     private readonly Computer _computer;
+    private readonly HardwareUpdateVisitor _updateVisitor;
     private readonly object _sync = new();
-    private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
-    private readonly HashSet<string> _loggedHardware = new(StringComparer.OrdinalIgnoreCase);
+    // Weak keys avoid allocating composite identifier strings on every poll without
+    // retaining disconnected hardware/sensor objects for the lifetime of the service.
+    private readonly ConditionalWeakTable<ISensor, LoggedMarker> _loggedSensors = new();
+    private readonly ConditionalWeakTable<IHardware, LoggedMarker> _loggedHardware = new();
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _storageModelCandidates = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
     private long? _previousIdleTime;
     private long? _previousKernelTime;
@@ -41,6 +46,7 @@ public sealed class HardwareMonitoringService : IDisposable
             IsPsuEnabled = true,
             IsBatteryEnabled = true
         };
+        _updateVisitor = new HardwareUpdateVisitor(LogHardwareUpdateFailure);
         try
         {
             _computer.Open();
@@ -72,8 +78,11 @@ public sealed class HardwareMonitoringService : IDisposable
             double cpuCoreLoadSum = 0;
             var cpuCoreLoadCount = 0;
 
+            // Reuse the set to avoid allocating/splitting model strings during every poll.
+            _storageModelCandidates.Clear();
+
             // Refresh the complete hardware tree once using the same visitor lifecycle as LibreHardwareMonitor.
-            _computer.Accept(new HardwareUpdateVisitor(LogHardwareUpdateFailure));
+            _computer.Accept(_updateVisitor);
 
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
@@ -137,30 +146,26 @@ public sealed class HardwareMonitoringService : IDisposable
     {
         try
         {
-            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
-            if (_loggedHardware.Add(hardwareKey))
+            if (!_loggedHardware.TryGetValue(hardware, out _))
+            {
+                _loggedHardware.Add(hardware, LoggedMarker.Instance);
                 Debug.WriteLine($"[HardwareMonitoring] Hardware encontrado: tipo={hardware.HardwareType}, nome='{hardware.Name}', identificador='{hardware.Identifier}'.");
+            }
 
             if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType == HardwareType.Storage)
             {
                 var candidate = CleanModel(hardware.Name);
-                if (IsUsefulStorageModel(candidate))
-                {
-                    if (storageModel is null)
-                        storageModel = candidate;
-                    else if (!storageModel.Split(" · ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                                 .Contains(candidate, StringComparer.OrdinalIgnoreCase))
-                        storageModel = $"{storageModel} · {candidate}";
-                }
+                if (candidate is not null && IsUsefulStorageModel(candidate) && _storageModelCandidates.Add(candidate))
+                    storageModel = storageModel is null ? candidate : $"{storageModel} · {candidate}";
             }
             foreach (var sensor in hardware.Sensors)
             {
                 var rawValue = sensor.Value;
-                var sensorKey = $"{hardware.Identifier}|{sensor.Identifier}|{sensor.SensorType}";
-                if (_loggedSensors.Add(sensorKey))
+                if (!_loggedSensors.TryGetValue(sensor, out _))
                 {
+                    _loggedSensors.Add(sensor, LoggedMarker.Instance);
                     var loggedValue = rawValue?.ToString("0.##", CultureInfo.InvariantCulture) ?? "null";
                     Debug.WriteLine($"[HardwareMonitoring] Sensor encontrado: hardware={hardware.HardwareType}, nome='{hardware.Name}', tipo={sensor.SensorType}, sensor='{sensor.Name}', valorInicial={loggedValue}");
                 }
@@ -226,6 +231,12 @@ public sealed class HardwareMonitoringService : IDisposable
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
+
+    private sealed class LoggedMarker
+    {
+        public static readonly LoggedMarker Instance = new();
+        private LoggedMarker() { }
+    }
 
     private void LogHardwareUpdateFailure(IHardware hardware, Exception ex)
     {

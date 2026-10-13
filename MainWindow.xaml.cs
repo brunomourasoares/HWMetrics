@@ -26,6 +26,7 @@ namespace WaterCoolerApp;
 public partial class MainWindow : Window
 {
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan HistoryPersistenceInterval = TimeSpan.FromSeconds(30);
     private const int WmActivateExistingInstance = 0x8001;
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
@@ -575,7 +576,7 @@ public partial class MainWindow : Window
         while (_storedHistory.Count > 0 && _storedHistory.Peek().UpdatedAt < retentionCutoff)
             _storedHistory.Dequeue();
 
-        if (s.UpdatedAt - _lastHistorySaveAt >= TimeSpan.FromSeconds(10))
+        if (s.UpdatedAt - _lastHistorySaveAt >= HistoryPersistenceInterval)
         {
             _historyWriter.Enqueue(_storedHistory, s.UpdatedAt, _historyRetention);
             _lastHistorySaveAt = s.UpdatedAt;
