@@ -21,7 +21,7 @@ public static class TelemetryHistoryCsvExporter
         var csv = new StringBuilder();
         csv.AppendLine("Tipo;Horário;Componente;Valor;Unidade");
 
-        foreach (var snapshot in snapshots.OrderBy(item => item.UpdatedAt))
+        foreach (var snapshot in snapshots.Where(item => item is not null).OrderBy(item => item.UpdatedAt))
         {
             if (snapshot is null)
                 continue;
