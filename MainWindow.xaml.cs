@@ -1012,6 +1012,13 @@ public partial class MainWindow : Window
         }, HandoffBehavior.SnapshotAndReplace);
     }
 
+    private static void StopRingAnimation(RotateTransform transform)
+    {
+        // Non-addressable 12 V RGB is shown as a static color blend, not a moving ARGB effect.
+        transform.BeginAnimation(RotateTransform.AngleProperty, null, HandoffBehavior.SnapshotAndReplace);
+        transform.Angle = 0;
+    }
+
     private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
@@ -1050,7 +1057,13 @@ public partial class MainWindow : Window
             StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
             StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
         }
-        if (profile.Family == "classic") StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
+        if (profile.Family == "classic")
+        {
+            if (profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
+                StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
+            else
+                StopRingAnimation(ClassicRingRotation);
+        }
 
         // The palette is centralized by series: ARGB is configurable later, RGB and
         // Rainbow have distinct palettes, and All Black remains intentionally unlit.
