@@ -1298,13 +1298,6 @@
                       <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Opacity="0.55" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
                   </Grid>
-                               Foreground="#FFFFFF"
-                               FontSize="9"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Bottom"
-                               Margin="0,0,0,62"/>
-                  </Grid>
                 </Grid>
               </Border>
               <Border x:Name="ThermalComponentsCard"
