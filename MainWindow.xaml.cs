@@ -960,8 +960,8 @@ public partial class MainWindow : Window
         var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
         CoolerBody.Fill = new SolidColorBrush(bodyColor);
         CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
-        CoolerProBody.Background = new SolidColorBrush(bodyColor);
-        CoolerProBody.BorderBrush = new SolidColorBrush(bodyStroke);
+        CoolerProBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerProBody.Stroke = new SolidColorBrush(bodyStroke);
         CoolerClassicBody.Fill = new SolidColorBrush(bodyColor);
         CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
 
@@ -971,7 +971,7 @@ public partial class MainWindow : Window
         StartRingAnimation(ClassicRingRotation, 9.0);
         CoolerDisplayLabel.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
 
-        // Shared ARGB ring: only the block shell and its display vary by model.
+        // Animate the lighting independently for each block family; these are visual previews only.
         var ringBrush = new LinearGradientBrush
         {
             StartPoint = new Point(0, 0.5),
