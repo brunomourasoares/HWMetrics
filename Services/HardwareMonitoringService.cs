@@ -14,6 +14,7 @@ public sealed class HardwareMonitoringService : IDisposable
     private readonly Computer _computer;
     private readonly object _sync = new();
     private readonly HashSet<string> _loggedSensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _loggedHardware = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
     private long? _previousIdleTime;
@@ -136,6 +137,10 @@ public sealed class HardwareMonitoringService : IDisposable
     {
         try
         {
+            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+            if (_loggedHardware.Add(hardwareKey))
+                Debug.WriteLine($"[HardwareMonitoring] Hardware encontrado: tipo={hardware.HardwareType}, nome='{hardware.Name}', identificador='{hardware.Identifier}'.");
+
             if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType == HardwareType.Storage)
