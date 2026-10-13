@@ -1292,7 +1292,9 @@
                         <Rectangle.RenderTransform><RotateTransform x:Name="SquareRingRotation" Angle="0"/></Rectangle.RenderTransform>
                         <Rectangle.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="19" ShadowDepth="0" Opacity="0.8"/></Rectangle.Effect>
                       </Rectangle>
-                      <Rectangle Width="119" Height="119" RadiusX="16" RadiusY="16" Fill="#203B3A" Stroke="#344653" StrokeThickness="2"/>
+                      <Rectangle Width="119" Height="119" RadiusX="16" RadiusY="16" Fill="#267F91" Stroke="#54D8E8" StrokeThickness="2">
+                        <Rectangle.Effect><DropShadowEffect Color="#FF38D9E8" BlurRadius="18" ShadowDepth="0" Opacity="0.72"/></Rectangle.Effect>
+                      </Rectangle>
                       <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
                     <!-- All Black: bloco circular preto, sem aro RGB nem efeitos luminosos. -->
