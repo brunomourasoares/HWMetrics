@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using LibreHardwareMonitor.Hardware;
 using WaterCoolerApp.Models;
 using System.IO;
+using System.Management;
 
 namespace WaterCoolerApp.Services;
 
@@ -304,6 +305,7 @@ public sealed class HardwareMonitoringService : IDisposable
 
         // Stable ordering prevents the rotating UI from changing drive identity between reads.
         drives = drives.OrderBy(item => item.Drive.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        var physicalModels = ReadPhysicalDiskModelsByDriveLetter();
         var volumes = drives.Select(item =>
         {
             var used = Math.Clamp(item.Used, 0d, item.Total);
@@ -320,6 +322,86 @@ public sealed class HardwareMonitoringService : IDisposable
             $"{item.Name}  {item.UsedGiB:0.0}/{item.TotalGiB:0.0} GB"));
         return (selected.Name, selected.UsedGiB, selected.TotalGiB, selected.FreeGiB,
             selected.UsedPercent, summary, volumes);
+    }
+
+
+    private static IReadOnlyDictionary<string, string> ReadPhysicalDiskModelsByDriveLetter()
+    {
+        var models = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            using var logicalToPartition = new ManagementObjectSearcher(
+                "SELECT Antecedent, Dependent FROM Win32_LogicalDiskToPartition");
+            using var diskToPartition = new ManagementObjectSearcher(
+                "SELECT Antecedent, Dependent FROM Win32_DiskDriveToDiskPartition");
+            using var diskDrives = new ManagementObjectSearcher(
+                "SELECT DeviceID, Model FROM Win32_DiskDrive");
+
+            var partitionsByDrive = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (ManagementObject association in logicalToPartition.Get())
+            {
+                var logicalPath = association["Dependent"]?.ToString();
+                var partitionPath = association["Antecedent"]?.ToString();
+                var drive = ExtractWmiKey(logicalPath, "DeviceID");
+                if (drive is null || partitionPath is null) continue;
+                if (!partitionsByDrive.TryGetValue(drive, out var list))
+                    partitionsByDrive[drive] = list = new List<string>();
+                list.Add(partitionPath);
+            }
+
+            var diskByPartition = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ManagementObject association in diskToPartition.Get())
+            {
+                var diskPath = association["Antecedent"]?.ToString();
+                var partitionPath = association["Dependent"]?.ToString();
+                var diskId = ExtractWmiKey(diskPath, "DeviceID");
+                if (diskId is not null && partitionPath is not null)
+                    diskByPartition[partitionPath] = diskId;
+            }
+
+            var modelByDisk = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ManagementObject disk in diskDrives.Get())
+            {
+                var id = disk["DeviceID"]?.ToString();
+                var model = disk["Model"]?.ToString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(model))
+                    modelByDisk[id] = model;
+            }
+
+            foreach (var (drive, partitions) in partitionsByDrive)
+            {
+                foreach (var partition in partitions)
+                {
+                    if (diskByPartition.TryGetValue(partition, out var diskId) &&
+                        modelByDisk.TryGetValue(diskId, out var model))
+                    {
+                        models[drive.TrimEnd('\\').ToUpperInvariant()] = model;
+                        break;
+                    }
+                }
+            }
+        }
+        catch (ManagementException ex)
+        {
+            Debug.WriteLine($"[HardwareMonitoring] Não foi possível mapear volumes para discos físicos: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[HardwareMonitoring] Acesso negado ao consultar modelos dos discos: {ex.Message}");
+        }
+
+        return models;
+    }
+
+    private static string? ExtractWmiKey(string? objectPath, string key)
+    {
+        if (string.IsNullOrWhiteSpace(objectPath)) return null;
+        var marker = key + "=\\\"";
+        var start = objectPath.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return null;
+        start += marker.Length;
+        var end = objectPath.IndexOf('\\\"', start);
+        return end > start ? objectPath[start..end].Replace("\\\\", "\\") : null;
     }
 
     private static double? NormalizePercent(double? value) =>
