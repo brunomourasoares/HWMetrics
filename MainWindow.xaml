@@ -1262,30 +1262,38 @@
                       <TextBlock x:Name="CoolerDisplayTemp" Text="--" Foreground="#FFFFFF" FontFamily="pack://application:,,,/Resources/Fonts/#7SegmentNumber" FontSize="46" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                       <TextBlock x:Name="CoolerDisplayLabel" Text="Temp/°C" Foreground="#FFFFFF" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,62"/>
                     </Grid>
-                    <!-- Aura Frost Pro: carcaça de perfil quadrado com contorno luminoso. -->
+                    <!-- Aura Frost Pro: cabeça circular branca, face de espelho infinito e símbolo central. -->
                     <Grid x:Name="CoolerAuraFrostProVisual" Visibility="Collapsed">
-                      <Border x:Name="CoolerProBody" Width="178" Height="178" CornerRadius="28" Background="#EFF2F5" BorderBrush="#B1BCC7" BorderThickness="5"/>
-                      <Border Width="150" Height="150" CornerRadius="22" Background="#18212A" BorderBrush="#4C6473" BorderThickness="2"/>
-                      <Border x:Name="CoolerProLight" Width="132" Height="132" CornerRadius="18" BorderBrush="#62E6C5" BorderThickness="4" Background="#101923">
-                        <Border.Effect><DropShadowEffect Color="#6262E6C5" BlurRadius="20" ShadowDepth="0" Opacity="0.8"/></Border.Effect>
-                      </Border>
-                      <Image Source="/Resources/Images/rise-mode.png" Width="42" Height="42" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
+                      <Ellipse x:Name="CoolerProBody" Width="184" Height="184" Fill="#EFF2F5" Stroke="#B1BCC7" StrokeThickness="7"/>
+                      <Ellipse Width="158" Height="158" Fill="#080D13" Stroke="#202A35" StrokeThickness="3"/>
+                      <Ellipse Width="142" Height="142" Fill="#0B1018" Stroke="#263341" StrokeThickness="2"/>
+                      <Ellipse x:Name="CoolerProLight" Width="130" Height="130" Fill="#090D15" StrokeThickness="5" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ProRingRotation" Angle="0"/></Ellipse.RenderTransform>
+                        <Ellipse.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="22" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                      </Ellipse>
+                      <Ellipse Width="108" Height="108" Stroke="#8AFFFFFF" StrokeThickness="1.2" Opacity="0.45"/>
+                      <Ellipse Width="86" Height="86" Stroke="#42FFFFFF" StrokeThickness="1.2" Opacity="0.55"/>
+                      <Image Source="/Resources/Images/rise-mode.png" Width="43" Height="43" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
-                    <!-- Linhas Frost/RGB e Black RGB/ARGB: bloco redondo iluminado, sem display. -->
+                    <!-- Frost RGB/ARGB: bloco circular com carcaça e aro iluminado; sem display. -->
                     <Grid x:Name="CoolerClassicVisual" Visibility="Collapsed">
                       <Ellipse x:Name="CoolerClassicBody" Width="184" Height="184" Fill="#EFF2F5" Stroke="#B1BCC7" StrokeThickness="7"/>
-                      <Ellipse Width="154" Height="154" Fill="#101923" Stroke="#344653" StrokeThickness="5"/>
-                      <Ellipse x:Name="CoolerClassicLight" Width="132" Height="132" Fill="#18212A" Stroke="#62E6C5" StrokeThickness="4">
-                        <Ellipse.Effect><DropShadowEffect Color="#6262E6C5" BlurRadius="18" ShadowDepth="0" Opacity="0.75"/></Ellipse.Effect>
+                      <Ellipse Width="154" Height="154" Fill="#10151D" Stroke="#344653" StrokeThickness="5"/>
+                      <Ellipse x:Name="CoolerClassicLight" Width="132" Height="132" Fill="#0C121A" StrokeThickness="5" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ClassicRingRotation" Angle="0"/></Ellipse.RenderTransform>
+                        <Ellipse.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="19" ShadowDepth="0" Opacity="0.8"/></Ellipse.Effect>
                       </Ellipse>
+                      <Ellipse Width="106" Height="106" Stroke="#344653" StrokeThickness="2"/>
                       <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
-                    <!-- All Black: bloco preto sem iluminação RGB. -->
+                    <!-- All Black: bloco circular preto, sem aro RGB nem efeitos luminosos. -->
                     <Grid x:Name="CoolerAllBlackVisual" Visibility="Collapsed">
-                      <Border Width="176" Height="176" CornerRadius="24" Background="#101216" BorderBrush="#34383E" BorderThickness="2"/>
-                      <Border Width="142" Height="142" CornerRadius="18" Background="#171A1F" BorderBrush="#292D33" BorderThickness="1"/>
+                      <Ellipse Width="184" Height="184" Fill="#101216" Stroke="#34383E" StrokeThickness="3"/>
+                      <Ellipse Width="154" Height="154" Fill="#171A1F" Stroke="#292D33" StrokeThickness="2"/>
+                      <Ellipse Width="126" Height="126" Fill="#12151A" Stroke="#242930" StrokeThickness="1"/>
                       <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Opacity="0.55" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
+                  </Grid>
                                Foreground="#FFFFFF"
                                FontSize="9"
                                FontWeight="Bold"
