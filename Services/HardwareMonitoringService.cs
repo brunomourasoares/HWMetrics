@@ -52,6 +52,9 @@ public sealed class HardwareMonitoringService : IDisposable
             double cpuCoreLoadSum = 0;
             var cpuCoreLoadCount = 0;
 
+            // Refresh the complete hardware tree using LibreHardwareMonitor's visitor pattern.
+            _computer.Accept(new UpdateVisitor());
+
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                     ref cpuCoreLoadSum, ref cpuCoreLoadCount,
@@ -128,7 +131,6 @@ public sealed class HardwareMonitoringService : IDisposable
                         storageModel = $"{storageModel} · {candidate}";
                 }
             }
-            hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
                 var rawValue = sensor.Value;
@@ -202,6 +204,29 @@ public sealed class HardwareMonitoringService : IDisposable
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
+
+    private sealed class UpdateVisitor : IVisitor
+    {
+        public void VisitComputer(IComputer computer) => computer.Traverse(this);
+
+        public void VisitHardware(IHardware hardware)
+        {
+            try
+            {
+                hardware.Update();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[HardwareMonitoring] Hardware update failed for {hardware.Name} ({hardware.HardwareType}): {ex.Message}");
+            }
+
+            foreach (var child in hardware.SubHardware)
+                child.Accept(this);
+        }
+
+        public void VisitSensor(ISensor sensor) { }
+        public void VisitParameter(IParameter parameter) { }
+    }
 
     private static bool IsGpu(HardwareType type) =>
         type is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
