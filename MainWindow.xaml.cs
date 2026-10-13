@@ -457,10 +457,10 @@ public partial class MainWindow : Window
     private void RenderStorageVolume(StorageVolumeSnapshot volume)
     {
         _selectedStorageDriveName = volume.Name;
-        // VolumeLabel is a filesystem label, not the physical storage product model.
-        StorageModelText.Text = string.IsNullOrWhiteSpace(volume.VolumeLabel)
+        // ProductModel identifies the physical disk, not the filesystem volume label.
+        StorageModelText.Text = string.IsNullOrWhiteSpace(volume.ProductModel)
             ? T("Drive model unavailable", "Modelo do disco indisponível")
-            : volume.VolumeLabel;
+            : volume.ProductModel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
             $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
