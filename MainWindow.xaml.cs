@@ -1043,14 +1043,14 @@ public partial class MainWindow : Window
         CoolerDisplayTemp.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
         CoolerDisplayLabel.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
 
-        if (profile.RingSeconds > 0)
+        if (profile.Family == "auraice") StartRingAnimation(RingRotation, profile.RingSeconds);
+        if (profile.Family == "aurafrostpro")
         {
-            StartRingAnimation(RingRotation, profile.RingSeconds);
             StartRingAnimation(ProRingRotation, profile.RingSeconds);
-            StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
+            StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
+            StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
         }
-        if (profile.OuterMirrorSeconds > 0) StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
-        if (profile.InnerMirrorSeconds > 0) StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
+        if (profile.Family == "classic") StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
 
         // The palette is centralized by series: ARGB is configurable later, RGB and
         // Rainbow have distinct palettes, and All Black remains intentionally unlit.
