@@ -34,7 +34,20 @@ public sealed class HardwareMonitoringService : IDisposable
             IsStorageEnabled = true,
             IsMotherboardEnabled = true
         };
-        _computer.Open();
+        try
+        {
+            _computer.Open();
+        }
+        catch
+        {
+            // Open may initialize some hardware groups before a later group fails.
+            try { _computer.Close(); }
+            catch (Exception cleanupException)
+            {
+                Debug.WriteLine($"[HardwareMonitoring] Cleanup after initialization failure failed: {cleanupException}");
+            }
+            throw;
+        }
     }
 
     public SensorSnapshot Read()
@@ -543,7 +556,15 @@ public sealed class HardwareMonitoringService : IDisposable
         {
             if (_disposed) return;
             _disposed = true;
-            _computer.Close();
+            try
+            {
+                _computer.Close();
+            }
+            catch (Exception ex)
+            {
+                // Disposal is best-effort; one faulty hardware provider must not crash shutdown.
+                Debug.WriteLine($"[HardwareMonitoring] Failed to close hardware providers: {ex}");
+            }
         }
     }
 }
