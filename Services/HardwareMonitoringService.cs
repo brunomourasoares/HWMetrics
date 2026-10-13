@@ -340,7 +340,9 @@ public sealed class HardwareMonitoringService : IDisposable
             {
                 if (!drive.IsReady || drive.DriveType is not (DriveType.Fixed or DriveType.Removable) || drive.TotalSize <= 0) continue;
                 var total = drive.TotalSize / bytesPerGiB;
-                var free = drive.AvailableFreeSpace / bytesPerGiB;
+                // Use volume-wide free space so the card reflects filesystem capacity,
+                // not the current user's quota-limited available space.
+                var free = drive.TotalFreeSpace / bytesPerGiB;
                 drives.Add((drive, total, free, Math.Max(0, total - free)));
             }
             catch (IOException) { }
