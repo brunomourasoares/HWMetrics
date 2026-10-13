@@ -1275,14 +1275,19 @@
                     </Grid>
                     <!-- Frost RGB/ARGB: bloco circular com carcaça e aro iluminado; sem display. -->
                     <Grid x:Name="CoolerClassicVisual" Visibility="Collapsed">
+                      <!-- Circular deep-face block: layered mirror tunnel with an illuminated perimeter. -->
                       <Ellipse x:Name="CoolerClassicBody" Width="184" Height="184" Fill="#EFF2F5" Stroke="#B1BCC7" StrokeThickness="7"/>
-                      <Ellipse Width="154" Height="154" Fill="#10151D" Stroke="#344653" StrokeThickness="5"/>
+                      <Ellipse Width="158" Height="158" Fill="#080C12" Stroke="#26313B" StrokeThickness="3"/>
+                      <Ellipse Width="146" Height="146" Fill="#0B1119" Stroke="#35414D" StrokeThickness="2"/>
+                      <Ellipse Width="134" Height="134" Fill="#101923" Stroke="#202C38" StrokeThickness="2"/>
                       <Ellipse x:Name="CoolerClassicLight" Width="132" Height="132" Fill="#0C121A" StrokeThickness="5" RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform><RotateTransform x:Name="ClassicRingRotation" Angle="0"/></Ellipse.RenderTransform>
                         <Ellipse.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="19" ShadowDepth="0" Opacity="0.8"/></Ellipse.Effect>
                       </Ellipse>
-                      <Ellipse Width="106" Height="106" Stroke="#344653" StrokeThickness="2"/>
-                      <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
+                      <Ellipse Width="114" Height="114" Fill="#101923" Stroke="#25313D" StrokeThickness="2"/>
+                      <Ellipse Width="94" Height="94" Fill="#0B1119" Stroke="#344653" StrokeThickness="1.5"/>
+                      <Path Data="M 0,-37 C 25,-18 28,4 10,20 C 2,27 -8,29 -16,24 C -5,23 4,15 5,5 C 6,-5 -2,-14 -10,-19 C -5,-26 -2,-32 0,-37 Z" Fill="#42D9CF" HorizontalAlignment="Center" VerticalAlignment="Center" Width="43" Height="50" Stretch="Uniform"/>
+                      <Path Data="M -3,-22 C 13,-7 17,7 6,17 C -2,24 -13,20 -16,12 C -7,14 -1,7 -3,0 C -5,-7 -9,-13 -3,-22 Z" Fill="#86FFF0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="25" Height="32" Stretch="Uniform" Opacity="0.9"/>
                     </Grid>
                     <!-- Frost Rainbow: bloco quadrado, cor central estática e LEDs nas bordas. -->
                     <Grid x:Name="CoolerSquareVisual" Visibility="Collapsed">
