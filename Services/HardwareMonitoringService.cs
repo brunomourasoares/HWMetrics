@@ -375,36 +375,54 @@ public sealed class HardwareMonitoringService : IDisposable
                 "SELECT DeviceID, Model FROM Win32_DiskDrive");
 
             var partitionsByDrive = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject association in logicalToPartition.Get())
+            using (var associations = logicalToPartition.Get())
             {
-                var logicalPath = association["Dependent"]?.ToString();
-                var partitionPath = association["Antecedent"]?.ToString();
-                var drive = ExtractWmiKey(logicalPath, "DeviceID");
-                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
-                if (drive is null || partitionId is null) continue;
-                if (!partitionsByDrive.TryGetValue(drive, out var list))
-                    partitionsByDrive[drive] = list = new List<string>();
-                list.Add(partitionId);
+                foreach (ManagementObject association in associations)
+                {
+                    using (association)
+                    {
+                        var logicalPath = association["Dependent"]?.ToString();
+                        var partitionPath = association["Antecedent"]?.ToString();
+                        var drive = ExtractWmiKey(logicalPath, "DeviceID");
+                        var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                        if (drive is null || partitionId is null) continue;
+                        if (!partitionsByDrive.TryGetValue(drive, out var list))
+                            partitionsByDrive[drive] = list = new List<string>();
+                        list.Add(partitionId);
+                    }
+                }
             }
 
             var diskByPartition = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject association in diskToPartition.Get())
+            using (var associations = diskToPartition.Get())
             {
-                var diskPath = association["Antecedent"]?.ToString();
-                var partitionPath = association["Dependent"]?.ToString();
-                var diskId = ExtractWmiKey(diskPath, "DeviceID");
-                var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
-                if (diskId is not null && partitionId is not null)
-                    diskByPartition[partitionId] = diskId;
+                foreach (ManagementObject association in associations)
+                {
+                    using (association)
+                    {
+                        var diskPath = association["Antecedent"]?.ToString();
+                        var partitionPath = association["Dependent"]?.ToString();
+                        var diskId = ExtractWmiKey(diskPath, "DeviceID");
+                        var partitionId = ExtractWmiKey(partitionPath, "DeviceID");
+                        if (diskId is not null && partitionId is not null)
+                            diskByPartition[partitionId] = diskId;
+                    }
+                }
             }
 
             var modelByDisk = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (ManagementObject disk in diskDrives.Get())
+            using (var disks = diskDrives.Get())
             {
-                var id = disk["DeviceID"]?.ToString();
-                var model = disk["Model"]?.ToString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(model))
-                    modelByDisk[id] = model;
+                foreach (ManagementObject disk in disks)
+                {
+                    using (disk)
+                    {
+                        var id = disk["DeviceID"]?.ToString();
+                        var model = disk["Model"]?.ToString()?.Trim();
+                        if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(model))
+                            modelByDisk[id] = model;
+                    }
+                }
             }
 
             foreach (var (drive, partitions) in partitionsByDrive)
