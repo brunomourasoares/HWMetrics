@@ -32,7 +32,13 @@ public sealed class HardwareMonitoringService : IDisposable
             IsGpuEnabled = true,
             IsMemoryEnabled = true,
             IsStorageEnabled = true,
-            IsMotherboardEnabled = true
+            IsMotherboardEnabled = true,
+            // Match LibreHardwareMonitor's default sensor-category coverage.
+            IsControllerEnabled = true,
+            IsNetworkEnabled = true,
+            IsPowerMonitorEnabled = true,
+            IsPsuEnabled = true,
+            IsBatteryEnabled = true
         };
         try
         {
