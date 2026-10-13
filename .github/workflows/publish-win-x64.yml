@@ -39,7 +39,7 @@ jobs:
             throw "Unexpected kernel driver files found in publish output: $paths"
           }
 
-          $matches = @()
+          $matchedFiles = @()
           $inspectionErrors = @()
           Get-ChildItem $root -Recurse -File | ForEach-Object {
             $path = $_.FullName
@@ -47,7 +47,7 @@ jobs:
               $bytes = [System.IO.File]::ReadAllBytes($path)
               $text = [System.Text.Encoding]::ASCII.GetString($bytes)
               if ($text -match "WinRing0|WinRing0x64|WinRing0_1_2") {
-                $matches += $path
+                $matchedFiles += $path
               }
             } catch {
               $inspectionErrors += "${path}: $($_.Exception.Message)"
@@ -56,8 +56,8 @@ jobs:
           if ($inspectionErrors.Count -gt 0) {
             throw ("Could not inspect all published files: " + ($inspectionErrors -join "; "))
           }
-          if ($matches.Count -gt 0) {
-            throw ("Legacy WinRing0 indicators found in published files: " + ($matches -join ", "))
+          if ($matchedFiles.Count -gt 0) {
+            throw ("Legacy WinRing0 indicators found in published files: " + ($matchedFiles -join ", "))
           }
           Write-Host "No .sys driver files or legacy WinRing0 string indicators found in published output."
           
