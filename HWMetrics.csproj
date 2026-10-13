@@ -10,7 +10,7 @@
     <AssemblyName>HWMetrics</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="external/LibreHardwareMonitor/LibreHardwareMonitorLib/LibreHardwareMonitorLib.csproj" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="System.Management" Version="10.0.2" />
     <PackageReference Include="HidSharp" Version="2.6.4" />
   </ItemGroup>
