@@ -902,6 +902,31 @@ public partial class MainWindow : Window
         HideSettingsPanel();
     }
 
+    private static LinearGradientBrush CreateArgbBrush()
+    {
+        var brush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0.5),
+            EndPoint = new Point(1, 0.5),
+            MappingMode = BrushMappingMode.RelativeToBoundingBox
+        };
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 42, 104), 0.0));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 194, 54), 0.22));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(68, 255, 190), 0.48));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(45, 150, 255), 0.72));
+        brush.GradientStops.Add(new GradientStop(Color.FromRgb(190, 74, 255), 1.0));
+        return brush;
+    }
+
+    private static void StartRingAnimation(RotateTransform transform, double seconds)
+    {
+        if (transform.HasAnimatedProperties) return;
+        transform.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(0, 360, TimeSpan.FromSeconds(seconds))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
+        });
+    }
+
     private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
@@ -941,6 +966,9 @@ public partial class MainWindow : Window
         CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
 
         CoolerDisplayTemp.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
+        StartRingAnimation(RingRotation, 7.5);
+        StartRingAnimation(ProRingRotation, 6.5);
+        StartRingAnimation(ClassicRingRotation, 9.0);
         CoolerDisplayLabel.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
 
         // Shared ARGB ring: only the block shell and its display vary by model.
@@ -953,8 +981,10 @@ public partial class MainWindow : Window
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 255, 0), 0.5));
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
         CoolerArgbRing.Stroke = ringBrush;
-        CoolerProLight.BorderBrush = new SolidColorBrush(Color.FromRgb(98, 230, 197));
-        CoolerClassicLight.Stroke = new SolidColorBrush(Color.FromRgb(98, 230, 197));
+        CoolerProLight.Stroke = CreateArgbBrush();
+        CoolerClassicLight.Stroke = CreateArgbBrush();
+        CoolerProLight.Opacity = 1;
+        CoolerClassicLight.Opacity = 1;
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
