@@ -33,6 +33,7 @@ public sealed class DisplayTransportService : IDisposable
     private readonly object _sync = new();
     private HidStream? _stream;
     private int _outputReportLength;
+    private DateTime _nextDeviceDiscoveryAt = DateTime.MinValue;
     private bool _disposed;
 
     private static void WriteHidDiagnostic(string message)
@@ -94,6 +95,12 @@ public sealed class DisplayTransportService : IDisposable
             {
                 if (_stream is null)
                 {
+                    // Avoid repeatedly enumerating HID devices on every telemetry poll
+                    // while the display is unplugged. Hot-plug detection remains bounded
+                    // to a two-second retry interval.
+                    if (DateTime.UtcNow < _nextDeviceDiscoveryAt)
+                        return DisplayTransportStatus.DeviceNotFound;
+
                     var devices = DeviceList.Local
                         .GetHidDevices(VendorId, ProductId)
                         .ToArray();
@@ -103,7 +110,10 @@ public sealed class DisplayTransportService : IDisposable
                         $"VID=0x{VendorId:X4}, PID=0x{ProductId:X4}.");
 
                     if (devices.Length == 0)
+                    {
+                        _nextDeviceDiscoveryAt = DateTime.UtcNow.AddSeconds(2);
                         return DisplayTransportStatus.DeviceNotFound;
+                    }
 
                     var foundCompatibleReport = false;
                     var inspectionFailed = false;
