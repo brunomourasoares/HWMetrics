@@ -1271,8 +1271,12 @@
                         <Ellipse.RenderTransform><RotateTransform x:Name="ProRingRotation" Angle="0"/></Ellipse.RenderTransform>
                         <Ellipse.Effect><DropShadowEffect Color="#8062E6C5" BlurRadius="22" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
                       </Ellipse>
-                      <Ellipse Width="108" Height="108" Stroke="#8AFFFFFF" StrokeThickness="1.2" Opacity="0.45"/>
-                      <Ellipse Width="86" Height="86" Stroke="#42FFFFFF" StrokeThickness="1.2" Opacity="0.55"/>
+                      <Ellipse x:Name="CoolerProMirrorOuter" Width="108" Height="108" StrokeThickness="2" Opacity="0.78" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ProMirrorOuterRotation" Angle="0"/></Ellipse.RenderTransform>
+                      </Ellipse>
+                      <Ellipse x:Name="CoolerProMirrorInner" Width="86" Height="86" StrokeThickness="1.5" Opacity="0.62" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="ProMirrorInnerRotation" Angle="0"/></Ellipse.RenderTransform>
+                      </Ellipse>
                       <Image Source="/Resources/Images/rise-mode.png" Width="43" Height="43" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
                     </Grid>
                     <!-- Frost RGB/ARGB: bloco circular com carcaça e aro iluminado; sem display. -->
