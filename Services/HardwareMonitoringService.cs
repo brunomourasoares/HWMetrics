@@ -52,6 +52,10 @@ public sealed class HardwareMonitoringService : IDisposable
             double cpuCoreLoadSum = 0;
             var cpuCoreLoadCount = 0;
 
+            // Use the same visitor traversal as the official LibreHardwareMonitor UI.
+            // This updates the complete hardware tree once before values are collected.
+            _computer.Accept(new HardwareUpdateVisitor(LogHardwareUpdateFailure));
+
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                     ref cpuCoreLoadSum, ref cpuCoreLoadCount,
@@ -128,7 +132,6 @@ public sealed class HardwareMonitoringService : IDisposable
                         storageModel = $"{storageModel} · {candidate}";
                 }
             }
-            hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
                 var rawValue = sensor.Value;
@@ -190,9 +193,7 @@ public sealed class HardwareMonitoringService : IDisposable
         }
         catch (Exception ex)
         {
-            var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
-            if (_loggedHardwareErrors.Add(hardwareKey))
-                Debug.WriteLine($"[HardwareMonitoring] Falha ao atualizar hardware '{hardware.Name}' ({hardware.HardwareType}): {ex}");
+            LogHardwareUpdateFailure(hardware, ex);
         }
 
         foreach (var child in hardware.SubHardware)
@@ -202,6 +203,41 @@ public sealed class HardwareMonitoringService : IDisposable
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
+
+    private void LogHardwareUpdateFailure(IHardware hardware, Exception ex)
+    {
+        var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+        if (_loggedHardwareErrors.Add(hardwareKey))
+            Debug.WriteLine($"[HardwareMonitoring] Falha ao atualizar hardware '{hardware.Name}' ({hardware.HardwareType}): {ex}");
+    }
+
+    private sealed class HardwareUpdateVisitor : IVisitor
+    {
+        private readonly Action<IHardware, Exception> _onError;
+
+        public HardwareUpdateVisitor(Action<IHardware, Exception> onError) => _onError = onError;
+
+        public void VisitComputer(IComputer computer) => computer.Traverse(this);
+
+        public void VisitHardware(IHardware hardware)
+        {
+            try
+            {
+                hardware.Update();
+            }
+            catch (Exception ex)
+            {
+                _onError(hardware, ex);
+            }
+
+            foreach (var child in hardware.SubHardware)
+                child.Accept(this);
+        }
+
+        public void VisitSensor(ISensor sensor) { }
+
+        public void VisitParameter(IParameter parameter) { }
+    }
 
     private static bool IsGpu(HardwareType type) =>
         type is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
