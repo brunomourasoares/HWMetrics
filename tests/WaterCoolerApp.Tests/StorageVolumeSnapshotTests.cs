@@ -44,4 +44,13 @@ public sealed class StorageVolumeSnapshotTests
         Assert.Equal(0.5, snapshot.FreeGiB);
         Assert.Equal(75, snapshot.UsedPercent);
     }
+    [Fact]
+    public void VolumeSnapshot_StoresPhysicalProductModelSeparatelyFromVolumeName()
+    {
+        var snapshot = new StorageVolumeSnapshot("C:", 40, 100, 60, 40, "Samsung SSD 990 PRO");
+
+        Assert.Equal("C:", snapshot.Name);
+        Assert.Equal("Samsung SSD 990 PRO", snapshot.ProductModel);
+    }
+
 }
