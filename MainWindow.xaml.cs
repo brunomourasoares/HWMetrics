@@ -585,28 +585,58 @@ public partial class MainWindow : Window
 
     private async void SaveHistory_Click(object sender, RoutedEventArgs e)
     {
+        bool exportTemperature = sender is Button button &&
+            button.Name == "SaveTemperatureHistoryButton";
+        bool showCpu;
+        bool showGpu;
+        bool showRam = false;
+
+        if (exportTemperature)
+        {
+            showCpu = TemperatureCpuFilter.IsChecked == true;
+            showGpu = TemperatureGpuFilter.IsChecked == true;
+        }
+        else
+        {
+            showCpu = UtilizationCpuFilter.IsChecked == true;
+            showGpu = UtilizationGpuFilter.IsChecked == true;
+            showRam = UtilizationRamFilter.IsChecked == true;
+        }
+
+        if (!showCpu && !showGpu && !showRam)
+        {
+            MessageBox.Show(
+                T("Select at least one series to export.", "Selecione ao menos uma série para exportar."),
+                T("Nothing to export", "Nada para exportar"),
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return;
+        }
+
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = T("Save telemetry history", "Salvar histórico de telemetria"),
-            Filter = "JSON files (*.json)|*.json",
-            DefaultExt = ".json",
+            Title = T("Export history to CSV", "Exportar histórico para CSV"),
+            Filter = "CSV files (*.csv)|*.csv",
+            DefaultExt = ".csv",
             AddExtension = true,
-            FileName = $"hw-metrics-telemetry-{DateTime.Now:yyyyMMdd-HHmmss}.json"
+            FileName = $"hw-metrics-history-{(exportTemperature ? "temperature" : "utilization")}-{DateTime.Now:yyyyMMdd-HHmmss}.csv"
         };
 
         if (dialog.ShowDialog(this) != true) return;
 
-        // Snapshot the UI-owned queue before leaving the dispatcher thread.
+        // Export only the metric family and series selected in the corresponding chart.
         var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
         try
         {
-            var json = await Task.Run(() => JsonSerializer.Serialize(
-                snapshots,
-                new JsonSerializerOptions { WriteIndented = true }));
-            await Task.Run(() => File.WriteAllText(dialog.FileName, json));
+            var csv = await Task.Run(() => BuildHistoryCsv(
+                snapshots, exportTemperature, showCpu, showGpu, showRam));
+            await Task.Run(() => File.WriteAllText(
+                dialog.FileName,
+                csv,
+                new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true)));
             MessageBox.Show(
-                T("Telemetry history saved successfully.", "Histórico de telemetria salvo com sucesso."),
-                T("History saved", "Histórico salvo"),
+                T("History exported successfully.", "Histórico exportado com sucesso."),
+                T("Export complete", "Exportação concluída"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
@@ -614,11 +644,62 @@ public partial class MainWindow : Window
         {
             System.Diagnostics.Debug.WriteLine($"[MainWindow] History export failed: {ex}");
             MessageBox.Show(
-                T("Could not save telemetry history.", "Não foi possível salvar o histórico de telemetria."),
-                T("Save failed", "Falha ao salvar"),
+                T("Could not export history.", "Não foi possível exportar o histórico."),
+                T("Export failed", "Falha na exportação"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
+    }
+
+    private static string BuildHistoryCsv(
+        IReadOnlyList<SensorSnapshot> snapshots,
+        bool exportTemperature,
+        bool showCpu,
+        bool showGpu,
+        bool showRam)
+    {
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("Tipo;Horário;Componente;Valor;Unidade");
+
+        foreach (var snapshot in snapshots)
+        {
+            var timestamp = snapshot.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+            if (exportTemperature)
+            {
+                if (showCpu && snapshot.CpuTemperatureC is double cpuTemperature)
+                    AppendHistoryCsvRow(csv, "Temperatura", timestamp, "CPU", cpuTemperature, "°C");
+                if (showGpu && snapshot.GpuTemperatureC is double gpuTemperature)
+                    AppendHistoryCsvRow(csv, "Temperatura", timestamp, "GPU", gpuTemperature, "°C");
+            }
+            else
+            {
+                if (showCpu && snapshot.CpuLoadPercent is double cpuLoad)
+                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "CPU", cpuLoad, "%");
+                if (showGpu && snapshot.GpuLoadPercent is double gpuLoad)
+                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "GPU", gpuLoad, "%");
+                if (showRam && snapshot.MemoryUsedGiB is double memoryUsed &&
+                    snapshot.MemoryTotalGiB is double memoryTotal && memoryTotal > 0)
+                    AppendHistoryCsvRow(csv, "Utilização", timestamp, "Memória", memoryUsed / memoryTotal * 100d, "%");
+            }
+        }
+
+        return csv.ToString();
+    }
+
+    private static void AppendHistoryCsvRow(
+        System.Text.StringBuilder csv,
+        string type,
+        string timestamp,
+        string component,
+        double value,
+        string unit)
+    {
+        // All text fields are controlled labels/timestamps and contain no CSV delimiters.
+        csv.Append(type).Append(';')
+            .Append(timestamp).Append(';')
+            .Append(component).Append(';')
+            .Append(value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append(';')
+            .AppendLine(unit);
     }
 
     private TimeSpan GetSelectedHistoryRetention() => HistoryRetentionSelector.SelectedIndex switch
