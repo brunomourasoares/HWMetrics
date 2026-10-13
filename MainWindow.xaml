@@ -632,9 +632,9 @@
                   <ComboBoxItem Content="RM-WCB-04-ARGB — Black ARGB 240" Tag="RM-WCB-04-ARGB|black|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WCB-05-ARGB — Black ARGB 120" Tag="RM-WCB-05-ARGB|black|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WCB-07-ARGB — Black ARGB 360" Tag="RM-WCB-07-ARGB|black|plain|classic|argb"/>
-                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain|classic|argb"/>
-                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain|classic|argb"/>
-                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain|classic|argb"/>
+                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Frost ARGB 120" Tag="RM-WCZ-05-ARGB|white|plain|classic|argb"/>
+                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Frost ARGB 240" Tag="RM-WCZ-06-ARGB|white|plain|classic|argb"/>
+                  <ComboBoxItem Content="RM-WCF-07-ARGB — Frost ARGB 360" Tag="RM-WCF-07-ARGB|white|plain|classic|argb"/>
                   <ComboBoxItem Content="RM-WC-AB-240 — All Black 240" Tag="RM-WC-AB-240|black|plain|allblack|none"/>
                   <ComboBoxItem Content="RM-WC-AB-360 — All Black 360" Tag="RM-WC-AB-360|black|plain|allblack|none"/>
                   <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain|square|rainbow"/>
