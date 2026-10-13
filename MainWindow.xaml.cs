@@ -1050,20 +1050,25 @@ public partial class MainWindow : Window
         CoolerDisplayTemp.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
         CoolerDisplayLabel.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
 
-        if (profile.Family == "auraice") StartRingAnimation(RingRotation, profile.RingSeconds);
+        // Stop clocks from the previously selected family before starting this profile.
+        // Hidden visuals should not keep running animations in the background.
+        StopRingAnimation(RingRotation);
+        StopRingAnimation(ProRingRotation);
+        StopRingAnimation(ProMirrorOuterRotation);
+        StopRingAnimation(ProMirrorInnerRotation);
+        StopRingAnimation(ClassicRingRotation);
+
+        if (profile.Family == "auraice")
+            StartRingAnimation(RingRotation, profile.RingSeconds);
         if (profile.Family == "aurafrostpro")
         {
             StartRingAnimation(ProRingRotation, profile.RingSeconds);
             StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
             StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
         }
-        if (profile.Family == "classic")
-        {
-            if (profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
-                StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
-            else
-                StopRingAnimation(ClassicRingRotation);
-        }
+        if (profile.Family == "classic" &&
+            profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
+            StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
 
         // The palette is centralized by series: ARGB is configurable later, RGB and
         // Rainbow have distinct palettes, and All Black remains intentionally unlit.
