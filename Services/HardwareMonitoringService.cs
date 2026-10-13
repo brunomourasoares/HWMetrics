@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using LibreHardwareMonitor.Hardware;
 using WaterCoolerApp.Models;
 using System.IO;
@@ -14,10 +15,10 @@ public sealed class HardwareMonitoringService : IDisposable
     private readonly Computer _computer;
     private readonly HardwareUpdateVisitor _updateVisitor;
     private readonly object _sync = new();
-    // Hardware and sensor objects are stable for the lifetime of Computer. Reference-based
-    // sets avoid constructing composite identifier strings on every polling cycle.
-    private readonly HashSet<ISensor> _loggedSensors = new(ReferenceEqualityComparer.Instance);
-    private readonly HashSet<IHardware> _loggedHardware = new(ReferenceEqualityComparer.Instance);
+    // Weak keys avoid allocating composite identifier strings on every poll without
+    // retaining disconnected hardware/sensor objects for the lifetime of the service.
+    private readonly ConditionalWeakTable<ISensor, LoggedMarker> _loggedSensors = new();
+    private readonly ConditionalWeakTable<IHardware, LoggedMarker> _loggedHardware = new();
     private readonly HashSet<string> _loggedHardwareErrors = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
     private long? _previousIdleTime;
@@ -141,8 +142,11 @@ public sealed class HardwareMonitoringService : IDisposable
     {
         try
         {
-            if (_loggedHardware.Add(hardware))
+            if (!_loggedHardware.TryGetValue(hardware, out _))
+            {
+                _loggedHardware.Add(hardware, LoggedMarker.Instance);
                 Debug.WriteLine($"[HardwareMonitoring] Hardware encontrado: tipo={hardware.HardwareType}, nome='{hardware.Name}', identificador='{hardware.Identifier}'.");
+            }
 
             if (hardware.HardwareType == HardwareType.Cpu) cpuModel ??= CleanModel(hardware.Name);
             else if (hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel) gpuModel ??= CleanModel(hardware.Name);
@@ -161,8 +165,9 @@ public sealed class HardwareMonitoringService : IDisposable
             foreach (var sensor in hardware.Sensors)
             {
                 var rawValue = sensor.Value;
-                if (_loggedSensors.Add(sensor))
+                if (!_loggedSensors.TryGetValue(sensor, out _))
                 {
+                    _loggedSensors.Add(sensor, LoggedMarker.Instance);
                     var loggedValue = rawValue?.ToString("0.##", CultureInfo.InvariantCulture) ?? "null";
                     Debug.WriteLine($"[HardwareMonitoring] Sensor encontrado: hardware={hardware.HardwareType}, nome='{hardware.Name}', tipo={sensor.SensorType}, sensor='{sensor.Name}', valorInicial={loggedValue}");
                 }
@@ -228,6 +233,12 @@ public sealed class HardwareMonitoringService : IDisposable
                 ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
+
+    private sealed class LoggedMarker
+    {
+        public static readonly LoggedMarker Instance = new();
+        private LoggedMarker() { }
+    }
 
     private void LogHardwareUpdateFailure(IHardware hardware, Exception ex)
     {
