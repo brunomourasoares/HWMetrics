@@ -905,25 +905,46 @@ public partial class MainWindow : Window
     private void CoolerModelSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsInitialized || CoolerModelSelector.SelectedIndex < 0) return;
-        var model = (CoolerModelSelector.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Generic LCD Pump";
-        CoolerModelBadge.Text = model;
-        // O seletor altera apenas a prévia visual; não envia comandos ao hardware.
-        bool blackModel = model.Contains("RM-WAIB-", StringComparison.OrdinalIgnoreCase);
+
+        // Tag schema: product code | finish | display style. This selector changes
+        // only the block preview; it never sends commands to the physical cooler.
+        var selectedItem = CoolerModelSelector.SelectedItem as ComboBoxItem;
+        var tag = selectedItem?.Tag?.ToString() ?? string.Empty;
+        var parts = tag.Split('|');
+        var modelCode = parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0])
+            ? parts[0]
+            : selectedItem?.Content?.ToString() ?? "Rise Mode";
+        var blackModel = parts.Length > 1
+            ? string.Equals(parts[1], "black", StringComparison.OrdinalIgnoreCase)
+            : modelCode.Contains("WAIB", StringComparison.OrdinalIgnoreCase)
+                || modelCode.Contains("WCB", StringComparison.OrdinalIgnoreCase)
+                || modelCode.Contains("WC-AB", StringComparison.OrdinalIgnoreCase);
+        var hasNumericDisplay = parts.Length > 2
+            ? string.Equals(parts[2], "display", StringComparison.OrdinalIgnoreCase)
+            : modelCode.Contains("WAI-", StringComparison.OrdinalIgnoreCase)
+                || modelCode.Contains("WAIB-", StringComparison.OrdinalIgnoreCase);
+
+        CoolerModelBadge.Text = modelCode;
         var bodyColor = blackModel ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
         var bodyStroke = blackModel ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
         CoolerBody.Fill = new SolidColorBrush(bodyColor);
         CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
 
-        // Simula o gradiente ARGB azul -> violeta -> vermelho usando um gradiente cônico
-        // aproximado por pequenos segmentos coloridos no aro externo.
-        var ringBrush = new LinearGradientBrush();
-        ringBrush.StartPoint = new Point(0, 0.5);
-        ringBrush.EndPoint = new Point(1, 0.5);
+        CoolerDisplayTemp.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
+        CoolerDisplayLabel.Visibility = hasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
+        CoolerLogo.VerticalAlignment = hasNumericDisplay ? VerticalAlignment.Top : VerticalAlignment.Center;
+        CoolerLogo.Margin = hasNumericDisplay ? new Thickness(0, 52, 0, 0) : new Thickness(0);
+
+        // Shared ARGB ring: only the block shell and its display vary by model.
+        var ringBrush = new LinearGradientBrush
+        {
+            StartPoint = new Point(0, 0.5),
+            EndPoint = new Point(1, 0.5)
+        };
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(255, 0, 0), 0.0));
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 255, 0), 0.5));
         ringBrush.GradientStops.Add(new GradientStop(Color.FromRgb(0, 0, 255), 1.0));
         CoolerArgbRing.Stroke = ringBrush;
-        // Display digits and thermometer glyph use an ice-white treatment on both case colors.
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
