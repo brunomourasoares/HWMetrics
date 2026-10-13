@@ -623,32 +623,32 @@
                           FontSize="11"
                           Style="{StaticResource ThemedComboBox}"
                           ItemContainerStyle="{StaticResource ThemedComboBoxItem}">
-                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB" Tag="RM-WAI-01-ARGB|white|display"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB" Tag="RM-WAI-02-ARGB|white|display"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB" Tag="RM-WAI-03-ARGB|white|display"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB" Tag="RM-WAIB-04-ARGB|black|display"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB" Tag="RM-WAIB-05-ARGB|black|display"/>
-                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB" Tag="RM-WAIB-06-ARGB|black|display"/>
-                  <ComboBoxItem Content="RM-WCZ-01-RGB — Frost RGB 120" Tag="RM-WCZ-01-RGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WCZ-02-RGB — Frost RGB 240" Tag="RM-WCZ-02-RGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WCF-04-RGB — Frost RGB 360" Tag="RM-WCF-04-RGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WCB-01-RGB — Black RGB 120" Tag="RM-WCB-01-RGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-02-RGB — Black RGB 240" Tag="RM-WCB-02-RGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-03-RGB — Black RGB 360" Tag="RM-WCB-03-RGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-04-ARGB — Black ARGB 240" Tag="RM-WCB-04-ARGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-05-ARGB — Black ARGB 120" Tag="RM-WCB-05-ARGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-07-ARGB — Black ARGB 360" Tag="RM-WCB-07-ARGB|black|plain"/>
-                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain"/>
-                  <ComboBoxItem Content="RM-WC-AB-240 — All Black 240" Tag="RM-WC-AB-240|black|plain"/>
-                  <ComboBoxItem Content="RM-WC-AB-360 — All Black 360" Tag="RM-WC-AB-360|black|plain"/>
-                  <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain"/>
-                  <ComboBoxItem Content="RM-WCZ-02-RBW — Frost Rainbow 240" Tag="RM-WCZ-02-RBW|white|plain"/>
-                  <ComboBoxItem Content="RM-WCF-04-RBW — Frost Rainbow 360" Tag="RM-WCF-04-RBW|white|plain"/>
-                  <ComboBoxItem Content="RM-WCB-01-RBW — Black Rainbow 120" Tag="RM-WCB-01-RBW|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-02-RBW — Black Rainbow 240" Tag="RM-WCB-02-RBW|black|plain"/>
-                  <ComboBoxItem Content="RM-WCB-03-RBW — Black Rainbow 360" Tag="RM-WCB-03-RBW|black|plain"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-01-ARGB" Tag="RM-WAI-01-ARGB|white|display|auraice"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-02-ARGB" Tag="RM-WAI-02-ARGB|white|display|auraice"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAI-03-ARGB" Tag="RM-WAI-03-ARGB|white|display|auraice"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-04-ARGB" Tag="RM-WAIB-04-ARGB|black|display|auraice"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-05-ARGB" Tag="RM-WAIB-05-ARGB|black|display|auraice"/>
+                  <ComboBoxItem Content="Rise Mode RM-WAIB-06-ARGB" Tag="RM-WAIB-06-ARGB|black|display|auraice"/>
+                  <ComboBoxItem Content="RM-WCZ-01-RGB — Frost RGB 120" Tag="RM-WCZ-01-RGB|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCZ-02-RGB — Frost RGB 240" Tag="RM-WCZ-02-RGB|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCF-04-RGB — Frost RGB 360" Tag="RM-WCF-04-RGB|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-01-RGB — Black RGB 120" Tag="RM-WCB-01-RGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-02-RGB — Black RGB 240" Tag="RM-WCB-02-RGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-03-RGB — Black RGB 360" Tag="RM-WCB-03-RGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-04-ARGB — Black ARGB 240" Tag="RM-WCB-04-ARGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-05-ARGB — Black ARGB 120" Tag="RM-WCB-05-ARGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-07-ARGB — Black ARGB 360" Tag="RM-WCB-07-ARGB|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCZ-05-ARGB — Aura Frost Pro 120" Tag="RM-WCZ-05-ARGB|white|plain|aurafrostpro"/>
+                  <ComboBoxItem Content="RM-WCZ-06-ARGB — Aura Frost Pro 240" Tag="RM-WCZ-06-ARGB|white|plain|aurafrostpro"/>
+                  <ComboBoxItem Content="RM-WCF-07-ARGB — Aura Frost Pro 360" Tag="RM-WCF-07-ARGB|white|plain|aurafrostpro"/>
+                  <ComboBoxItem Content="RM-WC-AB-240 — All Black 240" Tag="RM-WC-AB-240|black|plain|allblack"/>
+                  <ComboBoxItem Content="RM-WC-AB-360 — All Black 360" Tag="RM-WC-AB-360|black|plain|allblack"/>
+                  <ComboBoxItem Content="RM-WCZ-01-RBW — Frost Rainbow 120" Tag="RM-WCZ-01-RBW|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCZ-02-RBW — Frost Rainbow 240" Tag="RM-WCZ-02-RBW|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCF-04-RBW — Frost Rainbow 360" Tag="RM-WCF-04-RBW|white|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-01-RBW — Black Rainbow 120" Tag="RM-WCB-01-RBW|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-02-RBW — Black Rainbow 240" Tag="RM-WCB-02-RBW|black|plain|classic"/>
+                  <ComboBoxItem Content="RM-WCB-03-RBW — Black Rainbow 360" Tag="RM-WCB-03-RBW|black|plain|classic"/>
                 </ComboBox>
               </StackPanel>
             </StackPanel>
@@ -1249,58 +1249,43 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Margin="0,32,0,0">
-                    <Ellipse x:Name="CoolerBody"
-                             Width="192"
-                             Height="192"
-                             Fill="#101923"
-                             Stroke="#2C4651"
-                             StrokeThickness="1.5"/>
-                    <Ellipse Width="168"
-                             Height="168"
-                             Stroke="#20333F"
-                             StrokeThickness="12"/>
-                    <Ellipse x:Name="CoolerArgbRing"
-                             Width="168"
-                             Height="168"
-                             Stroke="{DynamicResource AccentBrush}"
-                             StrokeThickness="3"
-                             StrokeDashArray="1 2"
-                             RenderTransformOrigin="0.5,0.5">
-                      <Ellipse.RenderTransform>
-                        <RotateTransform x:Name="RingRotation"
-                                         Angle="0"/>
-                      </Ellipse.RenderTransform>
-                      <Ellipse.Effect>
-                        <DropShadowEffect Color="#6262E6C5"
-                                          BlurRadius="17"
-                                          ShadowDepth="0"
-                                          Opacity="0.7"/>
-                      </Ellipse.Effect>
-                    </Ellipse>
-                    <Ellipse Width="139"
-                             Height="139"
-                             Fill="#101923"
-                             Stroke="#2C4651"
-                             StrokeThickness="1"/>
-                    <Image Source="/Resources/Images/rise-mode.png"
-                           Width="29"
-                           Height="29"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Top"
-                           Margin="0,52,0,0"
-                           Stretch="Uniform"
-                           ToolTip="HW Metrics"
-                           AutomationProperties.Name="Ícone do modo de refrigeração"/>
-                    <TextBlock x:Name="CoolerDisplayTemp"
-                               Text="--"
-                               Foreground="#FFFFFF"
-                               FontFamily="pack://application:,,,/Resources/Fonts/#7SegmentNumber"
-                               FontSize="46"
-                               FontWeight="Bold"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Margin="0,0,0,0"/>
-                    <TextBlock Text="Temp/°C"
+                    <!-- Aura Ice: bloco espelhado com display numérico. -->
+                    <Grid x:Name="CoolerAuraIceVisual">
+                      <Ellipse x:Name="CoolerBody" Width="192" Height="192" Fill="#101923" Stroke="#2C4651" StrokeThickness="1.5"/>
+                      <Ellipse Width="168" Height="168" Stroke="#20333F" StrokeThickness="12"/>
+                      <Ellipse x:Name="CoolerArgbRing" Width="168" Height="168" Stroke="{DynamicResource AccentBrush}" StrokeThickness="3" StrokeDashArray="1 2" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform><RotateTransform x:Name="RingRotation" Angle="0"/></Ellipse.RenderTransform>
+                        <Ellipse.Effect><DropShadowEffect Color="#6262E6C5" BlurRadius="17" ShadowDepth="0" Opacity="0.7"/></Ellipse.Effect>
+                      </Ellipse>
+                      <Ellipse Width="139" Height="139" Fill="#101923" Stroke="#2C4651" StrokeThickness="1"/>
+                      <Image x:Name="CoolerLogo" Source="/Resources/Images/rise-mode.png" Width="29" Height="29" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,52,0,0" Stretch="Uniform" ToolTip="Rise Mode" AutomationProperties.Name="Logotipo Rise Mode"/>
+                      <TextBlock x:Name="CoolerDisplayTemp" Text="--" Foreground="#FFFFFF" FontFamily="pack://application:,,,/Resources/Fonts/#7SegmentNumber" FontSize="46" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                      <TextBlock x:Name="CoolerDisplayLabel" Text="Temp/°C" Foreground="#FFFFFF" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,62"/>
+                    </Grid>
+                    <!-- Aura Frost Pro: carcaça de perfil quadrado com contorno luminoso. -->
+                    <Grid x:Name="CoolerAuraFrostProVisual" Visibility="Collapsed">
+                      <Border x:Name="CoolerProBody" Width="178" Height="178" CornerRadius="28" Background="#EFF2F5" BorderBrush="#B1BCC7" BorderThickness="5"/>
+                      <Border Width="150" Height="150" CornerRadius="22" Background="#18212A" BorderBrush="#4C6473" BorderThickness="2"/>
+                      <Border x:Name="CoolerProLight" Width="132" Height="132" CornerRadius="18" BorderBrush="#62E6C5" BorderThickness="4" Background="#101923">
+                        <Border.Effect><DropShadowEffect Color="#6262E6C5" BlurRadius="20" ShadowDepth="0" Opacity="0.8"/></Border.Effect>
+                      </Border>
+                      <Image Source="/Resources/Images/rise-mode.png" Width="42" Height="42" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
+                    </Grid>
+                    <!-- Linhas Frost/RGB e Black RGB/ARGB: bloco redondo iluminado, sem display. -->
+                    <Grid x:Name="CoolerClassicVisual" Visibility="Collapsed">
+                      <Ellipse x:Name="CoolerClassicBody" Width="184" Height="184" Fill="#EFF2F5" Stroke="#B1BCC7" StrokeThickness="7"/>
+                      <Ellipse Width="154" Height="154" Fill="#101923" Stroke="#344653" StrokeThickness="5"/>
+                      <Ellipse x:Name="CoolerClassicLight" Width="132" Height="132" Fill="#18212A" Stroke="#62E6C5" StrokeThickness="4">
+                        <Ellipse.Effect><DropShadowEffect Color="#6262E6C5" BlurRadius="18" ShadowDepth="0" Opacity="0.75"/></Ellipse.Effect>
+                      </Ellipse>
+                      <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" AutomationProperties.Name="Logotipo Rise Mode"/>
+                    </Grid>
+                    <!-- All Black: bloco preto sem iluminação RGB. -->
+                    <Grid x:Name="CoolerAllBlackVisual" Visibility="Collapsed">
+                      <Border Width="176" Height="176" CornerRadius="24" Background="#101216" BorderBrush="#34383E" BorderThickness="2"/>
+                      <Border Width="142" Height="142" CornerRadius="18" Background="#171A1F" BorderBrush="#292D33" BorderThickness="1"/>
+                      <Image Source="/Resources/Images/rise-mode.png" Width="38" Height="38" HorizontalAlignment="Center" VerticalAlignment="Center" Stretch="Uniform" Opacity="0.55" AutomationProperties.Name="Logotipo Rise Mode"/>
+                    </Grid>
                                Foreground="#FFFFFF"
                                FontSize="9"
                                FontWeight="Bold"
