@@ -52,6 +52,10 @@ public sealed class HardwareMonitoringService : IDisposable
             double cpuCoreLoadSum = 0;
             var cpuCoreLoadCount = 0;
 
+            // Match LibreHardwareMonitor's official update lifecycle: update the complete
+            // hardware tree through IVisitor before reading any sensor values.
+            _computer.Accept(new UpdateVisitor(LogHardwareUpdateError));
+
             foreach (var hardware in _computer.Hardware)
                 Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                     ref cpuCoreLoadSum, ref cpuCoreLoadCount,
@@ -103,6 +107,42 @@ public sealed class HardwareMonitoringService : IDisposable
         }
     }
 
+    private void LogHardwareUpdateError(IHardware hardware, Exception exception)
+    {
+        var hardwareKey = $"{hardware.Identifier}|{hardware.HardwareType}";
+        if (_loggedHardwareErrors.Add(hardwareKey))
+            Debug.WriteLine($"[HardwareMonitoring] Falha ao atualizar hardware '{hardware.Name}' ({hardware.HardwareType}): {exception}");
+    }
+
+    /// <summary>
+    /// Mirrors the official LibreHardwareMonitor UpdateVisitor: traverse the entire
+    /// hardware tree and update each node before sensor values are collected.
+    /// Per-node exceptions are isolated so one unavailable device does not block others.
+    /// </summary>
+    private sealed class UpdateVisitor(Action<IHardware, Exception> onError) : IVisitor
+    {
+        public void VisitComputer(IComputer computer) => computer.Traverse(this);
+
+        public void VisitHardware(IHardware hardware)
+        {
+            try
+            {
+                hardware.Update();
+            }
+            catch (Exception ex)
+            {
+                onError(hardware, ex);
+            }
+
+            foreach (var child in hardware.SubHardware)
+                child.Accept(this);
+        }
+
+        public void VisitSensor(ISensor sensor) { }
+
+        public void VisitParameter(IParameter parameter) { }
+    }
+
     private void Visit(IHardware hardware,
         ref double? cpuTemp, ref int cpuTempPriority,
         ref double? cpuLoad, ref int cpuLoadPriority,
@@ -128,7 +168,6 @@ public sealed class HardwareMonitoringService : IDisposable
                         storageModel = $"{storageModel} · {candidate}";
                 }
             }
-            hardware.Update();
             foreach (var sensor in hardware.Sensors)
             {
                 var rawValue = sensor.Value;
