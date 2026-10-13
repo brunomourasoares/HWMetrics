@@ -117,7 +117,7 @@ public sealed class TelemetryHistoryCsvExporterTests
     }
 
     private static string[] Lines(string csv) =>
-        csv.Split(new[] { "\\r\\n", "\\n" }, StringSplitOptions.RemoveEmptyEntries);
+        csv.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
     private static SensorSnapshot CreateSnapshot(
         DateTime updatedAt,
