@@ -111,6 +111,8 @@ public partial class MainWindow : Window
                 CoolerLightingMode.Argb, 7.5, 0, 0, DefaultArgbPalette),
             "aurafrostpro" => new(family, finish.Equals("black", StringComparison.OrdinalIgnoreCase), false,
                 CoolerLightingMode.Argb, 6.5, 10.5, 5.8, DefaultArgbPalette),
+            "square" => new(family, finish.Equals("black", StringComparison.OrdinalIgnoreCase), false,
+                CoolerLightingMode.Rainbow, 9.0, 0, 0, RainbowPalette),
             "allblack" => new(family, true, false, CoolerLightingMode.None, 0, 0, 0, Array.Empty<Color>()),
             _ => new("classic", finish.Equals("black", StringComparison.OrdinalIgnoreCase), false,
                 lighting, 9.0, 0, 0,
@@ -985,6 +987,7 @@ public partial class MainWindow : Window
         CoolerAuraIceVisual.Visibility = profile.Family == "auraice" ? Visibility.Visible : Visibility.Collapsed;
         CoolerAuraFrostProVisual.Visibility = profile.Family == "aurafrostpro" ? Visibility.Visible : Visibility.Collapsed;
         CoolerClassicVisual.Visibility = profile.Family == "classic" ? Visibility.Visible : Visibility.Collapsed;
+        CoolerSquareVisual.Visibility = profile.Family == "square" ? Visibility.Visible : Visibility.Collapsed;
         CoolerAllBlackVisual.Visibility = profile.Family == "allblack" ? Visibility.Visible : Visibility.Collapsed;
 
         var bodyColor = profile.IsBlack ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
@@ -995,6 +998,8 @@ public partial class MainWindow : Window
         CoolerProBody.Stroke = new SolidColorBrush(bodyStroke);
         CoolerClassicBody.Fill = new SolidColorBrush(bodyColor);
         CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
+        CoolerSquareBody.Fill = new SolidColorBrush(bodyColor);
+        CoolerSquareBody.Stroke = new SolidColorBrush(bodyStroke);
 
         CoolerDisplayTemp.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
         CoolerDisplayLabel.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
@@ -1006,6 +1011,7 @@ public partial class MainWindow : Window
         StopRingAnimation(ProMirrorOuterRotation);
         StopRingAnimation(ProMirrorInnerRotation);
         StopRingAnimation(ClassicRingRotation);
+        StopRingAnimation(SquareRingRotation);
 
         if (profile.Family == "auraice")
             StartRingAnimation(RingRotation, profile.RingSeconds);
@@ -1018,6 +1024,8 @@ public partial class MainWindow : Window
         if (profile.Family == "classic" &&
             profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
             StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
+        if (profile.Family == "square" && profile.LightingMode == CoolerLightingMode.Rainbow)
+            StartRingAnimation(SquareRingRotation, profile.RingSeconds);
 
         // The palette is centralized by series: ARGB is configurable later, RGB and
         // Rainbow have distinct palettes, and All Black remains intentionally unlit.
@@ -1028,6 +1036,7 @@ public partial class MainWindow : Window
         CoolerProMirrorOuter.Stroke = paletteBrush;
         CoolerProMirrorInner.Stroke = paletteBrush;
         CoolerClassicLight.Stroke = paletteBrush;
+        CoolerSquareLight.Stroke = paletteBrush;
 
         var lightingEnabled = profile.LightingMode != CoolerLightingMode.None;
         CoolerArgbRing.Opacity = lightingEnabled ? 1 : 0;
@@ -1035,6 +1044,7 @@ public partial class MainWindow : Window
         CoolerProMirrorOuter.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.78 : 0;
         CoolerProMirrorInner.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.62 : 0;
         CoolerClassicLight.Opacity = lightingEnabled ? 1 : 0;
+        CoolerSquareLight.Opacity = profile.Family == "square" && lightingEnabled ? 1 : 0;
         CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
         CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
         SavePreferences();
