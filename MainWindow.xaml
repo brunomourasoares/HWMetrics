@@ -40,12 +40,6 @@
           <CubicEase EasingMode="EaseOut"/>
         </DoubleAnimation.EasingFunction>
       </DoubleAnimation>
-      <DoubleAnimation Storyboard.TargetName="RingRotation"
-                       Storyboard.TargetProperty="Angle"
-                       From="0"
-                       To="360"
-                       Duration="0:0:18"
-                       RepeatBehavior="Forever"/>
       <DoubleAnimation Storyboard.TargetName="AmbientGlow"
                        Storyboard.TargetProperty="Opacity"
                        From="0.22"
