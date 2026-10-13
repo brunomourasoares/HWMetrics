@@ -396,11 +396,11 @@ public sealed class HardwareMonitoringService : IDisposable
     private static string? ExtractWmiKey(string? objectPath, string key)
     {
         if (string.IsNullOrWhiteSpace(objectPath)) return null;
-        var marker = key + "=\\\"";
+        var marker = key + "=\"";
         var start = objectPath.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
         if (start < 0) return null;
         start += marker.Length;
-        var end = objectPath.IndexOf('\\\"', start);
+        var end = objectPath.IndexOf('"', start);
         return end > start ? objectPath[start..end].Replace("\\\\", "\\") : null;
     }
 
