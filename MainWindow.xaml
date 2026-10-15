@@ -136,15 +136,15 @@
         <Trigger Property="IsMouseOver"
                  Value="True">
           <Setter Property="Background"
-                  Value="{DynamicResource AccentSoftBrush}"/>
+                  Value="{DynamicResource WindowControlHoverBrush}"/>
           <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Trigger>
         <Trigger Property="IsPressed"
                  Value="True">
           <Setter Property="Background"
-                  Value="{DynamicResource AccentBrush}"/>
+                  Value="{DynamicResource WindowControlPressedBrush}"/>
           <Setter Property="Foreground"
-                  Value="{DynamicResource AccentForegroundBrush}"/>
+                  Value="{DynamicResource TextPrimaryBrush}"/>
         </Trigger>
       </Style.Triggers>
     </Style>
