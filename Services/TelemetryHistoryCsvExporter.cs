@@ -64,7 +64,7 @@ public static class TelemetryHistoryCsvExporter
     {
         if (!IsFinite(snapshot.MemoryUsedGiB) ||
             !IsFinite(snapshot.MemoryTotalGiB) ||
-            snapshot.MemoryTotalGiB <= 0)
+            snapshot.MemoryTotalGiB!.Value <= 0)
             return null;
 
         var percentage = snapshot.MemoryUsedGiB!.Value / snapshot.MemoryTotalGiB!.Value * 100d;
