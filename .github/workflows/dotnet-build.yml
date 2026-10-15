@@ -28,5 +28,5 @@ jobs:
       - name: Build Release
         run: dotnet build HWMetrics.csproj --configuration Release --no-restore
 
-      - name: Run telemetry tests
+      - name: Run RM Monitor tests
         run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
