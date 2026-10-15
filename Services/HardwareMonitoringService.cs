@@ -59,7 +59,9 @@ public sealed class HardwareMonitoringService : IDisposable
             {
                 Debug.WriteLine($"[HardwareMonitoring] Cleanup after initialization failure failed: {cleanupException}");
             }
-            throw;
+            // Keep the service alive: Windows CPU utilization and memory APIs remain usable
+            // even when a low-level hardware provider cannot initialize without elevation.
+            Debug.WriteLine("[HardwareMonitoring] LibreHardwareMonitor initialization failed; using available Windows fallbacks.");
         }
     }
 
@@ -82,13 +84,19 @@ public sealed class HardwareMonitoringService : IDisposable
             _storageModelCandidates.Clear();
 
             // Refresh the complete hardware tree once using the same visitor lifecycle as LibreHardwareMonitor.
-            _computer.Accept(_updateVisitor);
-
-            foreach (var hardware in _computer.Hardware)
-                Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
-                    ref cpuCoreLoadSum, ref cpuCoreLoadCount,
-                    ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                    ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
+            try
+            {
+                _computer.Accept(_updateVisitor);
+                foreach (var hardware in _computer.Hardware)
+                    Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
+                        ref cpuCoreLoadSum, ref cpuCoreLoadCount,
+                        ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
+                        ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[HardwareMonitoring] Hardware provider unavailable; retaining Windows fallbacks: {ex.Message}");
+            }
 
             // If no aggregate CPU load sensor exists, report the mean of the per-core
             // readings rather than whichever core happened to appear first.
