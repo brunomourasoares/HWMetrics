@@ -50,7 +50,7 @@ public partial class MainWindow : Window
     private int _storageDriveIndex = -1;
     private string? _selectedStorageDriveName;
     private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RM Monitor", "preferences.json");
-    private readonly string _legacyPreferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
+    private readonly string[] _legacyPreferencesPaths = { Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HWMetrics", "preferences.json"), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WaterCoolerApp", "preferences.json") };
     private bool _loadingPreferences;
     private NotifyIcon? _trayIcon;
     private System.Drawing.Icon? _trayApplicationIcon;
@@ -199,7 +199,7 @@ public partial class MainWindow : Window
         {
             var preferencesFile = File.Exists(_preferencesPath)
                 ? _preferencesPath
-                : _legacyPreferencesPath;
+                : _legacyPreferencesPaths.FirstOrDefault(File.Exists) ?? _preferencesPath;
             var preferences = File.Exists(preferencesFile)
                 ? JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(preferencesFile)) ?? new AppPreferences()
                 : new AppPreferences { LanguageIndex = Localizer.DetectSystemLanguageIndex() };
@@ -1148,7 +1148,7 @@ public partial class MainWindow : Window
             else
             {
                 key.DeleteValue("HWMetrics", throwOnMissingValue: false);
-                key.DeleteValue("WaterCoolerApp", throwOnMissingValue: false);
+                key.DeleteValue("RMMonitor", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
         }
