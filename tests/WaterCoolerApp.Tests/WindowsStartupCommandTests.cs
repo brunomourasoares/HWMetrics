@@ -9,8 +9,8 @@ public sealed class WindowsStartupCommandTests
     public void BuildWindowsStartupCommand_QuotesDirectExecutableAndStartsInTray()
     {
         var command = MainWindow.BuildWindowsStartupCommand(
-            @"C:\Program Files\Aqua Core\RMMonitor.exe",
-            @"C:\Program Files\Aqua Core\RMMonitor.dll");
+            @"C:\Program Files\RM Monitor\RMMonitor.exe",
+            @"C:\Program Files\RM Monitor\RMMonitor.dll");
 
         Assert.Equal("\"C:\\Program Files\\RM Monitor\\RMMonitor.exe\" --tray", command);
     }
@@ -20,7 +20,7 @@ public sealed class WindowsStartupCommandTests
     {
         var command = MainWindow.BuildWindowsStartupCommand(
             @"C:\Program Files\dotnet\dotnet.exe",
-            @"C:\Program Files\Aqua Core\RMMonitor.dll");
+            @"C:\Program Files\RM Monitor\RMMonitor.dll");
 
         Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\RM Monitor\\RMMonitor.dll\" --tray", command);
     }
