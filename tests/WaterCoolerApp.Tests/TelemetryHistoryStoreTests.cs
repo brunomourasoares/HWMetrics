@@ -10,7 +10,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void SaveAndLoad_KeepOnlySnapshotsInsideRetentionWindow()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = new DateTime(2026, 10, 11, 12, 0, 0, DateTimeKind.Local);
         var store = new TelemetryHistoryStore(path);
@@ -38,7 +38,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Save_UsesConfiguredRetentionWindow()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = DateTime.Now;
         var store = new TelemetryHistoryStore(path);
@@ -67,7 +67,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Load_OrdersSnapshotsChronologically()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = DateTime.Now;
         Directory.CreateDirectory(directory);
@@ -99,7 +99,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Load_FiltersExpiredAndFutureSnapshots()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = DateTime.Now;
         Directory.CreateDirectory(directory);
@@ -130,7 +130,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Save_IgnoresNullEntries()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = DateTime.Now;
         var store = new TelemetryHistoryStore(path);
@@ -151,7 +151,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Load_IgnoresNullEntriesInHistoryFile()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         var now = DateTime.Now;
         Directory.CreateDirectory(directory);
@@ -174,7 +174,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Load_ReturnsEmptyWhenHistoryRootIsNull()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         Directory.CreateDirectory(directory);
 
@@ -197,7 +197,7 @@ public sealed class TelemetryHistoryStoreTests
     [Fact]
     public void Load_ReturnsEmptyWhenHistoryFileIsMalformed()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "AquaCoreTests", Guid.NewGuid().ToString("N"));
+        var directory = Path.Combine(Path.GetTempPath(), "RMMonitorTests", Guid.NewGuid().ToString("N"));
         var path = Path.Combine(directory, "telemetry-history.json");
         Directory.CreateDirectory(directory);
 
