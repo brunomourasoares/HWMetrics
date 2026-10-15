@@ -18,6 +18,7 @@ using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
+using WaterCoolerApp.Controls;
 using WaterCoolerApp.Models;
 using WaterCoolerApp.Services;
 
@@ -42,7 +43,9 @@ public partial class MainWindow : Window
     private readonly DisplayTransportService _displayTransport = new();
     private bool _reading;
     private bool _closing;
-    private string _language = "pt";
+    private string _language = "en";
+    private DisplayTransportStatus? _lastDisplayStatus;
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<DependencyObject, TranslationState> _translationStates = new();
     private SensorSnapshot? _lastSnapshot;
     private int _storageDriveIndex = -1;
     private string? _selectedStorageDriveName;
@@ -154,73 +157,6 @@ public partial class MainWindow : Window
         public bool ClosePromptAnswered { get; set; }
     }
 
-    private static readonly Dictionary<string, string> Portuguese = new(StringComparer.Ordinal)
-    {
-        ["HW Metrics — Hardware Studio"] = "HW Metrics — Central de Hardware", ["HARDWARE STUDIO"] = "CENTRAL DE HARDWARE",
-        ["Minimize"] = "Minimizar", ["Maximize / Restore"] = "Maximizar / Restaurar",
-        ["Close settings"] = "Fechar configurações",
-        ["Changes the preview appearance only; it does not control the hardware."] = "Altera apenas a aparência da prévia; não controla o hardware.",
-        ["Detecting processor..."] = "Detectando processador...", ["Detecting graphics..."] = "Detectando placa de vídeo...",
-        ["Detecting drive..."] = "Detectando unidade...", ["Waiting for memory data"] = "Aguardando dados da memória",
-        ["Utilization --%"] = "Utilização --%",
-        ["Open HW Metrics"] = "Abrir HW Metrics", ["Exit"] = "Sair",
-        ["WORKSPACE"] = "ESPAÇO DE TRABALHO", ["Overview"] = "Visão geral", ["Cooling"] = "Refrigeração",
-        ["Hardware"] = "Hardware", ["Settings"] = "Configurações", ["DISPLAY DEVICE"] = "DISPOSITIVO DE DISPLAY",
-        ["Waiting for device"] = "Aguardando dispositivo", ["USB / HID connection not enabled"] = "Conexão USB / HID desativada",
-        ["HID display connected"] = "Display HID conectado", ["Telemetry sent to physical display"] = "Telemetria enviada ao display físico",
-        ["HID display not found"] = "Display HID não encontrado", ["CPU temperature unavailable · not sent"] = "Temperatura da CPU indisponível · não enviado",
-        ["HID report incompatible"] = "Relatório HID incompatível", ["Could not open HID display"] = "Não foi possível abrir o display HID",
-        ["HID write failed"] = "Falha ao transmitir por HID", ["Preview only · HID not connected"] = "Somente prévia · HID não conectado",
-        ["HID telemetry active · fan/pump control disabled"] = "Telemetria HID ativa · controle de bomba/ventoinha desativado",
-        ["APPEARANCE"] = "APARÊNCIA", ["Interface theme"] = "Tema da interface", ["Dark"] = "Escuro", ["Light"] = "Claro",
-        ["Refresh rate"] = "Intervalo de atualização", ["Language"] = "Idioma", ["SYSTEM SETTINGS"] = "CONFIGURAÇÕES DO SISTEMA",
-        ["Minimize to tray on close"] = "Minimizar para a bandeja ao fechar", ["Keep HW Metrics running in the notification area"] = "Manter o HW Metrics em execução na área de notificação",
-        ["Start with Windows"] = "Iniciar com o Windows", ["Launch automatically in the tray when you sign in"] = "Abrir automaticamente na bandeja ao entrar no Windows", ["1 sec"] = "1 s", ["2 sec"] = "2 s", ["5 sec"] = "5 s",
-        ["Preview build · .NET 10"] = "Versão de prévia · .NET 10", ["System overview"] = "Visão geral do sistema",
-        ["Your hardware, at a glance."] = "Seu hardware em um só lugar.",
-        ["PROCESSOR"] = "PROCESSADOR", ["CPU"] = "CPU", ["GPU"] = "GPU",
-        ["GRAPHICS"] = "GRÁFICOS", ["MEMORY"] = "MEMÓRIA", ["Memory model unavailable"] = "Modelo de memória indisponível", ["Capacity unavailable"] = "Capacidade indisponível",
-        ["STORAGE"] = "ARMAZENAMENTO", ["Waiting for disk data"] = "Aguardando dados do disco",
-        ["Thermal performance"] = "Desempenho térmico", ["Utilization performance"] = "Desempenho de utilização", ["Live CPU, GPU and memory history · rolling 30 minutes"] = "Histórico ao vivo de CPU, GPU e memória · últimos 30 minutos", ["Live temperature history · rolling 30 minutes"] = "Histórico de temperatura ao vivo · últimos 30 minutos",
-        ["Rolling 30 minutes · data since launch"] = "Últimos 30 minutos · dados desde a inicialização", ["100%"] = "100%", ["75%"] = "75%", ["50%"] = "50%", ["25%"] = "25%",
-        ["Waiting for sensor data"] = "Aguardando dados dos sensores", ["System utilization"] = "Utilização do sistema",
-        ["Current workload by component"] = "Carga atual por componente", ["CPU utilization"] = "Utilização da CPU",
-        ["GPU utilization"] = "Utilização da GPU", ["Memory in use"] = "Memória em uso",
-        ["Water cooler"] = "Water Cooler", ["Temperature"] = "Temperatura", ["Live temperature history"] = "Histórico da temperatura em tempo real", ["Utilization"] = "Utilização", ["Live utilization history"] = "Histórico da utilização em tempo real", ["WATER COOLER MODEL"] = "MODELO DO WATER COOLER", ["Preferences"] = "Preferências", ["Choose light or dark appearance"] = "Escolha o tema claro ou escuro", ["Sensor polling interval"] = "Intervalo de leitura dos sensores", ["Application display language"] = "Idioma da interface", ["Close"] = "Fechar", ["Pump display preview"] = "Prévia do display da bomba", ["CPU ONLY"] = "SOMENTE CPU",
-        ["CPU TEMP"] = "TEMP. CPU", ["CELSIUS"] = "CELSIUS", ["Hardware link not connected"] = "Hardware não conectado",
-        ["Preview only · HID transmission disabled"] = "Somente prévia · transmissão HID desativada",
-        ["Thermal components"] = "Componentes térmicos", ["Sensor availability on this machine"] = "Sensores disponíveis neste computador",
-        ["CPU package"] = "Pacote da CPU", ["Processor temperature"] = "Temperatura do processador",
-        ["GPU core"] = "Núcleo da GPU", ["Graphics temperature"] = "Temperatura gráfica", ["Storage"] = "Armazenamento",
-        ["Drive temperature, if exposed"] = "Temperatura do disco, se disponível",
-        ["Storage volumes will appear here."] = "Os volumes de armazenamento aparecerão aqui.",
-        ["Fan and pump control will appear after protocol validation."] = "O controle de ventoinhas e bomba será disponibilizado após validar o protocolo.",
-        ["HW METRICS  /  SYSTEM MONITOR"] = "HW METRICS  /  MONITOR DO SISTEMA",
-        ["All temperatures in °C"] = "Todas as temperaturas em °C",
-        ["No local volumes detected"] = "Nenhum volume local detectado",
-        ["Monitoring active · unsupported sensors remain N/D"] = "Monitoramento ativo · sensores não suportados aparecem como N/D",
-        ["No readable sensors detected · try running as administrator"] = "Nenhum sensor legível · tente executar como administrador",
-        ["Sensor service ready · polling every 2 seconds"] = "Serviço de sensores pronto · leitura a cada 2 segundos",
-        ["Display transmission disabled"] = "Transmissão para o display desativada", ["Sensors unavailable"] = "Sensores indisponíveis",
-        ["Storage capacity unavailable"] = "Capacidade do armazenamento indisponível", ["Drive"] = "Unidade",
-        ["used"] = "em uso", ["used of"] = "em uso de", ["total"] = "Total", ["free"] = "livres", ["Disk"] = "Disco",
-        ["Language changed"] = "Idioma alterado",
-        ["Save history"] = "Salvar histórico",
-        ["Save telemetry history"] = "Salvar histórico de telemetria",
-        ["Telemetry history saved successfully."] = "Histórico de telemetria salvo com sucesso.",
-        ["History saved"] = "Histórico salvo",
-        ["Could not save telemetry history."] = "Não foi possível salvar o histórico de telemetria.",
-        ["Save failed"] = "Falha ao salvar",
-        ["History retention"] = "Retenção do histórico",
-        ["How long to keep telemetry locally"] = "Por quanto tempo manter a telemetria localmente",
-        ["30 minutes"] = "30 minutos",
-        ["1 hour"] = "1 hora",
-        ["6 hours"] = "6 horas",
-        ["24 hours"] = "24 horas",
-        ["Temperature sensors available: "] = "Sensores de temperatura disponíveis: ",
-        ["No temperature sensors exposed by the current hardware/driver."] = "O hardware/driver atual não disponibilizou sensores de temperatura."
-    };
-
     public MainWindow()
     {
         InitializeComponent();
@@ -228,7 +164,7 @@ public partial class MainWindow : Window
         _historyWriter = new TelemetryHistoryWriter(_historyStore);
         ApplyApplicationIcon();
         LoadPreferences();
-        ApplyLanguage(LanguageSelector.SelectedIndex == 0 ? "en" : "pt");
+        ApplyLanguage(Localizer.CodeAt(LanguageSelector.SelectedIndex));
         _pollTimer.Tick += async (_, _) => await RefreshSensorsAsync();
         _storageCycleTimer.Tick += (_, _) => RotateStorageDrive();
         InitializeTrayIcon();
@@ -266,11 +202,11 @@ public partial class MainWindow : Window
                 : _legacyPreferencesPath;
             var preferences = File.Exists(preferencesFile)
                 ? JsonSerializer.Deserialize<AppPreferences>(File.ReadAllText(preferencesFile)) ?? new AppPreferences()
-                : new AppPreferences();
+                : new AppPreferences { LanguageIndex = Localizer.DetectSystemLanguageIndex() };
             ThemeSelector.SelectedIndex = Math.Clamp(preferences.ThemeIndex, 0, 1);
             PollIntervalSelector.SelectedIndex = Math.Clamp(preferences.PollIntervalIndex, 0, 2);
             _pollTimer.Interval = GetSelectedPollInterval();
-            LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, 1);
+            LanguageSelector.SelectedIndex = Math.Clamp(preferences.LanguageIndex, 0, Localizer.Languages.Count - 1);
             CoolerModelSelector.SelectedIndex = Math.Clamp(preferences.CoolerModelIndex, 0, Math.Max(0, CoolerModelSelector.Items.Count - 1));
             HistoryRetentionSelector.SelectedIndex = Math.Clamp(preferences.HistoryRetentionIndex, 0, HistoryRetentionSelector.Items.Count - 1);
             CloseToTrayCheckBox.IsChecked = preferences.MinimizeToTrayOnClose;
@@ -281,7 +217,7 @@ public partial class MainWindow : Window
         {
             ThemeSelector.SelectedIndex = 0;
             PollIntervalSelector.SelectedIndex = 1;
-            LanguageSelector.SelectedIndex = 1;
+            LanguageSelector.SelectedIndex = Localizer.DetectSystemLanguageIndex();
             CoolerModelSelector.SelectedIndex = 0;
             HistoryRetentionSelector.SelectedIndex = 0;
             CloseToTrayCheckBox.IsChecked = false;
@@ -386,13 +322,13 @@ public partial class MainWindow : Window
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add(T("Open HW Metrics", "Abrir HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
-        menu.Items.Add(T("Exit", "Sair"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
+        menu.Items.Add(T("Open HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add(T("Exit"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
         _trayApplicationIcon = CreateTrayIcon();
         _trayIcon = new NotifyIcon
         {
             Icon = _trayApplicationIcon,
-            Text = "HW Metrics — Hardware Studio",
+            Text = T("HW Metrics — Hardware Studio"),
             ContextMenuStrip = menu,
             Visible = true
         };
@@ -498,39 +434,41 @@ public partial class MainWindow : Window
 
     private void UpdateDisplayStatus(DisplayTransportStatus status)
     {
+        _lastDisplayStatus = status;
         var (title, detail, connected) = status switch
         {
             DisplayTransportStatus.Sent => (
-                T("HID display connected", "Display HID conectado"),
-                T("Telemetry sent to physical display", "Telemetria enviada ao display físico"),
+                T("HID display connected"),
+                T("Telemetry sent to physical display"),
                 true),
             DisplayTransportStatus.InvalidTelemetry => (
-                T("Waiting for device", "Aguardando dispositivo"),
-                T("CPU temperature unavailable · not sent", "Temperatura da CPU indisponível · não enviado"),
+                T("Waiting for device"),
+                T("CPU temperature unavailable · not sent"),
                 false),
             DisplayTransportStatus.IncompatibleReport => (
-                T("HID display not found", "Display HID não encontrado"),
-                T("HID report incompatible", "Relatório HID incompatível"),
+                T("HID display not found"),
+                T("HID report incompatible"),
                 false),
             DisplayTransportStatus.OpenFailed => (
-                T("HID display not found", "Display HID não encontrado"),
-                T("Could not open HID display", "Não foi possível abrir o display HID"),
+                T("HID display not found"),
+                T("Could not open HID display"),
                 false),
             DisplayTransportStatus.Error => (
-                T("HID display not found", "Display HID não encontrado"),
-                T("HID write failed", "Falha ao transmitir por HID"),
+                T("HID display not found"),
+                T("HID write failed"),
                 false),
             _ => (
-                T("Waiting for device", "Aguardando dispositivo"),
-                T("HID display not found", "Display HID não encontrado"),
+                T("Waiting for device"),
+                T("HID display not found"),
                 false)
         };
 
         DisplayConnectionTitleText.Text = title;
         DisplayConnectionStatusText.Text = detail;
-        DisplayConnectionIndicator.Fill = connected
-            ? (Brush)FindResource("AccentBrush")
-            : (Brush)FindResource("WarningBrush");
+        // SetResourceReference mantém a ligação com o tema: a cor acompanha a troca claro/escuro.
+        DisplayConnectionIndicator.SetResourceReference(
+            System.Windows.Shapes.Shape.FillProperty,
+            connected ? "AccentBrush" : "WarningBrush");
     }
 
     private void RotateStorageDrive()
@@ -547,24 +485,24 @@ public partial class MainWindow : Window
         _selectedStorageDriveName = volume.Name;
         // ProductModel identifies the physical disk, not the filesystem volume label.
         StorageModelText.Text = string.IsNullOrWhiteSpace(volume.ProductModel)
-            ? T("Drive model unavailable", "Modelo do disco indisponível")
+            ? T("Drive model unavailable")
             : volume.ProductModel;
         StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
         StorageCapacityText.Text =
-            $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total", "Total")} - " +
-            $"{FormatCapacity(volume.FreeGiB)} {T("free", "livres")}";
+            $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total")} - " +
+            $"{FormatCapacity(volume.FreeGiB)} {T("free")}";
         AnimateProgress(StorageUsageBar, volume.UsedPercent);
     }
 
     private void Render(SensorSnapshot s)
     {
         _lastSnapshot = s;
-        CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable", "Modelo do processador indisponível") : s.CpuModel;
-        GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable", "Modelo gráfico indisponível") : s.GpuModel;
-        StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable", "Modelo do disco indisponível") : s.StorageModel;
+        CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
+        GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
+        StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
         CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
-        CoolerDisplayTemp.Text = s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--";
+        CoolerPreview.SetTemperature(s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--");
         GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
         GpuDetailTemp.Text = FullTemp(s.GpuTemperatureC);
         StorageDetailTemp.Text = FullTemp(s.StorageTemperatureC);
@@ -605,27 +543,27 @@ public partial class MainWindow : Window
                 _storageDriveIndex = systemIndex >= 0 ? systemIndex : 0;
             }
             RenderStorageVolume(s.StorageVolumes[_storageDriveIndex]);
-            StorageVolumesText.Text = s.StorageVolumesSummary;
+            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
         {
             // Keep a safe fallback for snapshots with legacy aggregate storage data.
             StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total", "Total")}" +
-                (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free", "livres")}" : string.Empty);
+            StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total")}" +
+                (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
-            StorageVolumesText.Text = s.StorageVolumesSummary;
+            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else
         {
             StorageUsedPercentText.Text = "N/D";
-            StorageCapacityText.Text = T("Storage capacity unavailable", "Capacidade do armazenamento indisponível");
+            StorageCapacityText.Text = T("Storage capacity unavailable");
             StorageUsageBar.Value = 0;
-            StorageVolumesText.Text = T("No local volumes detected", "Nenhum volume local detectado");
+            StorageVolumesText.Text = T("No local volumes detected");
         }
 
-        CpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.CpuLoadPercent);
-        GpuLoadText.Text = T("Utilization ", "Utilização ") + Percent(s.GpuLoadPercent);
+        CpuLoadText.Text = T("Utilization ") + Percent(s.CpuLoadPercent);
+        GpuLoadText.Text = T("Utilization ") + Percent(s.GpuLoadPercent);
 
         if (s.MemoryUsedGiB.HasValue && s.MemoryTotalGiB.HasValue && s.MemoryTotalGiB.Value > 0)
         {
@@ -634,13 +572,13 @@ public partial class MainWindow : Window
             var free = Math.Max(0, total - used);
             var pct = Math.Clamp(used / total * 100, 0, 100);
             MemoryText.Text = $"{pct:0}%";
-            MemoryPercentText.Text = T($"{FormatCapacity(used)} used · {FormatCapacity(free)} free of {FormatCapacity(total)}", $"{FormatCapacity(used)} em uso · {FormatCapacity(free)} livres de {FormatCapacity(total)}");
+                        MemoryPercentText.Text = string.Format(T("{0} used · {1} free of {2}"), FormatCapacity(used), FormatCapacity(free), FormatCapacity(total));
             AnimateProgress(MemoryUsageBar, pct);
         }
         else
         {
             MemoryText.Text = "N/D";
-            MemoryPercentText.Text = T("Capacity unavailable", "Capacidade indisponível");
+            MemoryPercentText.Text = T("Capacity unavailable");
             AnimateProgress(MemoryUsageBar, 0);
         }
 
@@ -693,8 +631,8 @@ public partial class MainWindow : Window
         if (!showCpu && !showGpu && !showRam)
         {
             MessageBox.Show(
-                T("Select at least one series to export.", "Selecione ao menos uma série para exportar."),
-                T("Nothing to export", "Nada para exportar"),
+                T("Select at least one series to export."),
+                T("Nothing to export"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             return;
@@ -702,7 +640,7 @@ public partial class MainWindow : Window
 
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
-            Title = T("Export history to CSV", "Exportar histórico para CSV"),
+            Title = T("Export history to CSV"),
             Filter = "CSV files (*.csv)|*.csv",
             DefaultExt = ".csv",
             AddExtension = true,
@@ -722,8 +660,8 @@ public partial class MainWindow : Window
                 csv,
                 new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true)));
             MessageBox.Show(
-                T("History exported successfully.", "Histórico exportado com sucesso."),
-                T("Export complete", "Exportação concluída"),
+                T("History exported successfully."),
+                T("Export complete"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
         }
@@ -731,8 +669,8 @@ public partial class MainWindow : Window
         {
             System.Diagnostics.Debug.WriteLine($"[MainWindow] History export failed: {ex}");
             MessageBox.Show(
-                T("Could not export history.", "Não foi possível exportar o histórico."),
-                T("Export failed", "Falha na exportação"),
+                T("Could not export history."),
+                T("Export failed"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
         }
@@ -983,111 +921,99 @@ public partial class MainWindow : Window
             : selectedItem?.Content?.ToString() ?? "Rise Mode";
         var profile = CreateCoolerProfile(parts, modelCode);
 
-        CoolerModelBadge.Text = modelCode;
-        CoolerAuraIceVisual.Visibility = profile.Family == "auraice" ? Visibility.Visible : Visibility.Collapsed;
-        CoolerAuraFrostProVisual.Visibility = profile.Family == "aurafrostpro" ? Visibility.Visible : Visibility.Collapsed;
-        CoolerClassicVisual.Visibility = profile.Family == "classic" ? Visibility.Visible : Visibility.Collapsed;
-        CoolerSquareVisual.Visibility = profile.Family == "square" ? Visibility.Visible : Visibility.Collapsed;
-        CoolerAllBlackVisual.Visibility = profile.Family == "allblack" ? Visibility.Visible : Visibility.Collapsed;
-
-        var bodyColor = profile.IsBlack ? Color.FromRgb(20, 22, 27) : Color.FromRgb(239, 242, 245);
-        var bodyStroke = profile.IsBlack ? Color.FromRgb(66, 76, 88) : Color.FromRgb(177, 188, 199);
-        CoolerBody.Fill = new SolidColorBrush(bodyColor);
-        CoolerBody.Stroke = new SolidColorBrush(bodyStroke);
-        CoolerProBody.Fill = new SolidColorBrush(bodyColor);
-        CoolerProBody.Stroke = new SolidColorBrush(bodyStroke);
-        CoolerClassicBody.Fill = new SolidColorBrush(bodyColor);
-        CoolerClassicBody.Stroke = new SolidColorBrush(bodyStroke);
-        CoolerSquareBody.Fill = new SolidColorBrush(bodyColor);
-        CoolerSquareBody.Stroke = new SolidColorBrush(bodyStroke);
-
-        CoolerDisplayTemp.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
-        CoolerDisplayLabel.Visibility = profile.HasNumericDisplay ? Visibility.Visible : Visibility.Collapsed;
-
-        // Stop clocks from the previously selected family before starting this profile.
-        // Hidden visuals should not keep running animations in the background.
-        StopRingAnimation(RingRotation);
-        StopRingAnimation(ProRingRotation);
-        StopRingAnimation(ProMirrorOuterRotation);
-        StopRingAnimation(ProMirrorInnerRotation);
-        StopRingAnimation(ClassicRingRotation);
-        StopRingAnimation(SquareRingRotation);
-
-        if (profile.Family == "auraice")
-            StartRingAnimation(RingRotation, profile.RingSeconds);
-        if (profile.Family == "aurafrostpro")
-        {
-            StartRingAnimation(ProRingRotation, profile.RingSeconds);
-            StartRingAnimation(ProMirrorOuterRotation, profile.OuterMirrorSeconds);
-            StartRingAnimation(ProMirrorInnerRotation, profile.InnerMirrorSeconds);
-        }
-        if (profile.Family == "classic" &&
-            profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow)
-            StartRingAnimation(ClassicRingRotation, profile.RingSeconds);
-        if (profile.Family == "square" && profile.LightingMode == CoolerLightingMode.Rainbow)
-            StartRingAnimation(SquareRingRotation, profile.RingSeconds);
-
-        // The palette is centralized by series: ARGB is configurable later, RGB and
-        // Rainbow have distinct palettes, and All Black remains intentionally unlit.
-        var palette = profile.Palette;
-        var paletteBrush = CreatePaletteBrush(palette);
-        CoolerArgbRing.Stroke = paletteBrush;
-        CoolerProLight.Stroke = paletteBrush;
-        CoolerProMirrorOuter.Stroke = paletteBrush;
-        CoolerProMirrorInner.Stroke = paletteBrush;
-        CoolerClassicLight.Stroke = paletteBrush;
-        CoolerSquareLight.Stroke = paletteBrush;
-
-        var lightingEnabled = profile.LightingMode != CoolerLightingMode.None;
-        CoolerArgbRing.Opacity = lightingEnabled ? 1 : 0;
-        CoolerProLight.Opacity = lightingEnabled ? 1 : 0;
-        CoolerProMirrorOuter.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.78 : 0;
-        CoolerProMirrorInner.Opacity = profile.Family == "aurafrostpro" && lightingEnabled ? 0.62 : 0;
-        CoolerClassicLight.Opacity = lightingEnabled ? 1 : 0;
-        CoolerSquareLight.Opacity = profile.Family == "square" && lightingEnabled ? 1 : 0;
-        CoolerDisplayTemp.Foreground = new SolidColorBrush(Color.FromRgb(244, 251, 255));
-        CoolerModelBadge.Foreground = (Brush)FindResource("AccentBrush");
+        var displayName = selectedItem?.Content?.ToString();
+        CoolerModelBadge.Text = string.IsNullOrWhiteSpace(displayName) ? modelCode : displayName;
+        CoolerPreview.Apply(new CoolerBlockStyle(
+            profile.Family,
+            profile.IsBlack,
+            profile.HasNumericDisplay,
+            Lit: profile.LightingMode != CoolerLightingMode.None,
+            Animated: profile.Family switch
+            {
+                "auraice" or "aurafrostpro" => true,
+                "classic" => profile.LightingMode is CoolerLightingMode.Argb or CoolerLightingMode.Rainbow,
+                "square" => profile.LightingMode == CoolerLightingMode.Rainbow,
+                _ => false
+            },
+            RingSeconds: profile.RingSeconds,
+            Palette: profile.Palette));
+        CoolerModelBadge.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "AccentBrush");
         SavePreferences();
     }
 
     private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || LanguageSelector.SelectedIndex < 0) return;
-        ApplyLanguage(LanguageSelector.SelectedIndex == 1 ? "pt" : "en");
+        ApplyLanguage(Localizer.CodeAt(LanguageSelector.SelectedIndex));
         SavePreferences();
     }
 
     private void ApplyLanguage(string language)
     {
-        _language = language;
-        var reverse = Portuguese.GroupBy(pair => pair.Value, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
-        TranslateTree(this, language == "pt" ? Portuguese : reverse);
-        Title = language == "pt" ? Portuguese["HW Metrics — Hardware Studio"] : "HW Metrics — Hardware Studio";
+        Localizer.SetLanguage(language);
+        _language = Localizer.Current;
+        TranslateTree(this);
+        Title = T("HW Metrics — Hardware Studio");
         if (_trayIcon is not null)
         {
-            _trayIcon.Text = T("HW Metrics — Hardware Studio", "HW Metrics — Central de Hardware");
+            _trayIcon.Text = T("HW Metrics — Hardware Studio");
             if (_trayIcon.ContextMenuStrip is ContextMenuStrip trayMenu && trayMenu.Items.Count >= 2)
             {
-                trayMenu.Items[0].Text = T("Open HW Metrics", "Abrir HW Metrics");
-                trayMenu.Items[1].Text = T("Exit", "Sair");
+                trayMenu.Items[0].Text = T("Open HW Metrics");
+                trayMenu.Items[1].Text = T("Exit");
             }
         }
+
+        // Textos montados em código (status do display etc.) são refeitos já no novo idioma.
+        if (_lastDisplayStatus is { } status) UpdateDisplayStatus(status);
     }
 
-    private static void TranslateTree(DependencyObject parent, IReadOnlyDictionary<string, string> dictionary)
+    // Guarda o texto original (em inglês) de cada elemento para poder trocar entre QUALQUER idioma,
+    // não só entre inglês e um idioma. Se o código mudar o texto depois, o novo texto vira a origem.
+    private sealed class TranslationState
     {
-        if (parent is TextBlock textBlock && dictionary.TryGetValue(textBlock.Text, out var translatedText))
-            textBlock.Text = translatedText;
-        if (parent is ContentControl contentControl && contentControl.Content is string content && dictionary.TryGetValue(content, out var translatedContent))
-            contentControl.Content = translatedContent;
-        if (parent is FrameworkElement element && element.ToolTip is string toolTip && dictionary.TryGetValue(toolTip, out var translatedToolTip))
-            element.ToolTip = translatedToolTip;
+        public string? TextSource, TextOutput, ContentSource, ContentOutput, ToolTipSource, ToolTipOutput;
+    }
+
+    private static string Retranslate(string current, ref string? source, ref string? output)
+    {
+        var key = source is not null && current == output
+            ? source
+            : Localizer.GetEnglishKey(current) ?? current;
+        var translated = Localizer.Get(key);
+        source = key;
+        output = translated;
+        return translated;
+    }
+
+    private void TranslateTree(DependencyObject parent)
+    {
+        if (parent is TextBlock textBlock && !string.IsNullOrEmpty(textBlock.Text))
+        {
+            var state = _translationStates.GetOrCreateValue(textBlock);
+            var translated = Retranslate(textBlock.Text, ref state.TextSource, ref state.TextOutput);
+            if (translated != textBlock.Text) textBlock.Text = translated;
+        }
+
+        if (parent is ContentControl contentControl && contentControl.Content is string content && content.Length > 0)
+        {
+            var state = _translationStates.GetOrCreateValue(contentControl);
+            var translated = Retranslate(content, ref state.ContentSource, ref state.ContentOutput);
+            if (translated != content) contentControl.Content = translated;
+        }
+
+        if (parent is FrameworkElement element && element.ToolTip is string toolTip && toolTip.Length > 0)
+        {
+            var state = _translationStates.GetOrCreateValue(element);
+            var translated = Retranslate(toolTip, ref state.ToolTipSource, ref state.ToolTipOutput);
+            if (translated != toolTip) element.ToolTip = translated;
+        }
 
         foreach (var child in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>().ToArray())
-            TranslateTree(child, dictionary);
+            TranslateTree(child);
     }
 
-    private string T(string english, string portuguese) => _language == "pt" ? portuguese : english;
+    private string T(string english) => Localizer.Get(english);
 
     private void SetActiveNavigation(Button active)
     {
@@ -1144,9 +1070,8 @@ public partial class MainWindow : Window
         if (!_closePromptAnswered)
         {
             var choice = MessageBox.Show(
-                T("Would you like to exit HW Metrics or keep it running in the system tray?",
-                  "Deseja fechar o HW Metrics ou mantê-lo em execução na bandeja do sistema?"),
-                T("Close HW Metrics", "Fechar HW Metrics"),
+                T("Would you like to exit HW Metrics or keep it running in the system tray?"),
+                T("Close HW Metrics"),
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question,
                 MessageBoxResult.Cancel);
@@ -1229,8 +1154,8 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             MessageBox.Show(
-                T("Could not update Windows startup settings.", "Não foi possível alterar a inicialização do Windows.") + Environment.NewLine + ex.Message,
-                T("Startup setting failed", "Falha na configuração de inicialização"),
+                T("Could not update Windows startup settings.") + Environment.NewLine + ex.Message,
+                T("Startup setting failed"),
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
             return;
