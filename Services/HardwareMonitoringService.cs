@@ -39,12 +39,6 @@ public sealed class HardwareMonitoringService : IDisposable
             IsMemoryEnabled = true,
             IsStorageEnabled = true,
             IsMotherboardEnabled = true,
-            // Match LibreHardwareMonitor's default sensor-category coverage.
-            IsControllerEnabled = true,
-            IsNetworkEnabled = true,
-            IsPowerMonitorEnabled = true,
-            IsPsuEnabled = true,
-            IsBatteryEnabled = true
         };
         _updateVisitor = new HardwareUpdateVisitor(LogHardwareUpdateFailure);
         try
