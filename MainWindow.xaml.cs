@@ -18,11 +18,11 @@ using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
-using WaterCoolerApp.Controls;
-using WaterCoolerApp.Models;
-using WaterCoolerApp.Services;
+using RMMonitor.Controls;
+using RMMonitor.Models;
+using RMMonitor.Services;
 
-namespace WaterCoolerApp;
+namespace RMMonitor;
 
 public partial class MainWindow : Window
 {
@@ -322,13 +322,13 @@ public partial class MainWindow : Window
     private void InitializeTrayIcon()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add(T("Open HW Metrics"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
+        menu.Items.Add(T("Open RM Monitor"), null, (_, _) => Dispatcher.Invoke(RestoreFromTray));
         menu.Items.Add(T("Exit"), null, (_, _) => Dispatcher.Invoke(() => { _allowExit = true; Close(); }));
         _trayApplicationIcon = CreateTrayIcon();
         _trayIcon = new NotifyIcon
         {
             Icon = _trayApplicationIcon,
-            Text = T("HW Metrics — Hardware Studio"),
+            Text = T("RM Monitor"),
             ContextMenuStrip = menu,
             Visible = true
         };
@@ -1148,6 +1148,7 @@ public partial class MainWindow : Window
             else
             {
                 key.DeleteValue("HWMetrics", throwOnMissingValue: false);
+                key.DeleteValue("WaterCoolerApp", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
         }
