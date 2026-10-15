@@ -1,6 +1,6 @@
-namespace WaterCoolerApp.Protocol;
+namespace RMMonitor.Protocol;
 
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
 /// <summary>
 /// Encodes the 11-byte payload observed in the original software.
