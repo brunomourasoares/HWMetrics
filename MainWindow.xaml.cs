@@ -188,7 +188,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[HWMetrics] Could not apply window icon: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[RM Monitor] Could not apply window icon: {ex}");
         }
     }
 
@@ -1148,6 +1148,7 @@ public partial class MainWindow : Window
             else
             {
                 key.DeleteValue("HWMetrics", throwOnMissingValue: false);
+                key.DeleteValue("WaterCoolerApp", throwOnMissingValue: false);
                 key.DeleteValue("RMMonitor", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
