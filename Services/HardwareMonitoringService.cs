@@ -32,48 +32,36 @@ public sealed class HardwareMonitoringService : IDisposable
 
     public HardwareMonitoringService()
     {
-        // Open the CPU group first. LibreHardwareMonitor adds groups sequentially during
-        // Open(); a failure in motherboard/controller initialization must not prevent the
-        // CPU provider from being created. Optional groups are added independently below.
         _computer = new Computer
         {
-            IsCpuEnabled = true
+            IsCpuEnabled = true,
+            IsGpuEnabled = true,
+            IsMemoryEnabled = true,
+            IsStorageEnabled = true,
+            IsMotherboardEnabled = true,
+            // Match LibreHardwareMonitor's default sensor-category coverage.
+            IsControllerEnabled = true,
+            IsNetworkEnabled = true,
+            IsPowerMonitorEnabled = true,
+            IsPsuEnabled = true,
+            IsBatteryEnabled = true
         };
         _updateVisitor = new HardwareUpdateVisitor(LogHardwareUpdateFailure);
         try
         {
             _computer.Open();
         }
-        catch (Exception ex)
+        catch
         {
-            // Do not pretend that a failed provider is available. Windows API fallbacks
-            // for CPU load and memory remain usable even if CPU sensor access is unavailable.
-            Debug.WriteLine($"[HardwareMonitoring] CPU provider initialization failed; CPU temperature may be unavailable. Windows fallbacks remain active. {ex}");
-            return;
-        }
-
-        TryEnableHardwareGroup("GPU", () => _computer.IsGpuEnabled = true);
-        TryEnableHardwareGroup("memória", () => _computer.IsMemoryEnabled = true);
-        TryEnableHardwareGroup("armazenamento", () => _computer.IsStorageEnabled = true);
-        TryEnableHardwareGroup("placa-mãe", () => _computer.IsMotherboardEnabled = true);
-        TryEnableHardwareGroup("controladores", () => _computer.IsControllerEnabled = true);
-        TryEnableHardwareGroup("rede", () => _computer.IsNetworkEnabled = true);
-        TryEnableHardwareGroup("monitores de energia", () => _computer.IsPowerMonitorEnabled = true);
-        TryEnableHardwareGroup("fonte", () => _computer.IsPsuEnabled = true);
-        TryEnableHardwareGroup("bateria", () => _computer.IsBatteryEnabled = true);
-    }
-
-    private void TryEnableHardwareGroup(string groupName, Action enable)
-    {
-        try
-        {
-            enable();
-        }
-        catch (Exception ex)
-        {
-            // A failing optional hardware provider should not disable sensors from
-            // groups that were already initialized successfully.
-            Debug.WriteLine($"[HardwareMonitoring] Não foi possível inicializar o grupo de {groupName}; os demais grupos continuarão ativos: {ex}");
+            // Open may initialize some hardware groups before a later group fails.
+            try { _computer.Close(); }
+            catch (Exception cleanupException)
+            {
+                Debug.WriteLine($"[HardwareMonitoring] Cleanup after initialization failure failed: {cleanupException}");
+            }
+            // Keep the service alive: Windows CPU utilization and memory APIs remain usable
+            // even when a low-level hardware provider cannot initialize without elevation.
+            Debug.WriteLine("[HardwareMonitoring] LibreHardwareMonitor initialization failed; using available Windows fallbacks.");
         }
     }
 
