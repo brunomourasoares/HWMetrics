@@ -13,7 +13,7 @@ using Path = System.Windows.Shapes.Path;
 using Point = System.Windows.Point;
 using UserControl = System.Windows.Controls.UserControl;
 
-namespace WaterCoolerApp.Controls;
+namespace RMMonitor.Controls;
 
 /// <summary>
 /// Descrição visual do bloco selecionado. É montada em MainWindow a partir do CoolerVisualProfile.
