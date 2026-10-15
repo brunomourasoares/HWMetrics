@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Textos da interface em 6 idiomas. A chave é sempre o texto em inglês (o mesmo que está no XAML),
@@ -80,7 +80,7 @@ public static class Localizer
     private static readonly Dictionary<string, string[]> Strings = new(StringComparer.Ordinal)
     {
         ["RM Monitor"] = ["RM Monitor", "RM Monitor", "RM Monitor", "RM Monitor", "RM Monitor"],
-        ["RM Monitor"] = ["RM Monitor — Central de Hardware", "RM Monitor — Centro de Hardware", "RM Monitor — Centro Hardware", "RM Monitor — Centre matériel", "RM Monitor — 硬件中心"],
+        ["HW Metrics — Hardware Studio"] = ["HW Metrics — Central de Hardware", "HW Metrics — Centro de Hardware", "HW Metrics — Centro Hardware", "HW Metrics — Centre matériel", "HW Metrics — 硬件中心"],
         ["HARDWARE STUDIO"] = ["CENTRAL DE HARDWARE", "CENTRO DE HARDWARE", "CENTRO HARDWARE", "CENTRE MATÉRIEL", "硬件中心"],
         ["Minimize"] = ["Minimizar", "Minimizar", "Riduci a icona", "Réduire", "最小化"],
         ["Maximize / Restore"] = ["Maximizar / Restaurar", "Maximizar / Restaurar", "Ingrandisci / Ripristina", "Agrandir / Restaurer", "最大化 / 还原"],
