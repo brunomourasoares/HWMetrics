@@ -522,7 +522,7 @@
                       BorderBrush="{DynamicResource AccentLineBrush}"
                       BorderThickness="1"
                       Padding="5">
-                <Image Source="/Resources/Images/logo-square.png"
+                <Image Source="/Resources/Images/rise-mode.png"
                        Stretch="Uniform"
                        AutomationProperties.Name="Rise Mode logo"/>
               </Border>
@@ -814,7 +814,7 @@
                     <Canvas Width="24"
                             Height="24">
                       <Path Data="M3,4 L3,18 M3,6 L20,6 Q21,6 21,7 L21,15 Q21,16 20,16 L3,16 M9,13 A2,2 0 1 0 9,9 A2,2 0 1 0 9,13 M15,9 L15,13 M18,9 L18,13 M7,16 L7,19 L15,19 L15,16"
-                            Stroke="{DynamicResource AccentBlueBrush}"
+                            Stroke="{DynamicResource GpuGreenBrush}"
                             StrokeThickness="1.5"
                             StrokeStartLineCap="Round"
                             StrokeEndLineCap="Round"
@@ -1070,7 +1070,7 @@
                               StrokeLineJoin="Round"
                               Fill="{x:Null}"/>
                         <Path x:Name="GpuHistoryPath"
-                              Stroke="{DynamicResource AccentBlueBrush}"
+                              Stroke="{DynamicResource GpuGreenBrush}"
                               StrokeThickness="2"
                               StrokeLineJoin="Round"
                               Fill="{x:Null}"
@@ -1088,7 +1088,7 @@
                                Foreground="{DynamicResource TextSecondaryBrush}"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" Margin="0,0,4,0"/><TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBlueBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Ellipse Width="7" Height="7" Fill="{DynamicResource GpuGreenBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
                     </StackPanel>
                   </Grid>
                 </Grid>
@@ -1237,7 +1237,7 @@
                               StrokeLineJoin="Round"
                               Fill="{x:Null}"/>
                         <Path x:Name="GpuUtilizationHistoryPath"
-                              Stroke="{DynamicResource AccentBlueBrush}"
+                              Stroke="{DynamicResource GpuGreenBrush}"
                               StrokeThickness="2"
                               StrokeLineJoin="Round"
                               Fill="{x:Null}"/>
@@ -1257,7 +1257,7 @@
                     <TextBlock Text="Rolling 30 minutes · data since launch" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" Margin="0,0,4,0"/><TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBlueBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0"><Ellipse Width="7" Height="7" Fill="{DynamicResource GpuGreenBrush}" Margin="0,0,4,0"/><TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Ellipse Width="7" Height="7" Fill="{DynamicResource PurpleBrush}" Margin="0,0,4,0"/><TextBlock Text="RAM" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
                     </StackPanel>
                   </Grid>
@@ -1384,7 +1384,7 @@
                                 Height="30"
                                 CornerRadius="9">
                           <TextBlock Text="◈"
-                                     Foreground="{DynamicResource AccentBlueBrush}"
+                                     Foreground="{DynamicResource GpuGreenBrush}"
                                      FontSize="17"
                                      HorizontalAlignment="Center"
                                      VerticalAlignment="Center"/>
