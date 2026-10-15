@@ -8,56 +8,51 @@ namespace RMMonitor.Tests;
 public sealed class TelemetryHistoryCsvExporterTests
 {
     [Fact]
-    public void Build_TemperatureExportIncludesOnlySelectedCpuAndGpuSeriesInChronologicalOrder()
+    public void Build_TemperatureExportContainsOnlyTimestampAndSelectedTemperatureColumns()
     {
         var newer = CreateSnapshot(
             new DateTime(2026, 10, 13, 12, 0, 0),
-            cpuTemperature: 51.5,
-            gpuTemperature: 63.25,
-            cpuLoad: 30,
-            gpuLoad: 40);
+            cpuTemperature: 51.5, gpuTemperature: 63.25, cpuLoad: 30, gpuLoad: 40);
         var older = CreateSnapshot(
             new DateTime(2026, 10, 13, 11, 59, 0),
-            cpuTemperature: 48,
-            gpuTemperature: 60,
-            cpuLoad: 20,
-            gpuLoad: 35);
+            cpuTemperature: 48, gpuTemperature: 60, cpuLoad: 20, gpuLoad: 35);
 
         var csv = TelemetryHistoryCsvExporter.Build(
             new[] { newer, older }, exportTemperature: true,
             showCpu: true, showGpu: false, showRam: false);
 
-        var rows = Lines(csv);
-        Assert.Equal("Tipo;Horário;Componente;Valor;Unidade", rows[0]);
-        Assert.Equal(3, rows.Length);
-        Assert.Contains("Temperatura;2026-10-13 11:59:00;CPU;48;°C", rows);
-        Assert.Contains("Temperatura;2026-10-13 12:00:00;CPU;51.5;°C", rows);
-        Assert.DoesNotContain(rows, row => row.Contains(";GPU;", StringComparison.Ordinal));
-        Assert.DoesNotContain(rows, row => row.Contains("Utilização", StringComparison.Ordinal));
+        Assert.Equal(new[]
+        {
+            "Horário;CPU (°C)",
+            "2026-10-13 11:59:00;48",
+            "2026-10-13 12:00:00;51.5"
+        }, Lines(csv));
+        Assert.DoesNotContain("GPU", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("Utilização", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("Componente", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("Unidade", csv, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Build_UtilizationExportIncludesSelectedRamAsPercentage()
+    public void Build_UtilizationExportContainsOnlyTimestampAndSelectedPercentages()
     {
         var snapshot = CreateSnapshot(
             new DateTime(2026, 10, 13, 12, 0, 0),
-            cpuTemperature: 50,
-            gpuTemperature: 60,
-            cpuLoad: 22.5,
-            gpuLoad: 77.75,
-            memoryUsed: 12,
-            memoryTotal: 16);
+            cpuTemperature: 50, gpuTemperature: 60, cpuLoad: 22.5, gpuLoad: 77.75,
+            memoryUsed: 12, memoryTotal: 16);
 
         var csv = TelemetryHistoryCsvExporter.Build(
             new[] { snapshot }, exportTemperature: false,
             showCpu: false, showGpu: true, showRam: true);
 
-        var rows = Lines(csv);
-        Assert.Equal(3, rows.Length);
-        Assert.Contains("Utilização;2026-10-13 12:00:00;GPU;77.75;%", rows);
-        Assert.Contains("Utilização;2026-10-13 12:00:00;Memória;75;%", rows);
-        Assert.DoesNotContain(rows, row => row.Contains(";CPU;", StringComparison.Ordinal));
-        Assert.DoesNotContain(rows, row => row.Contains("Temperatura", StringComparison.Ordinal));
+        Assert.Equal(new[]
+        {
+            "Horário;GPU (%);Memória (%)",
+            "2026-10-13 12:00:00;77.75;75"
+        }, Lines(csv));
+        Assert.DoesNotContain("CPU (%)", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("Temperatura", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("°C", csv, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -65,29 +60,26 @@ public sealed class TelemetryHistoryCsvExporterTests
     {
         var snapshot = CreateSnapshot(
             new DateTime(2026, 10, 13, 12, 0, 0),
-            cpuTemperature: double.NaN,
-            gpuTemperature: null,
-            cpuLoad: double.PositiveInfinity,
-            gpuLoad: null,
-            memoryUsed: 8,
-            memoryTotal: 0);
+            cpuTemperature: double.NaN, gpuTemperature: null,
+            cpuLoad: double.PositiveInfinity, gpuLoad: null,
+            memoryUsed: 8, memoryTotal: 0);
 
         var csv = TelemetryHistoryCsvExporter.Build(
             new[] { snapshot }, exportTemperature: false,
             showCpu: true, showGpu: true, showRam: true);
 
-        Assert.Equal("Tipo;Horário;Componente;Valor;Unidade", Lines(csv)[0]);
+        Assert.Equal("Horário;CPU (%);GPU (%);Memória (%)", Lines(csv)[0]);
         Assert.Single(Lines(csv));
     }
 
     [Fact]
-    public void Build_EmptyHistoryReturnsHeaderOnly()
+    public void Build_EmptyHistoryReturnsSelectedColumnHeadersOnly()
     {
         var csv = TelemetryHistoryCsvExporter.Build(
             Array.Empty<SensorSnapshot>(), exportTemperature: true,
             showCpu: true, showGpu: true, showRam: false);
 
-        Assert.Equal(new[] { "Tipo;Horário;Componente;Valor;Unidade" }, Lines(csv));
+        Assert.Equal(new[] { "Horário;CPU (°C);GPU (°C)" }, Lines(csv));
     }
 
     [Fact]
@@ -99,16 +91,13 @@ public sealed class TelemetryHistoryCsvExporterTests
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("pt-BR");
             var snapshot = CreateSnapshot(
                 new DateTime(2026, 10, 13, 12, 0, 0),
-                cpuTemperature: 51.75,
-                gpuTemperature: null,
-                cpuLoad: null,
-                gpuLoad: null);
+                cpuTemperature: 51.75, gpuTemperature: null, cpuLoad: null, gpuLoad: null);
 
             var csv = TelemetryHistoryCsvExporter.Build(
                 new[] { snapshot }, exportTemperature: true,
                 showCpu: true, showGpu: false, showRam: false);
 
-            Assert.Contains("CPU;51.75;°C", csv, StringComparison.Ordinal);
+            Assert.Contains("2026-10-13 12:00:00;51.75", csv, StringComparison.Ordinal);
         }
         finally
         {
