@@ -1,4 +1,4 @@
-namespace WaterCoolerApp.Models;
+namespace RMMonitor.Models;
 
 public sealed record StorageVolumeSnapshot(
     string Name,
