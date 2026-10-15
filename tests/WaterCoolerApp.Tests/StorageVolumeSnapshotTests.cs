@@ -1,7 +1,7 @@
 using Xunit;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class StorageVolumeSnapshotTests
 {
