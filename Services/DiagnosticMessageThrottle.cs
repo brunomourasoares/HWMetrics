@@ -1,4 +1,4 @@
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Thread-safe, bounded rate limiter for repeated diagnostic messages.
