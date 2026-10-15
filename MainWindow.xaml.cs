@@ -49,7 +49,7 @@ public partial class MainWindow : Window
     private SensorSnapshot? _lastSnapshot;
     private int _storageDriveIndex = -1;
     private string? _selectedStorageDriveName;
-    private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HWMetrics", "preferences.json");
+    private readonly string _preferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RM Monitor", "preferences.json");
     private readonly string _legacyPreferencesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AquaCore", "preferences.json");
     private bool _loadingPreferences;
     private NotifyIcon? _trayIcon;
@@ -953,13 +953,13 @@ public partial class MainWindow : Window
         Localizer.SetLanguage(language);
         _language = Localizer.Current;
         TranslateTree(this);
-        Title = T("HW Metrics — Hardware Studio");
+        Title = "RM Monitor";
         if (_trayIcon is not null)
         {
-            _trayIcon.Text = T("HW Metrics — Hardware Studio");
+            _trayIcon.Text = "RM Monitor";
             if (_trayIcon.ContextMenuStrip is ContextMenuStrip trayMenu && trayMenu.Items.Count >= 2)
             {
-                trayMenu.Items[0].Text = T("Open HW Metrics");
+                trayMenu.Items[0].Text = T("Open RM Monitor");
                 trayMenu.Items[1].Text = T("Exit");
             }
         }
@@ -1070,8 +1070,8 @@ public partial class MainWindow : Window
         if (!_closePromptAnswered)
         {
             var choice = MessageBox.Show(
-                T("Would you like to exit HW Metrics or keep it running in the system tray?"),
-                T("Close HW Metrics"),
+                T("Would you like to exit RM Monitor or keep it running in the system tray?"),
+                T("Close RM Monitor"),
                 MessageBoxButton.YesNoCancel,
                 MessageBoxImage.Question,
                 MessageBoxResult.Cancel);
@@ -1142,7 +1142,7 @@ public partial class MainWindow : Window
                     throw new InvalidOperationException("Could not determine the current executable path.");
 
                 var startupCommand = BuildWindowsStartupCommand(executable, typeof(App).Assembly.Location);
-                key.SetValue("HWMetrics", startupCommand);
+                key.SetValue("RM Monitor", startupCommand);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
             else
