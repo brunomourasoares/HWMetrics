@@ -21,7 +21,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Run RM Monitor tests
-        run: dotnet test tests/WaterCoolerApp.Tests/WaterCoolerApp.Tests.csproj --configuration Release
+        run: dotnet test tests/RMMonitor.Tests/RMMonitor.Tests.csproj --configuration Release
 
       - name: Restore Windows x64 runtime assets
         run: dotnet restore HWMetrics.csproj --runtime win-x64
