@@ -5,6 +5,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Windows.Interop;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Text.Json;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
@@ -29,6 +30,39 @@ public partial class MainWindow : Window
     private static readonly TimeSpan HistoryWindow = TimeSpan.FromMinutes(30);
     private static readonly TimeSpan HistoryPersistenceInterval = TimeSpan.FromSeconds(30);
     private const int WmActivateExistingInstance = 0x8001;
+    private const int WmGetMinMaxInfo = 0x0024;
+    private const uint MonitorDefaultToNearest = 0x00000002;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint { public int X; public int Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect { public int Left; public int Top; public int Right; public int Bottom; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeMinMaxInfo
+    {
+        public NativePoint Reserved;
+        public NativePoint MaxSize;
+        public NativePoint MaxPosition;
+        public NativePoint MinTrackSize;
+        public NativePoint MaxTrackSize;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct NativeMonitorInfo
+    {
+        public int Size;
+        public NativeRect Monitor;
+        public NativeRect Work;
+        public uint Flags;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromWindow(nint hwnd, uint flags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool GetMonitorInfo(nint monitor, ref NativeMonitorInfo info);
     private readonly DispatcherTimer _pollTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
@@ -343,6 +377,32 @@ public partial class MainWindow : Window
 
     private nint WindowMessageHook(nint hwnd, int message, nint wParam, nint lParam, ref bool handled)
     {
+        if (message == WmGetMinMaxInfo)
+        {
+            var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+            if (monitor != 0)
+            {
+                var monitorInfo = new NativeMonitorInfo { Size = Marshal.SizeOf<NativeMonitorInfo>() };
+                if (GetMonitorInfo(monitor, ref monitorInfo))
+                {
+                    var info = Marshal.PtrToStructure<NativeMinMaxInfo>(lParam);
+                    info.MaxPosition = new NativePoint
+                    {
+                        X = monitorInfo.Work.Left - monitorInfo.Monitor.Left,
+                        Y = monitorInfo.Work.Top - monitorInfo.Monitor.Top
+                    };
+                    info.MaxSize = new NativePoint
+                    {
+                        X = monitorInfo.Work.Right - monitorInfo.Work.Left,
+                        Y = monitorInfo.Work.Bottom - monitorInfo.Work.Top
+                    };
+                    Marshal.StructureToPtr(info, lParam, false);
+                    handled = true;
+                }
+            }
+            return 0;
+        }
+
         if (message != WmActivateExistingInstance) return 0;
 
         RestoreFromTray();

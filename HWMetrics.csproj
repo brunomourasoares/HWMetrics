@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>RMMonitor</RootNamespace>
     <AssemblyName>RMMonitor</AssemblyName>
+    <ApplicationIcon>Resources/Images/rise-mode.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
@@ -16,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
+    <Resource Include="Resources/Images/rise-mode.ico" />
     <Resource Include="Resources/Images/icon.png" />
     <Resource Include="Resources/Images/logo-vertical.png" />
     <Resource Include="Resources/Images/logo-square.png" />
