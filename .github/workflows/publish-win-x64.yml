@@ -27,12 +27,12 @@ jobs:
         run: dotnet restore HWMetrics.csproj --runtime win-x64
 
       - name: Publish self-contained Windows x64
-        run: dotnet publish HWMetrics.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/HW-Metrics-win-x64
+        run: dotnet publish HWMetrics.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore --output artifacts/RM-Monitor-win-x64
 
       - name: Audit published output for legacy WinRing0 indicators
         shell: pwsh
         run: |
-          $root = Resolve-Path "artifacts/HW-Metrics-win-x64"
+          $root = Resolve-Path "artifacts/RM-Monitor-win-x64"
           $driverFiles = @(Get-ChildItem $root -Recurse -File | Where-Object {
             $_.Extension -in @(".sys", ".inf", ".cat") -or $_.Name -match "^(WinRing0|WinRing0x64|WinRing0_1_2)(\.|$)"
           })
@@ -72,6 +72,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HW-Metrics-win-x64
-          path: artifacts/HW-Metrics-win-x64/
+          path: artifacts/RM-Monitor-win-x64/
           if-no-files-found: error
           retention-days: 14
