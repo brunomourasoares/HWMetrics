@@ -67,6 +67,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
+    private readonly Queue<SensorSnapshot> _frequencyHistory = new();
     private readonly Queue<SensorSnapshot> _storedHistory = new();
     private readonly TelemetryHistoryStore _historyStore = new();
     private readonly TelemetryHistoryWriter _historyWriter;
@@ -623,6 +624,8 @@ public partial class MainWindow : Window
         }
 
         CpuLoadText.Text = T("Utilization ") + Percent(s.CpuLoadPercent);
+        CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
+        GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
         GpuLoadText.Text = T("Utilization ") + Percent(s.GpuLoadPercent);
 
         if (s.MemoryUsedGiB.HasValue && s.MemoryTotalGiB.HasValue && s.MemoryTotalGiB.Value > 0)
@@ -650,6 +653,9 @@ public partial class MainWindow : Window
         _utilizationHistory.Enqueue(s);
         while (_utilizationHistory.Count > 0 && _utilizationHistory.Peek().UpdatedAt < cutoff) _utilizationHistory.Dequeue();
         UpdateUtilizationHistoryChart(s);
+        _frequencyHistory.Enqueue(s);
+        while (_frequencyHistory.Count > 0 && _frequencyHistory.Peek().UpdatedAt < s.UpdatedAt - TimeSpan.FromSeconds(60)) _frequencyHistory.Dequeue();
+        UpdateFrequencyHistoryChart();
 
         if (_storedHistory.Count == 0 || s.UpdatedAt - _lastPersistedSnapshotAt >= TimeSpan.FromSeconds(10))
         {
@@ -778,6 +784,38 @@ public partial class MainWindow : Window
         GpuHistoryPath.Data = showGpu
             ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC), _history.Count)
             : Geometry.Empty;
+    }
+
+    private static string FormatFrequency(double? frequencyMHz) =>
+        frequencyMHz is double value && double.IsFinite(value) && value > 0
+            ? $"{value / 1000d:0.00} GHz"
+            : "-- GHz";
+
+    private void UpdateFrequencyHistoryChart()
+    {
+        CpuFrequencyHistoryPath.Data = BuildFrequencyGeometry(_frequencyHistory.Select(point => point.CpuFrequencyMHz));
+        GpuFrequencyHistoryPath.Data = BuildFrequencyGeometry(_frequencyHistory.Select(point => point.GpuFrequencyMHz));
+    }
+
+    private static Geometry BuildFrequencyGeometry(IEnumerable<double?> values)
+    {
+        var samples = values.Where(value => value.HasValue && double.IsFinite(value.Value) && value.Value > 0)
+            .Select(value => value!.Value).ToArray();
+        if (samples.Length < 2) return Geometry.Empty;
+        var min = Math.Max(0, samples.Min() * 0.85);
+        var max = samples.Max() * 1.05;
+        if (max - min < 100) { min = Math.Max(0, min - 100); max += 100; }
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            var firstIndex = Array.FindIndex(values.ToArray(), value => value.HasValue && double.IsFinite(value.Value) && value.Value > 0);
+            var valid = values.Where(value => value.HasValue && double.IsFinite(value.Value) && value.Value > 0).Select(value => value!.Value).ToArray();
+            context.BeginFigure(new Point(0, 100 - (valid[0] - min) / (max - min) * 90), false, false);
+            for (var i = 1; i < valid.Length; i++)
+                context.LineTo(new Point(900d * i / (valid.Length - 1), 100 - (valid[i] - min) / (max - min) * 90), true, false);
+        }
+        geometry.Freeze();
+        return geometry;
     }
 
     private void UpdateUtilizationHistoryChart(SensorSnapshot current)
