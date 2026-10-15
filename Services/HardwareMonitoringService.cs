@@ -64,7 +64,7 @@ public sealed class HardwareMonitoringService : IDisposable
         lock (_sync)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null;
+            double? cpuTemp = null, cpuLoad = null, gpuTemp = null, gpuLoad = null, cpuFrequency = null, gpuFrequency = null;
             double? usedGiB = null, totalGiB = null, driveTemp = null;
             string? cpuModel = null, gpuModel = null, storageModel = null;
             var cpuTempPriority = -1;
@@ -85,7 +85,7 @@ public sealed class HardwareMonitoringService : IDisposable
                     Visit(hardware, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                         ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                         ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                        ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
+                        ref cpuFrequency, ref gpuFrequency, ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
             }
             catch (Exception ex)
             {
@@ -133,7 +133,7 @@ public sealed class HardwareMonitoringService : IDisposable
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
                 driveTemp, cpuModel, gpuModel, storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
-                now, "Leitura concluída");
+                now, "Leitura concluída", cpuFrequency, gpuFrequency);
         }
     }
 
@@ -143,6 +143,7 @@ public sealed class HardwareMonitoringService : IDisposable
         ref double cpuCoreLoadSum, ref int cpuCoreLoadCount,
         ref double? gpuTemp, ref int gpuTempPriority,
         ref double? gpuLoad, ref int gpuLoadPriority,
+        ref double? cpuFrequency, ref double? gpuFrequency,
         ref double? usedGiB, ref double? totalGiB, ref double? driveTemp,
         ref string? cpuModel, ref string? gpuModel, ref string? storageModel)
     {
@@ -192,6 +193,13 @@ public sealed class HardwareMonitoringService : IDisposable
                             driveTemp ??= value;
                         break;
 
+                    case SensorType.Clock:
+                        if (hardware.HardwareType == HardwareType.Cpu)
+                            cpuFrequency ??= value;
+                        else if (IsGpu(hardware.HardwareType))
+                            gpuFrequency ??= value;
+                        break;
+
                     case SensorType.Load:
                         if (hardware.HardwareType == HardwareType.Cpu)
                         {
@@ -230,7 +238,7 @@ public sealed class HardwareMonitoringService : IDisposable
             Visit(child, ref cpuTemp, ref cpuTempPriority, ref cpuLoad, ref cpuLoadPriority,
                 ref cpuCoreLoadSum, ref cpuCoreLoadCount,
                 ref gpuTemp, ref gpuTempPriority, ref gpuLoad, ref gpuLoadPriority,
-                ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
+                ref cpuFrequency, ref gpuFrequency, ref usedGiB, ref totalGiB, ref driveTemp, ref cpuModel, ref gpuModel, ref storageModel);
     }
 
 
