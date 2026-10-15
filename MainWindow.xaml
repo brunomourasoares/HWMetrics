@@ -447,6 +447,7 @@
                   Click="MaximizeWindow_Click"
                   ToolTip="Maximize / Restore"
                   AutomationProperties.Name="Maximize / Restore"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True"
                   Style="{StaticResource WindowControlButton}"
                   Padding="7">
             <Grid Width="12"
