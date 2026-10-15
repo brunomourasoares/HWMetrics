@@ -1,8 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
+using RMMonitor.Services;
 
-namespace WaterCoolerApp;
+namespace RMMonitor;
 
 public partial class App : System.Windows.Application
 {
@@ -19,7 +20,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\HW-Metrics-SingleInstance", createdNew: out var createdNew);
+        _instanceMutex = new Mutex(initiallyOwned: true, name: @"Local\RM-Monitor-SingleInstance", createdNew: out var createdNew);
         _ownsMutex = createdNew;
         if (!createdNew)
         {
@@ -46,8 +47,8 @@ public partial class App : System.Windows.Application
 
     private static void ActivateExistingWindow()
     {
-        // The title follows the selected UI language. Check both supported translations.
-        foreach (var title in new[] { "HW Metrics — Hardware Studio", "HW Metrics — Central de Hardware" })
+        // The title follows the selected UI language, so try every supported translation.
+        foreach (var title in new[] { "RM Monitor", "HW Metrics — Hardware Studio", "HW Metrics", "HWMetrics" }.Concat(Localizer.AllVariants("HW Metrics — Hardware Studio")))
         {
             var handle = FindWindow(null, title);
             if (handle == 0) continue;

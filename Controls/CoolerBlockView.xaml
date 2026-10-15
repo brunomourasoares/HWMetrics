@@ -1,0 +1,178 @@
+<UserControl x:Class="RMMonitor.Controls.CoolerBlockView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False">
+  <!--
+    Cena desenhada em um espaço fixo de 300x300 e escalada pelo Viewbox.
+    Todos os valores abaixo são coordenadas desse espaço, então dá para ajustar
+    qualquer peça (posição, tamanho, ângulo) sem se preocupar com o layout do card.
+  -->
+  <Viewbox Stretch="Uniform">
+    <Canvas Width="300" Height="300" ClipToBounds="True">
+
+      <!-- ================================================================
+           CILINDRO: Aura Ice (display), Classic (espelho infinito), All Black
+           Vista 3/4: elipse no topo (RY = 0.92 * RX) + corpo + placa de fixação.
+           ================================================================ -->
+      <Canvas x:Name="CylinderScene" Width="300" Height="300">
+
+        <!-- Placa de fixação (elipse escura + 2 orelhas com furos) -->
+        <Ellipse Canvas.Left="52" Canvas.Top="82" Width="196" Height="188"
+                 Fill="#14171B" Stroke="#2B313A" StrokeThickness="1.2"/>
+        <Grid Canvas.Left="48" Canvas.Top="231" Width="44" Height="15" RenderTransformOrigin="0.5,0.5">
+          <Grid.RenderTransform>
+            <RotateTransform Angle="28"/>
+          </Grid.RenderTransform>
+          <Border CornerRadius="7" Background="#14171B" BorderBrush="#2B313A" BorderThickness="1"/>
+          <Ellipse Width="8" Height="8" Margin="9,0,0,0" HorizontalAlignment="Left"
+                   Fill="#050607" Stroke="#3A424C" StrokeThickness="1"/>
+        </Grid>
+        <Grid Canvas.Left="208" Canvas.Top="231" Width="44" Height="15" RenderTransformOrigin="0.5,0.5">
+          <Grid.RenderTransform>
+            <RotateTransform Angle="-28"/>
+          </Grid.RenderTransform>
+          <Border CornerRadius="7" Background="#14171B" BorderBrush="#2B313A" BorderThickness="1"/>
+          <Ellipse Width="8" Height="8" Margin="0,0,9,0" HorizontalAlignment="Right"
+                   Fill="#050607" Stroke="#3A424C" StrokeThickness="1"/>
+        </Grid>
+
+        <!-- Corpo lateral do cilindro -->
+        <Path x:Name="CylBody"
+              Data="M 50,108 L 50,166 A 100,92 0 0 0 250,166 L 250,108 Z"
+              StrokeThickness="1.2" StrokeLineJoin="Round"/>
+
+        <!-- Face superior: círculos reais dentro de um grupo achatado (ScaleY 0.92).
+             Assim o anel pode girar sem a elipse "balançar". -->
+        <Canvas Canvas.Left="50" Canvas.Top="8" Width="200" Height="200" RenderTransformOrigin="0.5,0.5">
+          <Canvas.RenderTransform>
+            <ScaleTransform ScaleX="1" ScaleY="0.92"/>
+          </Canvas.RenderTransform>
+
+          <Ellipse x:Name="CylRim" Width="200" Height="200" StrokeThickness="1.5"/>
+          <Ellipse Canvas.Left="7" Canvas.Top="7" Width="186" Height="186" Fill="#05070A"/>
+
+          <!-- Aura Ice: anel prismático ARGB + vidro preto -->
+          <Canvas x:Name="AuraIceLayer" Width="200" Height="200">
+            <Ellipse x:Name="PrismRing" Canvas.Left="11" Canvas.Top="11" Width="178" Height="178"
+                     StrokeThickness="17" RenderTransformOrigin="0.5,0.5">
+              <Ellipse.RenderTransform>
+                <RotateTransform x:Name="PrismRotation"/>
+              </Ellipse.RenderTransform>
+            </Ellipse>
+            <!-- "Dentes" do prisma: traços radiais escuros sobre o anel colorido -->
+            <Ellipse Canvas.Left="11" Canvas.Top="11" Width="178" Height="178"
+                     Stroke="#70000000" StrokeThickness="17" StrokeDashArray="0.16 0.26"/>
+            <Ellipse Canvas.Left="28" Canvas.Top="28" Width="144" Height="144"
+                     Fill="#030406" Stroke="#27323B" StrokeThickness="1.5"/>
+          </Canvas>
+
+          <!-- Classic / Frost: túnel de espelho infinito (construído no code-behind) -->
+          <Canvas x:Name="TunnelHost" Width="200" Height="200" Visibility="Collapsed"/>
+
+          <!-- All Black: sem iluminação -->
+          <Canvas x:Name="AllBlackLayer" Width="200" Height="200" Visibility="Collapsed">
+            <Ellipse Canvas.Left="14" Canvas.Top="14" Width="172" Height="172"
+                     Fill="#171A1F" Stroke="#292D33" StrokeThickness="2"/>
+            <Ellipse Canvas.Left="38" Canvas.Top="38" Width="124" Height="124"
+                     Fill="#0F1216" Stroke="#242930" StrokeThickness="1"/>
+            <Image Source="/Resources/Images/rise-mode.png" Canvas.Left="72" Canvas.Top="72"
+                   Width="56" Height="56" Stretch="Uniform" Opacity="0.5"/>
+          </Canvas>
+
+          <!-- Reflexo diagonal no vidro -->
+          <Polygon x:Name="GlassGlare" Points="0,0 150,0 0,150">
+            <Polygon.Clip>
+              <EllipseGeometry Center="100,100" RadiusX="93" RadiusY="93"/>
+            </Polygon.Clip>
+            <Polygon.Fill>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#2EFFFFFF" Offset="0"/>
+                <GradientStop Color="#00FFFFFF" Offset="0.7"/>
+              </LinearGradientBrush>
+            </Polygon.Fill>
+          </Polygon>
+        </Canvas>
+
+        <!-- Display numérico do Aura Ice (fora do grupo achatado para não deformar o texto) -->
+        <Grid x:Name="AuraIceDisplay" Canvas.Left="77" Canvas.Top="41" Width="146" Height="134">
+          <Image Source="/Resources/Images/rise-mode.png" Width="19" Height="19"
+                 VerticalAlignment="Top" Margin="0,22,0,0" Stretch="Uniform"/>
+          <TextBlock x:Name="DisplayTemp" Text="--" Foreground="White"
+                     FontFamily="pack://application:,,,/Resources/Fonts/#7SegmentNumber"
+                     FontSize="40" FontWeight="Bold"
+                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,8,0,0"/>
+          <TextBlock Text="Temp/°C" Foreground="White" FontSize="8.5" FontWeight="SemiBold"
+                     HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,21"/>
+        </Grid>
+      </Canvas>
+
+      <!-- ================================================================
+           CUBO (Frost Rainbow): três faces visíveis, LED no contorno do topo,
+           mini display "RISE" na face esquerda.
+           ================================================================ -->
+      <Canvas x:Name="CubeScene" Width="300" Height="300" Visibility="Collapsed">
+        <!-- Escala 1.22 em torno do centro do cubo para ficar do tamanho visual dos blocos redondos -->
+        <Canvas.RenderTransform>
+          <TransformGroup>
+            <ScaleTransform ScaleX="1.22" ScaleY="1.22" CenterX="150" CenterY="177"/>
+            <TranslateTransform Y="-27"/>
+          </TransformGroup>
+        </Canvas.RenderTransform>
+
+        <!-- Faces laterais e topo -->
+        <Polygon x:Name="CubeLeftFace" Points="63,134 140,186 140,264 63,212"
+                 StrokeThickness="1" StrokeLineJoin="Round"/>
+        <Polygon x:Name="CubeRightFace" Points="140,186 237,147 237,225 140,264"
+                 StrokeThickness="1" StrokeLineJoin="Round"/>
+        <Polygon x:Name="CubeTopFace" Points="63,134 152,90 237,147 140,186"
+                 StrokeThickness="1" StrokeLineJoin="Round"/>
+
+        <!-- Relevo triangular da tampa (cores definidas em ApplyFinish) -->
+        <Canvas x:Name="CubeRelief">
+          <Polygon Points="152,110 210,146 150,140"/>
+          <Polygon Points="86,136 150,110 148,139"/>
+          <Polygon Points="150,142 210,148 141,166"/>
+          <Polygon Points="88,139 147,142 141,165"/>
+        </Canvas>
+
+        <!-- LED do contorno do topo: brilho estático por baixo + anel animado por cima -->
+        <Polygon x:Name="CubeRingGlow" Points="74,135.5 152,99 226,147 140,178" Fill="Transparent"
+                 StrokeThickness="9" StrokeLineJoin="Round">
+          <Polygon.Effect>
+            <BlurEffect Radius="9"/>
+          </Polygon.Effect>
+        </Polygon>
+        <Polygon x:Name="CubeRing" Points="74,135.5 152,99 226,147 140,178" Fill="Transparent"
+                 StrokeThickness="6" StrokeLineJoin="Round"/>
+
+        <!-- Faixa de LED curta ao lado do display; nasce no LED do topo e usa o mesmo brush dele -->
+        <Path x:Name="CubeStripGlow" Data="M 76,140 L 76,195" StrokeThickness="5"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+          <Path.Effect>
+            <BlurEffect Radius="5"/>
+          </Path.Effect>
+        </Path>
+        <Path x:Name="CubeStrip" Data="M 76,140 L 76,195" StrokeThickness="3"
+              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+
+        <!-- Mini display "RISE": retângulo preto inclinado para seguir a face esquerda (tan 34° ≈ 0.675) -->
+        <Border Canvas.Left="82" Canvas.Top="159" Width="22" Height="52" CornerRadius="3"
+                Background="#030405" BorderBrush="#2A3038" BorderThickness="1">
+          <Border.RenderTransform>
+            <SkewTransform AngleX="0" AngleY="34"/>
+          </Border.RenderTransform>
+          <TextBlock Text="RISE" Foreground="#8AA4FF" FontSize="12" FontWeight="Black" FontStyle="Italic"
+                     HorizontalAlignment="Center" VerticalAlignment="Center">
+            <TextBlock.LayoutTransform>
+              <RotateTransform Angle="-90"/>
+            </TextBlock.LayoutTransform>
+            <TextBlock.Effect>
+              <DropShadowEffect Color="#3C64FF" BlurRadius="6" ShadowDepth="0" Opacity="0.9"/>
+            </TextBlock.Effect>
+          </TextBlock>
+        </Border>
+      </Canvas>
+
+    </Canvas>
+  </Viewbox>
+</UserControl>

@@ -1,9 +1,9 @@
 using System.IO;
 using HidSharp;
-using WaterCoolerApp.Models;
-using WaterCoolerApp.Protocol;
+using RMMonitor.Models;
+using RMMonitor.Protocol;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 public enum DisplayTransportStatus
 {
@@ -46,7 +46,7 @@ public sealed class DisplayTransportService : IDisposable
             var directory = Path.Combine(
                 Environment.GetFolderPath(
                     Environment.SpecialFolder.LocalApplicationData),
-                "WaterCoolerApp");
+                "RMMonitor");
 
             Directory.CreateDirectory(directory);
 

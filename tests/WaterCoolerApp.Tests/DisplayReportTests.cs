@@ -1,7 +1,7 @@
-using WaterCoolerApp.Protocol;
+using RMMonitor.Protocol;
 using Xunit;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class DisplayReportTests
 {

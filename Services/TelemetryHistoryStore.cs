@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Persists a bounded window of telemetry in the user's local application data directory.
@@ -15,15 +15,15 @@ public sealed class TelemetryHistoryStore
     public static readonly TimeSpan DefaultRetention = TimeSpan.FromMinutes(30);
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
     private readonly string _filePath;
-    private readonly string? _legacyFilePath;
+    private readonly string[] _legacyFilePaths;
 
     public TelemetryHistoryStore(string? filePath = null)
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        _filePath = filePath ?? Path.Combine(localAppData, "HWMetrics", "telemetry-history.json");
-        _legacyFilePath = filePath is null
-            ? Path.Combine(localAppData, "AquaCore", "telemetry-history.json")
-            : null;
+        _filePath = filePath ?? Path.Combine(localAppData, "RM Monitor", "telemetry-history.json");
+        _legacyFilePaths = filePath is null
+            ? new[] { Path.Combine(localAppData, "HWMetrics", "telemetry-history.json"), Path.Combine(localAppData, "AquaCore", "telemetry-history.json"), Path.Combine(localAppData, "WaterCoolerApp", "telemetry-history.json") }
+            : Array.Empty<string>();
     }
 
     public IReadOnlyList<SensorSnapshot> Load(DateTime now, TimeSpan? retention = null)
@@ -33,9 +33,7 @@ public sealed class TelemetryHistoryStore
         {
             var sourcePath = File.Exists(_filePath)
                 ? _filePath
-                : _legacyFilePath is not null && File.Exists(_legacyFilePath)
-                    ? _legacyFilePath
-                    : null;
+                : _legacyFilePaths.FirstOrDefault(File.Exists);
             if (sourcePath is null) return Array.Empty<SensorSnapshot>();
             var snapshots = JsonSerializer.Deserialize<List<SensorSnapshot>>(File.ReadAllText(sourcePath), JsonOptions);
             if (snapshots is null)

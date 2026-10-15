@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Builds CSV exports from telemetry snapshots without depending on WPF controls.

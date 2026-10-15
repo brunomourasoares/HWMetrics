@@ -1,8 +1,8 @@
 using LibreHardwareMonitor.Hardware;
-using WaterCoolerApp.Services;
+using RMMonitor.Services;
 using Xunit;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class CpuTemperaturePriorityTests
 {
