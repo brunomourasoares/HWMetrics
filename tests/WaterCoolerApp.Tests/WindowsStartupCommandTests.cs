@@ -12,7 +12,7 @@ public sealed class WindowsStartupCommandTests
             @"C:\Program Files\Aqua Core\RMMonitor.exe",
             @"C:\Program Files\Aqua Core\RMMonitor.dll");
 
-        Assert.Equal("\"C:\\Program Files\\Aqua Core\\RMMonitor.exe\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\RM Monitor\\RMMonitor.exe\" --tray", command);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class WindowsStartupCommandTests
             @"C:\Program Files\dotnet\dotnet.exe",
             @"C:\Program Files\Aqua Core\RMMonitor.dll");
 
-        Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\Aqua Core\\RMMonitor.dll\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\RM Monitor\\RMMonitor.dll\" --tray", command);
     }
 
     [Fact]
