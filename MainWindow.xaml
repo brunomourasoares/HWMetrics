@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:controls="clr-namespace:WaterCoolerApp.Controls"
-        Title="HW Metrics — Hardware Studio"
+        Title="RM Monitor"
         Height="900"
         Width="1480"
         MinHeight="700"
@@ -134,7 +134,8 @@
         <Trigger Property="IsMouseOver"
                  Value="True">
           <Setter Property="Background"
-                  Value="{DynamicResource PanelRaisedBrush}"/>
+                  Value="{DynamicResource AccentSoftBrush}"/>
+          <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         </Trigger>
         <Trigger Property="IsPressed"
                  Value="True">
@@ -414,7 +415,7 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
           </Border>
-          <TextBlock Text="HW METRICS"
+          <TextBlock Text="RM MONITOR"
                      FontSize="11"
                      FontWeight="Bold"
                      Margin="9,0,0,0"
@@ -527,7 +528,7 @@
                 <TextBlock Text="HW METRICS"
                            FontSize="15"
                            FontWeight="Bold"/>
-                <TextBlock Text="HARDWARE STUDIO"
+                <TextBlock Text="RISE MODE HARDWARE MONITOR"
                            FontSize="9"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            Margin="0,2,0,0"/>
