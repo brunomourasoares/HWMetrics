@@ -1,5 +1,5 @@
 <Window x:Class="RMMonitor.MainWindow"
-        Icon="/Resources/Images/rise-mode.png"
+        Icon="/Resources/Images/rise-mode.ico"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
