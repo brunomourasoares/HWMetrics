@@ -29,7 +29,7 @@ Esta lista complementa a CI automatizada. Deve ser executada em um computador Wi
 
 | ID | Action / Ação | Expected result / Resultado esperado | Pass |
 | --- | --- | --- | --- |
-| HW-01 | Launch Aqua Core normally. / Inicie o Aqua Core normalmente. | Window opens; no unhandled exception or startup crash. / A janela abre sem exceção não tratada ou falha de inicialização. | [ ] |
+| HW-01 | Launch RM Monitor normally. / Inicie o RM Monitor normalmente. | Window opens; no unhandled exception or startup crash. / A janela abre sem exceção não tratada ou falha de inicialização. | [ ] |
 | HW-02 | Observe CPU, GPU, RAM and storage cards for at least 2 minutes. / Observe os cartões por pelo menos 2 minutos. | Values update at the selected interval; unavailable sensors are shown as unavailable rather than fabricated values. / Valores são atualizados no intervalo selecionado; sensores indisponíveis são indicados como indisponíveis. | [ ] |
 | HW-03 | Change polling interval between 1, 2 and 5 seconds. / Alterne entre 1, 2 e 5 segundos. | UI remains responsive and polling does not overlap or freeze. / A interface permanece responsiva e as leituras não se sobrepõem nem travam. | [ ] |
 | HW-04 | Confirm the cooler's physical display while telemetry changes naturally. Do not stress the CPU solely for this test. / Confira o display físico enquanto a telemetria variar naturalmente; não force a CPU só para este teste. | Display values correspond to the app preview within the device's update cadence and integer rounding. / Valores correspondem à prévia do aplicativo, considerando o tempo de atualização e o arredondamento para inteiros. | [ ] |
@@ -45,6 +45,6 @@ For each failed case, record the test ID, exact steps, expected and observed beh
 
 Para cada caso que falhar, registre o ID, passos exatos, comportamento esperado e observado, commit/build, modelo do cooler e entradas de log relevantes. O log de diagnóstico HID fica em:
 
-`%LocalAppData%\WaterCoolerApp\hid-diagnostic.log`
+`%LocalAppData%\RM Monitor\hid-diagnostic.log`
 
 Do not include personal data from unrelated files. A passing checklist documents one specific hardware/software configuration; it does not guarantee compatibility with every cooler revision or motherboard.
