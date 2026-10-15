@@ -20,7 +20,7 @@
         Closed="Window_Closed"
         PreviewKeyDown="Window_PreviewKeyDown">
   <shell:WindowChrome.WindowChrome>
-    <shell:WindowChrome CaptionHeight="0"
+    <shell:WindowChrome CaptionHeight="42"
                         ResizeBorderThickness="6"
                         GlassFrameThickness="0"
                         UseAeroCaptionButtons="False"/>
@@ -431,7 +431,7 @@
                   Click="MinimizeWindow_Click"
                   ToolTip="Minimize"
                   AutomationProperties.Name="Minimize"
-                  Style="{StaticResource WindowControlButton}"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource WindowControlButton}"
                   Padding="7">
             <Viewbox Width="10"
                      Height="10">
@@ -483,7 +483,7 @@
                   Click="CloseWindow_Click"
                   ToolTip="Close"
                   AutomationProperties.Name="Close"
-                  Style="{StaticResource CloseWindowControlButton}"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CloseWindowControlButton}"
                   Padding="7">
             <Viewbox Width="10"
                      Height="10">
