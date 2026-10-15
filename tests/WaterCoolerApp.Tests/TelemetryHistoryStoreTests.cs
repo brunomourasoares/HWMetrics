@@ -1,9 +1,9 @@
 using System.Text.Json;
-using WaterCoolerApp.Models;
-using WaterCoolerApp.Services;
+using RMMonitor.Models;
+using RMMonitor.Services;
 using Xunit;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class TelemetryHistoryStoreTests
 {
