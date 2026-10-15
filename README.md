@@ -1,6 +1,6 @@
-# HW Metrics
+# RM Monitor
 
-A modern WPF hardware dashboard targeting **.NET 10**. The interface supports **Portuguese and English**, dark/light themes, animated transitions, live sensor polling, and a rolling temperature history chart. Temperatures are displayed in Celsius only.
+RM Monitor is a WPF hardware dashboard targeting **.NET 10**. The interface supports **Portuguese and English**, dark/light themes, animated transitions, live sensor polling, and a rolling temperature history chart. Temperatures are displayed in Celsius only.
 
 ## Features / Funcionalidades
 
