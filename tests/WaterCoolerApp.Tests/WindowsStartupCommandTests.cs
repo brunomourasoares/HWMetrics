@@ -1,7 +1,7 @@
-using WaterCoolerApp;
+using RMMonitor;
 using Xunit;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class WindowsStartupCommandTests
 {
@@ -9,10 +9,10 @@ public sealed class WindowsStartupCommandTests
     public void BuildWindowsStartupCommand_QuotesDirectExecutableAndStartsInTray()
     {
         var command = MainWindow.BuildWindowsStartupCommand(
-            @"C:\Program Files\Aqua Core\WaterCoolerApp.exe",
-            @"C:\Program Files\Aqua Core\WaterCoolerApp.dll");
+            @"C:\Program Files\Aqua Core\RMMonitor.exe",
+            @"C:\Program Files\Aqua Core\RMMonitor.dll");
 
-        Assert.Equal("\"C:\\Program Files\\Aqua Core\\WaterCoolerApp.exe\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\Aqua Core\\RMMonitor.exe\" --tray", command);
     }
 
     [Fact]
@@ -20,9 +20,9 @@ public sealed class WindowsStartupCommandTests
     {
         var command = MainWindow.BuildWindowsStartupCommand(
             @"C:\Program Files\dotnet\dotnet.exe",
-            @"C:\Program Files\Aqua Core\WaterCoolerApp.dll");
+            @"C:\Program Files\Aqua Core\RMMonitor.dll");
 
-        Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\Aqua Core\\WaterCoolerApp.dll\" --tray", command);
+        Assert.Equal("\"C:\\Program Files\\dotnet\\dotnet.exe\" \"C:\\Program Files\\Aqua Core\\RMMonitor.dll\" --tray", command);
     }
 
     [Fact]
