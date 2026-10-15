@@ -987,7 +987,7 @@
                                 FontSize="10"
                                 VerticalAlignment="Center"/>
                       </StackPanel>
-                      <Button x:Name="SaveTemperatureHistoryButton" Content="Save history" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
+                      <Button x:Name="SaveTemperatureHistoryButton" Content="Export CSV" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
                     </StackPanel>
                   </Grid>
                   <Grid Grid.Row="1"
@@ -1142,7 +1142,7 @@
                                 FontSize="10"
                                 VerticalAlignment="Center"/>
                       </StackPanel>
-                      <Button x:Name="SaveUtilizationHistoryButton" Content="Save history" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
+                      <Button x:Name="SaveUtilizationHistoryButton" Content="Export CSV" Click="SaveHistory_Click" HorizontalAlignment="Right" Margin="0,7,0,0" Padding="10,4" FontSize="10" Background="{DynamicResource PanelRaisedBrush}" BorderBrush="{DynamicResource StrokeBrush}"/>
                     </StackPanel>
                   </Grid>
                   <Grid Grid.Row="1"
