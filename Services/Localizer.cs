@@ -79,6 +79,7 @@ public static class Localizer
 
     private static readonly Dictionary<string, string[]> Strings = new(StringComparer.Ordinal)
     {
+        ["RM Monitor"] = ["RM Monitor", "RM Monitor", "RM Monitor", "RM Monitor", "RM Monitor"],
         ["HW Metrics — Hardware Studio"] = ["HW Metrics — Central de Hardware", "HW Metrics — Centro de Hardware", "HW Metrics — Centro Hardware", "HW Metrics — Centre matériel", "HW Metrics — 硬件中心"],
         ["HARDWARE STUDIO"] = ["CENTRAL DE HARDWARE", "CENTRO DE HARDWARE", "CENTRO HARDWARE", "CENTRE MATÉRIEL", "硬件中心"],
         ["Minimize"] = ["Minimizar", "Minimizar", "Riduci a icona", "Réduire", "最小化"],
@@ -90,6 +91,7 @@ public static class Localizer
         ["Detecting drive..."] = ["Detectando unidade...", "Detectando unidad...", "Rilevamento dell'unità...", "Détection du disque...", "正在检测磁盘..."],
         ["Waiting for memory data"] = ["Aguardando dados da memória", "Esperando datos de la memoria", "In attesa dei dati della memoria", "En attente des données de la mémoire", "正在等待内存数据"],
         ["Utilization --%"] = ["Utilização --%", "Uso --%", "Utilizzo --%", "Utilisation --%", "使用率 --%"],
+        ["Open RM Monitor"] = ["Abrir RM Monitor", "Abrir RM Monitor", "Apri RM Monitor", "Ouvrir RM Monitor", "打开 RM Monitor"],
         ["Open HW Metrics"] = ["Abrir HW Metrics", "Abrir HW Metrics", "Apri HW Metrics", "Ouvrir HW Metrics", "打开 HW Metrics"],
         ["Exit"] = ["Sair", "Salir", "Esci", "Quitter", "退出"],
         ["WORKSPACE"] = ["ESPAÇO DE TRABALHO", "ESPACIO DE TRABAJO", "AREA DI LAVORO", "ESPACE DE TRAVAIL", "工作区"],
