@@ -4,9 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Queues telemetry history persistence away from the UI thread.
