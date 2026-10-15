@@ -16,7 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources/Images/rise-mode.png" />
-    <ApplicationIcon>Resources/Images/rm-monitor.ico</ApplicationIcon>
     <Resource Include="Resources/Images/icon.png" />
     <Resource Include="Resources/Images/logo-vertical.png" />
     <Resource Include="Resources/Images/logo-square.png" />
