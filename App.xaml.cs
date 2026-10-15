@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows;
-using WaterCoolerApp.Services;
+using RMMonitor.Services;
 
-namespace WaterCoolerApp;
+namespace RMMonitor;
 
 public partial class App : System.Windows.Application
 {
