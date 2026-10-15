@@ -293,7 +293,7 @@ public partial class MainWindow : Window
 
     private static System.Drawing.Bitmap LoadApplicationBitmap()
     {
-        var resource = Application.GetResourceStream(new Uri("Resources/Images/icon.png", UriKind.Relative))
+        var resource = Application.GetResourceStream(new Uri("Resources/Images/logo-square.png", UriKind.Relative))
             ?? throw new InvalidOperationException("The application icon resource is unavailable.");
         using var stream = resource.Stream;
         using var bitmap = new System.Drawing.Bitmap(stream);
