@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Resources;
-using WaterCoolerApp;
+using RMMonitor;
 using Xunit;
 
-namespace WaterCoolerApp.Tests;
+namespace RMMonitor.Tests;
 
 public sealed class WpfResourcePackagingTests
 {
