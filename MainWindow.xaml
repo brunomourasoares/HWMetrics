@@ -1316,137 +1316,41 @@
               </Border>
               <Border x:Name="ThermalComponentsCard"
                       Grid.Row="2"
-                      Style="{StaticResource CardStyle}">
+                      Style="{StaticResource CardStyle}"
+                      ClipToBounds="True">
                 <Grid>
                   <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                   </Grid.RowDefinitions>
                   <StackPanel>
-                    <TextBlock Text="Thermal components"
-                               FontSize="17"
-                               FontWeight="SemiBold"/>
-                    <TextBlock Text="Sensor availability on this machine"
-                               FontSize="11"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               Margin="0,4,0,0"/>
+                    <TextBlock Text="Frequencies" FontSize="17" FontWeight="SemiBold"/>
+                    <TextBlock Text="CPU and GPU clock history · last 60 seconds"
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                   </StackPanel>
-                  <StackPanel Grid.Row="1"
-                              Margin="0,15,0,0">
-                    <Grid Margin="0,0,0,13">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                      </Grid.ColumnDefinitions>
-                      <StackPanel Orientation="Horizontal">
-                        <Border Width="30"
-                                Height="30"
-                                CornerRadius="9">
-                          <TextBlock Text="⌁"
-                                     Foreground="{DynamicResource AccentBrush}"
-                                     FontSize="18"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="10,0,0,0"
-                                    VerticalAlignment="Center">
-                          <TextBlock Text="CPU package"
-                                     FontSize="11"
-                                     FontWeight="SemiBold"/>
-                          <TextBlock Text="Processor temperature"
-                                     FontSize="9"
-                                     Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                      </StackPanel>
-                      <TextBlock x:Name="CpuDetailTemp"
-                                 Grid.Column="1"
-                                 Text="--°C"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 VerticalAlignment="Center"/>
-                    </Grid>
-                    <Border Height="1"
-                            Background="{DynamicResource StrokeBrush}"
-                            Margin="0,0,0,13"/>
-                    <Grid Margin="0,0,0,13">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                      </Grid.ColumnDefinitions>
-                      <StackPanel Orientation="Horizontal">
-                        <Border Width="30"
-                                Height="30"
-                                CornerRadius="9">
-                          <TextBlock Text="◈"
-                                     Foreground="{DynamicResource GpuGreenBrush}"
-                                     FontSize="17"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="10,0,0,0"
-                                    VerticalAlignment="Center">
-                          <TextBlock Text="GPU core"
-                                     FontSize="11"
-                                     FontWeight="SemiBold"/>
-                          <TextBlock Text="Graphics temperature"
-                                     FontSize="9"
-                                     Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                      </StackPanel>
-                      <TextBlock x:Name="GpuDetailTemp"
-                                 Grid.Column="1"
-                                 Text="--°C"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 VerticalAlignment="Center"/>
-                    </Grid>
-                    <Border Height="1"
-                            Background="{DynamicResource StrokeBrush}"
-                            Margin="0,0,0,13"/>
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                      </Grid.ColumnDefinitions>
-                      <StackPanel Orientation="Horizontal">
-                        <Border Width="30"
-                                Height="30"
-                                CornerRadius="9">
-                          <TextBlock Text="▱"
-                                     Foreground="{DynamicResource WarningBrush}"
-                                     FontSize="17"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Margin="10,0,0,0"
-                                    VerticalAlignment="Center">
-                          <TextBlock Text="Storage"
-                                     FontSize="11"
-                                     FontWeight="SemiBold"/>
-                          <TextBlock Text="Drive temperature, if exposed"
-                                     FontSize="9"
-                                     Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                      </StackPanel>
-                      <TextBlock x:Name="StorageDetailTemp"
-                                 Grid.Column="1"
-                                 Text="--°C"
-                                 FontSize="13"
-                                 FontWeight="SemiBold"
-                                 VerticalAlignment="Center"/>
-                    </Grid>
-                    <TextBlock x:Name="StorageVolumesText"
-                               Text="Storage volumes will appear here."
-                               TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               FontSize="10"
-                               Margin="0,14,0,0"/>
-                    <TextBlock Text="Fan and pump control will appear after protocol validation."
-                               TextWrapping="Wrap"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               FontSize="10"
-                               Margin="0,6,0,0"/>
-                  </StackPanel>
+                  <Grid Grid.Row="1" Margin="0,14,0,8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                      <TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                      <TextBlock x:Name="CpuFrequencyText" Text="-- GHz" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                      <TextBlock x:Name="GpuFrequencyText" Text="-- GHz" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource GpuGreenBrush}"/>
+                    </StackPanel>
+                  </Grid>
+                  <Viewbox Grid.Row="2" Stretch="Fill" ClipToBounds="True">
+                    <Canvas Width="900" Height="110" ClipToBounds="True">
+                      <Line X1="0" Y1="20" X2="900" Y2="20" Stroke="{DynamicResource StrokeBrush}" StrokeThickness="1" StrokeDashArray="3 5"/>
+                      <Line X1="0" Y1="55" X2="900" Y2="55" Stroke="{DynamicResource StrokeBrush}" StrokeThickness="1" StrokeDashArray="3 5"/>
+                      <Line X1="0" Y1="90" X2="900" Y2="90" Stroke="{DynamicResource StrokeBrush}" StrokeThickness="1" StrokeDashArray="3 5"/>
+                      <Path x:Name="CpuFrequencyHistoryPath" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2.5" StrokeLineJoin="Round" Fill="{x:Null}"/>
+                      <Path x:Name="GpuFrequencyHistoryPath" Stroke="{DynamicResource GpuGreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" Fill="{x:Null}"/>
+                    </Canvas>
+                  </Viewbox>
+                  <TextBlock Grid.Row="3" Text="Blue: CPU · Green: GPU" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
                 </Grid>
               </Border>
             </Grid>
