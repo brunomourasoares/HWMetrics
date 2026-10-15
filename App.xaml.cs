@@ -48,7 +48,7 @@ public partial class App : System.Windows.Application
     private static void ActivateExistingWindow()
     {
         // The title follows the selected UI language, so try every supported translation.
-        foreach (var title in Localizer.AllVariants("HW Metrics — Hardware Studio"))
+        foreach (var title in new[] { "RM Monitor" }.Concat(Localizer.AllVariants("HW Metrics — Hardware Studio")))
         {
             var handle = FindWindow(null, title);
             if (handle == 0) continue;
