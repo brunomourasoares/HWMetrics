@@ -45,6 +45,6 @@ For each failed case, record the test ID, exact steps, expected and observed beh
 
 Para cada caso que falhar, registre o ID, passos exatos, comportamento esperado e observado, commit/build, modelo do cooler e entradas de log relevantes. O log de diagnóstico HID fica em:
 
-`%LocalAppData%\WaterCoolerApp\hid-diagnostic.log`
+`%LocalAppData%\RM Monitor\hid-diagnostic.log`
 
 Do not include personal data from unrelated files. A passing checklist documents one specific hardware/software configuration; it does not guarantee compatibility with every cooler revision or motherboard.
