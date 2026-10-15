@@ -3,11 +3,11 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using LibreHardwareMonitor.Hardware;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 using System.IO;
 using System.Management;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>Reads telemetry only. It never writes to USB or changes fan/pump speeds.</summary>
 public sealed class HardwareMonitoringService : IDisposable
