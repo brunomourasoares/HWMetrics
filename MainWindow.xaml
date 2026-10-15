@@ -719,12 +719,6 @@
                   <ComboBoxItem Content="Aura Frost Pro ARGB 360mm" Tag="RM-WCF-07-ARGB|white|plain|classic|argb"/>
                   <ComboBoxItem Content="All Black 240mm" Tag="RM-WC-AB-240|black|plain|allblack|none"/>
                   <ComboBoxItem Content="All Black 360mm" Tag="RM-WC-AB-360|black|plain|allblack|none"/>
-                  <ComboBoxItem Content="Frost ARGB Rainbow 120mm" Tag="RM-WCZ-01-RBW|white|plain|square|rainbow"/>
-                  <ComboBoxItem Content="Frost ARGB Rainbow 240mm" Tag="RM-WCZ-02-RBW|white|plain|square|rainbow"/>
-                  <ComboBoxItem Content="Frost ARGB Rainbow 360mm" Tag="RM-WCF-04-RBW|white|plain|square|rainbow"/>
-                  <ComboBoxItem Content="Black ARGB Rainbow 120mm" Tag="RM-WCB-01-RBW|black|plain|square|rainbow"/>
-                  <ComboBoxItem Content="Black ARGB Rainbow 240mm" Tag="RM-WCB-02-RBW|black|plain|square|rainbow"/>
-                  <ComboBoxItem Content="Black ARGB Rainbow 360mm" Tag="RM-WCB-03-RBW|black|plain|square|rainbow"/>
                 </ComboBox>
               </StackPanel>
             </StackPanel>
