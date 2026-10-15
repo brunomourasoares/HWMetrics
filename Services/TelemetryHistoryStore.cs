@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using WaterCoolerApp.Models;
+using RMMonitor.Models;
 
-namespace WaterCoolerApp.Services;
+namespace RMMonitor.Services;
 
 /// <summary>
 /// Persists a bounded window of telemetry in the user's local application data directory.
