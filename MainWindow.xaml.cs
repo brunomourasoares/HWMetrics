@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Diagnostics;
 using System.Text.Json;
 using NotifyIcon = System.Windows.Forms.NotifyIcon;
 using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
@@ -1186,35 +1187,80 @@ public partial class MainWindow : Window
         return $"\"{executable}\" --tray";
     }
 
+    private const string StartupTaskName = "RM Monitor";
+
+    private static void RunElevatedScheduledTaskCommand(bool enable)
+    {
+        var executable = Environment.ProcessPath;
+        if (enable && string.IsNullOrWhiteSpace(executable))
+            throw new InvalidOperationException("Could not determine the current executable path.");
+
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                UseShellExecute = true,
+                Verb = "runas",
+                WindowStyle = ProcessWindowStyle.Hidden
+            }
+        };
+
+        process.StartInfo.ArgumentList.Add(enable ? "/Create" : "/Delete");
+        process.StartInfo.ArgumentList.Add("/TN");
+        process.StartInfo.ArgumentList.Add(StartupTaskName);
+
+        if (enable)
+        {
+            process.StartInfo.ArgumentList.Add("/SC");
+            process.StartInfo.ArgumentList.Add("ONLOGON");
+            process.StartInfo.ArgumentList.Add("/RL");
+            process.StartInfo.ArgumentList.Add("HIGHEST");
+            process.StartInfo.ArgumentList.Add("/TR");
+            process.StartInfo.ArgumentList.Add(BuildWindowsStartupCommand(executable!, typeof(App).Assembly.Location));
+        }
+
+        process.StartInfo.ArgumentList.Add("/F");
+        if (!process.Start())
+            throw new InvalidOperationException("Could not start the Windows Task Scheduler command.");
+
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            throw new InvalidOperationException($"Windows Task Scheduler failed with exit code {process.ExitCode}.");
+    }
+
     private void StartWithWindowsCheckBox_Changed(object sender, RoutedEventArgs e)
     {
         if (_loadingPreferences) return;
         try
         {
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true)
-                ?? Microsoft.Win32.Registry.CurrentUser.CreateSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Run");
-            if (StartWithWindowsCheckBox.IsChecked == true)
-            {
-                var executable = Environment.ProcessPath;
-                if (string.IsNullOrWhiteSpace(executable))
-                    throw new InvalidOperationException("Could not determine the current executable path.");
+            RunElevatedScheduledTaskCommand(StartWithWindowsCheckBox.IsChecked == true);
 
-                var startupCommand = BuildWindowsStartupCommand(executable, typeof(App).Assembly.Location);
-                key.SetValue("RM Monitor", startupCommand);
-                key.DeleteValue("AquaCore", throwOnMissingValue: false);
-            }
-            else
+            // Remove older per-user startup entries so the app cannot start twice.
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true);
+            if (key is not null)
             {
+                key.DeleteValue("RM Monitor", throwOnMissingValue: false);
                 key.DeleteValue("HWMetrics", throwOnMissingValue: false);
                 key.DeleteValue("WaterCoolerApp", throwOnMissingValue: false);
                 key.DeleteValue("RMMonitor", throwOnMissingValue: false);
                 key.DeleteValue("AquaCore", throwOnMissingValue: false);
             }
         }
+        catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            // The user cancelled the UAC prompt; keep the saved preference unchanged.
+            _loadingPreferences = true;
+            StartWithWindowsCheckBox.IsChecked = !StartWithWindowsCheckBox.IsChecked;
+            _loadingPreferences = false;
+            return;
+        }
         catch (Exception ex)
         {
+            _loadingPreferences = true;
+            StartWithWindowsCheckBox.IsChecked = !StartWithWindowsCheckBox.IsChecked;
+            _loadingPreferences = false;
             MessageBox.Show(
                 T("Could not update Windows startup settings.") + Environment.NewLine + ex.Message,
                 T("Startup setting failed"),
