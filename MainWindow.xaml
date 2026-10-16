@@ -1358,6 +1358,7 @@
                       </StackPanel>
                     </Grid>
                     <TextBlock x:Name="StorageVolumesText" Text="Storage volumes will appear here." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,6,0,0"/>
+                    <TextBlock Text="Fan and pump control will appear after protocol validation." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,4,0,0"/>
                   </StackPanel>
                 </Grid>
               </Border>
