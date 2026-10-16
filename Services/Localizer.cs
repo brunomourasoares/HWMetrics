@@ -148,7 +148,7 @@ public static class Localizer
         ["Application display language"] = ["Idioma da interface", "Idioma de la aplicación", "Lingua dell'applicazione", "Langue de l'application", "应用显示语言"],
         ["Close"] = ["Fechar", "Cerrar", "Chiudi", "Fermer", "关闭"],
         ["Pump display preview"] = ["Prévia do display da bomba", "Vista previa de la pantalla de la bomba", "Anteprima del display della pompa", "Aperçu de l'écran de la pompe", "水泵显示屏预览"],
-        ["Thermal components"] = ["Frequências", "Frecuencias", "Frequenze", "Fréquences", "频率"],
+        ["Thermal components"] = ["Componentes térmicos", "Componentes térmicos", "Componenti termici", "Composants thermiques", "温度组件"],
         ["Frequencies"] = ["Frequências", "Frecuencias", "Frequenze", "Fréquences", "频率"],
         ["CPU and GPU clock history"] = ["Histórico de frequência da CPU e GPU", "Historial de frecuencia de CPU y GPU", "Cronologia frequenze CPU e GPU", "Historique des fréquences CPU et GPU", "CPU 和 GPU 频率历史"],
         ["60 seconds"] = ["Últimos 60 segundos", "Últimos 60 segundos", "Ultimi 60 secondi", "60 dernières secondes", "最近 60 秒"],
