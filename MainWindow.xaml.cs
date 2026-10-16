@@ -67,6 +67,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
+    private readonly Queue<SensorSnapshot> _frequencyHistory = new();
     private readonly Queue<SensorSnapshot> _storedHistory = new();
     private readonly TelemetryHistoryStore _historyStore = new();
     private readonly TelemetryHistoryWriter _historyWriter;
@@ -554,9 +555,63 @@ public partial class MainWindow : Window
         AnimateProgress(StorageUsageBar, volume.UsedPercent);
     }
 
+    private static string FormatFrequency(double? frequencyMHz) =>
+        frequencyMHz is double value && double.IsFinite(value) && value >= 100
+            ? $"{value / 1000d:0.00} GHz"
+            : "-- GHz";
+
+    private void FrequencyChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawFrequencyHistory();
+
+    private void DrawFrequencyHistory()
+    {
+        if (FrequencyChartCanvas is null) return;
+        var width = FrequencyChartCanvas.ActualWidth;
+        var height = FrequencyChartCanvas.ActualHeight;
+        if (width <= 1 || height <= 1) return;
+
+        var samples = _frequencyHistory.ToArray();
+        var validValues = samples.SelectMany(sample => new[] { sample.CpuFrequencyMHz, sample.GpuFrequencyMHz })
+            .Where(value => value.HasValue && double.IsFinite(value.Value) && value.Value >= 100)
+            .Select(value => value!.Value).ToArray();
+        if (validValues.Length == 0)
+        {
+            CpuFrequencyLine.Points = new PointCollection();
+            GpuFrequencyLine.Points = new PointCollection();
+            return;
+        }
+
+        var min = Math.Max(0, Math.Floor(validValues.Min() / 500d) * 500d);
+        var max = Math.Ceiling(validValues.Max() / 500d) * 500d;
+        if (max - min < 500) max = min + 500;
+        var cpuPoints = new PointCollection();
+        var gpuPoints = new PointCollection();
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var x = samples.Length <= 1 ? width : i * width / (samples.Length - 1d);
+            AddFrequencyPoint(cpuPoints, samples[i].CpuFrequencyMHz, x, height, min, max);
+            AddFrequencyPoint(gpuPoints, samples[i].GpuFrequencyMHz, x, height, min, max);
+        }
+        CpuFrequencyLine.Points = cpuPoints;
+        GpuFrequencyLine.Points = gpuPoints;
+    }
+
+    private static void AddFrequencyPoint(PointCollection points, double? value, double x, double height, double min, double max)
+    {
+        if (value is not double frequency || !double.IsFinite(frequency) || frequency < 100)
+            return;
+        var y = height - 4 - ((frequency - min) / (max - min)) * (height - 8);
+        points.Add(new Point(x, Math.Clamp(y, 2, height - 2)));
+    }
+
     private void Render(SensorSnapshot s)
     {
         _lastSnapshot = s;
+        _frequencyHistory.Enqueue(s);
+        while (_frequencyHistory.Count > 0 && s.UpdatedAt - _frequencyHistory.Peek().UpdatedAt > TimeSpan.FromSeconds(60))
+            _frequencyHistory.Dequeue();
+        CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
+        GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
+        DrawFrequencyHistory();
         CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
         GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
         StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
