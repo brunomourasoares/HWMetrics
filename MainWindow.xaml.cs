@@ -616,11 +616,8 @@ public partial class MainWindow : Window
         GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
         StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
-        CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
         CoolerPreview.SetTemperature(s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--");
         GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
-        GpuDetailTemp.Text = FullTemp(s.GpuTemperatureC);
-        StorageDetailTemp.Text = FullTemp(s.StorageTemperatureC);
         if (s.StorageVolumes.Count > 0)
         {
             // Select the Windows system volume on first render; subsequent reads keep the
@@ -658,7 +655,6 @@ public partial class MainWindow : Window
                 _storageDriveIndex = systemIndex >= 0 ? systemIndex : 0;
             }
             RenderStorageVolume(s.StorageVolumes[_storageDriveIndex]);
-            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
         {
@@ -667,14 +663,12 @@ public partial class MainWindow : Window
             StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total")}" +
                 (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free")}" : string.Empty);
             AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
-            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else
         {
             StorageUsedPercentText.Text = "N/D";
             StorageCapacityText.Text = T("Storage capacity unavailable");
             StorageUsageBar.Value = 0;
-            StorageVolumesText.Text = T("No local volumes detected");
         }
 
         CpuLoadText.Text = T("Utilization ") + Percent(s.CpuLoadPercent);
