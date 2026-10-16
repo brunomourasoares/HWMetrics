@@ -1189,38 +1189,77 @@ public partial class MainWindow : Window
 
     private const string StartupTaskName = "RM Monitor";
 
+    private static string QuoteWindowsCommandLineArgument(string argument)
+    {
+        var builder = new System.Text.StringBuilder("\"");
+        var backslashes = 0;
+
+        foreach (var character in argument)
+        {
+            if (character == '\\\\')
+            {
+                backslashes++;
+                continue;
+            }
+
+            if (character == '\"')
+            {
+                builder.Append('\\', backslashes * 2 + 1);
+                builder.Append('\"');
+                backslashes = 0;
+                continue;
+            }
+
+            builder.Append('\\', backslashes);
+            backslashes = 0;
+            builder.Append(character);
+        }
+
+        builder.Append('\\', backslashes * 2);
+        builder.Append('\"');
+        return builder.ToString();
+    }
+
     private static void RunElevatedScheduledTaskCommand(bool enable)
     {
         var executable = Environment.ProcessPath;
         if (enable && string.IsNullOrWhiteSpace(executable))
             throw new InvalidOperationException("Could not determine the current executable path.");
 
+        var arguments = new List<string>
+        {
+            enable ? "/Create" : "/Delete",
+            "/TN",
+            StartupTaskName
+        };
+
+        if (enable)
+        {
+            arguments.Add("/SC");
+            arguments.Add("ONLOGON");
+            arguments.Add("/RL");
+            arguments.Add("HIGHEST");
+            arguments.Add("/TR");
+            arguments.Add(BuildWindowsStartupCommand(executable!, typeof(App).Assembly.Location));
+        }
+
+        arguments.Add("/F");
+
+        // ShellExecute (required for the UAC "runas" verb) uses Arguments rather
+        // than ArgumentList. Quote each argument and escape embedded quotes so
+        // paths containing spaces survive both schtasks.exe and its /TR command.
+        var commandLine = string.Join(" ", arguments.Select(QuoteWindowsCommandLineArgument));
         using var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "schtasks.exe",
+                Arguments = commandLine,
                 UseShellExecute = true,
                 Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden
             }
         };
-
-        process.StartInfo.ArgumentList.Add(enable ? "/Create" : "/Delete");
-        process.StartInfo.ArgumentList.Add("/TN");
-        process.StartInfo.ArgumentList.Add(StartupTaskName);
-
-        if (enable)
-        {
-            process.StartInfo.ArgumentList.Add("/SC");
-            process.StartInfo.ArgumentList.Add("ONLOGON");
-            process.StartInfo.ArgumentList.Add("/RL");
-            process.StartInfo.ArgumentList.Add("HIGHEST");
-            process.StartInfo.ArgumentList.Add("/TR");
-            process.StartInfo.ArgumentList.Add(BuildWindowsStartupCommand(executable!, typeof(App).Assembly.Location));
-        }
-
-        process.StartInfo.ArgumentList.Add("/F");
         if (!process.Start())
             throw new InvalidOperationException("Could not start the Windows Task Scheduler command.");
 
