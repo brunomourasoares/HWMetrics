@@ -1196,7 +1196,7 @@ public partial class MainWindow : Window
 
         foreach (var character in argument)
         {
-            if (character == '\\\\')
+            if (character == '\\')
             {
                 backslashes++;
                 continue;
