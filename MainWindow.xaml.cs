@@ -710,7 +710,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog(this) != true) return;
 
         // Export only the metric family and series selected in the corresponding chart.
-        var snapshots = _storedHistory.OrderBy(snapshot => snapshot.UpdatedAt).ToArray();
+        var snapshots = _storedHistory.ToArray();
         try
         {
             var csv = await Task.Run(() => TelemetryHistoryCsvExporter.Build(
