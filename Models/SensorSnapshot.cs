@@ -27,4 +27,6 @@ public sealed record SensorSnapshot(
     string StorageVolumesSummary,
     IReadOnlyList<StorageVolumeSnapshot> StorageVolumes,
     DateTime UpdatedAt,
-    string Status);
+    string Status,
+    double? CpuFrequencyMHz = null,
+    double? GpuFrequencyMHz = null);
