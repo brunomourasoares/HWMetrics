@@ -1320,7 +1320,7 @@
               </Border>
               <Border x:Name="ThermalComponentsCard" Grid.Row="2" Style="{StaticResource CardStyle}" ClipToBounds="True">
                 <Grid>
-                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                   <StackPanel>
                     <TextBlock Text="Frequencies" FontSize="17" FontWeight="SemiBold"/>
                     <TextBlock Text="CPU and GPU clock history" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
@@ -1341,6 +1341,24 @@
                     <Polyline x:Name="GpuFrequencyLine" Stroke="{DynamicResource GpuGreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                   </Canvas>
                   <TextBlock Grid.Row="3" Text="60 seconds" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                  <StackPanel Grid.Row="4" Margin="0,10,0,0">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="CPU temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="CpuDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="GPU temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="GpuDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="Storage temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="StorageDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock x:Name="StorageVolumesText" Text="Storage volumes will appear here." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,6,0,0"/>
+                  </StackPanel>
                 </Grid>
               </Border>
             </Grid>
