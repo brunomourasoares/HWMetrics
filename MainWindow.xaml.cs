@@ -567,9 +567,9 @@ public partial class MainWindow : Window
         _frequencyHistory.Enqueue(s);
         while (_frequencyHistory.Count > 0 && s.UpdatedAt - _frequencyHistory.Peek().UpdatedAt > TimeSpan.FromSeconds(60))
             _frequencyHistory.Dequeue();
-        CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
-        GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
-        FrequencyHistoryChart.Samples = _frequencyHistory.ToArray();
+        FrequencyPanel.CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
+        FrequencyPanel.GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
+        FrequencyPanel.FrequencyHistoryChart.Samples = _frequencyHistory.ToArray();
         DashboardMetrics.CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
         DashboardMetrics.GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
         DashboardMetrics.StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
