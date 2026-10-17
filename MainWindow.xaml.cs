@@ -778,16 +778,9 @@ public partial class MainWindow : Window
 
     private void UpdateTemperatureHistoryChart(SensorSnapshot current)
     {
-        bool showCpu = TemperatureCpuFilter.IsChecked == true;
-        bool showGpu = TemperatureGpuFilter.IsChecked == true;
-        CpuHistoryPath.Visibility = showCpu ? Visibility.Visible : Visibility.Collapsed;
-        GpuHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
-        CpuHistoryPath.Data = showCpu
-            ? BuildTemperatureGeometry(_history.Select(point => point.CpuTemperatureC), _history.Count)
-            : Geometry.Empty;
-        GpuHistoryPath.Data = showGpu
-            ? BuildTemperatureGeometry(_history.Select(point => point.GpuTemperatureC), _history.Count)
-            : Geometry.Empty;
+        TemperatureHistoryChart.Samples = _history.ToArray();
+        TemperatureHistoryChart.ShowCpu = TemperatureCpuFilter.IsChecked == true;
+        TemperatureHistoryChart.ShowGpu = TemperatureGpuFilter.IsChecked == true;
     }
 
     private void UpdateUtilizationHistoryChart(SensorSnapshot current)
@@ -817,13 +810,6 @@ public partial class MainWindow : Window
     private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source, int sampleCount) =>
         BuildHistoryGeometry(source, sampleCount, static percent =>
             128d - Math.Clamp(percent, 0d, 100d) * 1.2d);
-
-    private static Geometry BuildTemperatureGeometry(IEnumerable<double?> source, int sampleCount) =>
-        BuildHistoryGeometry(source, sampleCount, static temperature =>
-        {
-            var normalized = Math.Clamp((temperature - 30d) / 60d, 0d, 1d);
-            return 128d - normalized * 120d;
-        });
 
     private static Geometry BuildHistoryGeometry(
         IEnumerable<double?> source,
