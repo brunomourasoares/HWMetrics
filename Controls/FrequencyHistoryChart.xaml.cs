@@ -9,7 +9,7 @@ namespace RMMonitor.Controls;
 /// Renders CPU and GPU clock samples only. Sample acquisition, retention, and polling
 /// remain owned by MainWindow so chart rendering cannot alter sensor monitoring.
 /// </summary>
-public partial class FrequencyHistoryChart : UserControl
+public partial class FrequencyHistoryChart : System.Windows.Controls.UserControl
 {
     public static readonly DependencyProperty SamplesProperty = DependencyProperty.Register(
         nameof(Samples),
