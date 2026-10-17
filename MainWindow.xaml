@@ -49,30 +49,9 @@
                        AutoReverse="True"
                        RepeatBehavior="Forever"/>
     </Storyboard>
-    <Style x:Key="MetricCard"
-           TargetType="Border"
-           BasedOn="{StaticResource CardStyle}">
-      <Setter Property="Padding"
-              Value="16"/>
-      <Setter Property="Margin"
-              Value="0"/>
-      <Setter Property="RenderTransformOrigin"
-              Value="0.5,0.5"/>
-      <Setter Property="RenderTransform">
-        <Setter.Value>
-          <ScaleTransform ScaleX="1"
-                          ScaleY="1"/>
-        </Setter.Value>
-      </Setter>
-      <Style.Triggers>
-        <Trigger Property="IsMouseOver"
-                 Value="True">
-          <Setter Property="BorderBrush"
-                  Value="{DynamicResource AccentBrush}"/>
-          <Setter Property="Effect" Value="{DynamicResource CardHoverEffect}"/>
-        </Trigger>
-      </Style.Triggers>
-    </Style>
+    <ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary Source="/Resources/Styles/DashboardStyles.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
     <Style TargetType="Button">
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
