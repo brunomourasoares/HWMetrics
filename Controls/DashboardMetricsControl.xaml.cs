@@ -13,17 +13,17 @@ public partial class DashboardMetricsControl : WpfUserControl
 {
     public DashboardMetricsControl() => InitializeComponent();
     public WpfTextBlock CpuModelText => CpuModelTextElement;
-    public TextBlock CpuTempText => CpuTempTextElement;
-    public TextBlock CpuLoadText => CpuLoadTextElement;
-    public TextBlock GpuModelText => GpuModelTextElement;
-    public TextBlock GpuTempText => GpuTempTextElement;
-    public TextBlock GpuLoadText => GpuLoadTextElement;
-    public TextBlock MemoryText => MemoryTextElement;
-    public TextBlock MemoryPercentText => MemoryPercentTextElement;
+    public WpfTextBlock CpuTempText => CpuTempTextElement;
+    public WpfTextBlock CpuLoadText => CpuLoadTextElement;
+    public WpfTextBlock GpuModelText => GpuModelTextElement;
+    public WpfTextBlock GpuTempText => GpuTempTextElement;
+    public WpfTextBlock GpuLoadText => GpuLoadTextElement;
+    public WpfTextBlock MemoryText => MemoryTextElement;
+    public WpfTextBlock MemoryPercentText => MemoryPercentTextElement;
     public WpfProgressBar MemoryUsageBar => MemoryUsageBarElement;
-    public TextBlock StorageVolumesText => StorageVolumesTextElement;
-    public TextBlock StorageModelText => StorageModelTextElement;
-    public TextBlock StorageUsedPercentText => StorageUsedPercentTextElement;
-    public TextBlock StorageCapacityText => StorageCapacityTextElement;
-    public ProgressBar StorageUsageBar => StorageUsageBarElement;
+    public WpfTextBlock StorageVolumesText => StorageVolumesTextElement;
+    public WpfTextBlock StorageModelText => StorageModelTextElement;
+    public WpfTextBlock StorageUsedPercentText => StorageUsedPercentTextElement;
+    public WpfTextBlock StorageCapacityText => StorageCapacityTextElement;
+    public WpfProgressBar StorageUsageBar => StorageUsageBarElement;
 }
