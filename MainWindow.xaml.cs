@@ -68,6 +68,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer _storageCycleTimer = new() { Interval = TimeSpan.FromSeconds(5) };
     private readonly Queue<SensorSnapshot> _history = new();
     private readonly Queue<SensorSnapshot> _utilizationHistory = new();
+    private readonly Queue<SensorSnapshot> _frequencyHistory = new();
     private readonly Queue<SensorSnapshot> _storedHistory = new();
     private readonly TelemetryHistoryStore _historyStore = new();
     private readonly TelemetryHistoryWriter _historyWriter;
@@ -555,9 +556,101 @@ public partial class MainWindow : Window
         AnimateProgress(StorageUsageBar, volume.UsedPercent);
     }
 
+    private static string FormatFrequency(double? frequencyMHz) =>
+        frequencyMHz is double value && double.IsFinite(value) && value >= 100
+            ? $"{value / 1000d:0.00} GHz"
+            : "-- GHz";
+
+    private void FrequencyChartCanvas_SizeChanged(object sender, SizeChangedEventArgs e) => DrawFrequencyHistory();
+
+    private void DrawFrequencyHistory()
+    {
+        if (FrequencyChartCanvas is null) return;
+        var width = FrequencyChartCanvas.ActualWidth;
+        var height = FrequencyChartCanvas.ActualHeight;
+        if (width <= 1 || height <= 1) return;
+
+        var samples = _frequencyHistory.ToArray();
+        var validValues = samples.SelectMany(sample => new[] { sample.CpuFrequencyMHz, sample.GpuFrequencyMHz })
+            .Where(value => value.HasValue && double.IsFinite(value.Value) && value.Value >= 100)
+            .Select(value => value!.Value).ToArray();
+        if (validValues.Length == 0)
+        {
+            CpuFrequencyLine.Data = Geometry.Empty;
+            GpuFrequencyLine.Data = Geometry.Empty;
+            return;
+        }
+
+        var min = Math.Max(0, Math.Floor(validValues.Min() / 500d) * 500d);
+        var max = Math.Ceiling(validValues.Max() / 500d) * 500d;
+        if (max - min < 500) max = min + 500;
+
+        var cpuGeometry = new PathGeometry();
+        var gpuGeometry = new PathGeometry();
+        PathFigure? cpuFigure = null;
+        PathFigure? gpuFigure = null;
+        var newest = samples.Length > 0 ? samples[^1].UpdatedAt : DateTime.MinValue;
+        DateTime? previousSampleAt = null;
+
+        foreach (var sample in samples)
+        {
+            // Break the line when the polling interval was missed; don't imply continuous telemetry.
+            if (previousSampleAt is DateTime previous && (sample.UpdatedAt - previous).TotalSeconds > 2.5)
+            {
+                cpuFigure = null;
+                gpuFigure = null;
+            }
+
+            // Use a fixed 60-second window so the graph's horizontal scale is stable.
+            var ageSeconds = Math.Clamp((newest - sample.UpdatedAt).TotalSeconds, 0, 60);
+            var x = width * (1 - ageSeconds / 60d);
+            AddFrequencyPoint(cpuGeometry, ref cpuFigure, sample.CpuFrequencyMHz, x, height, min, max);
+            AddFrequencyPoint(gpuGeometry, ref gpuFigure, sample.GpuFrequencyMHz, x, height, min, max);
+            previousSampleAt = sample.UpdatedAt;
+        }
+
+        CpuFrequencyLine.Data = cpuGeometry;
+        GpuFrequencyLine.Data = gpuGeometry;
+    }
+
+    private static void AddFrequencyPoint(
+        PathGeometry geometry,
+        ref PathFigure? currentFigure,
+        double? value,
+        double x,
+        double height,
+        double min,
+        double max)
+    {
+        if (value is not double frequency || !double.IsFinite(frequency) || frequency < 100)
+        {
+            // Start a new path after a missing sample; never draw a false bridge across telemetry gaps.
+            currentFigure = null;
+            return;
+        }
+
+        var y = height - 4 - ((frequency - min) / (max - min)) * (height - 8);
+        var point = new Point(x, Math.Clamp(y, 2, height - 2));
+        if (currentFigure is null)
+        {
+            currentFigure = new PathFigure { StartPoint = point, IsFilled = false, IsClosed = false };
+            geometry.Figures.Add(currentFigure);
+        }
+        else
+        {
+            currentFigure.Segments.Add(new LineSegment(point, isStroked: true));
+        }
+    }
+
     private void Render(SensorSnapshot s)
     {
         _lastSnapshot = s;
+        _frequencyHistory.Enqueue(s);
+        while (_frequencyHistory.Count > 0 && s.UpdatedAt - _frequencyHistory.Peek().UpdatedAt > TimeSpan.FromSeconds(60))
+            _frequencyHistory.Dequeue();
+        CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
+        GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
+        DrawFrequencyHistory();
         CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
         GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
         StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;

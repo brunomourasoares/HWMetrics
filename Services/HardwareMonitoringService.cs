@@ -129,12 +129,74 @@ public sealed class HardwareMonitoringService : IDisposable
             }
 
             var storage = _cachedStorage.Value;
+            var (cpuFrequencyMHz, gpuFrequencyMHz) = ReadFrequencies();
             return new SensorSnapshot(cpuTemp, NormalizePercent(cpuLoad), gpuTemp, NormalizePercent(gpuLoad),
                 NormalizeMemoryUsed(usedGiB, totalGiB), NormalizeMemoryTotal(totalGiB),
                 driveTemp, cpuModel, gpuModel, storageModel, storage.SystemDriveName, storage.UsedGiB, storage.TotalGiB,
                 storage.FreeGiB, storage.UsedPercent, storage.VolumesSummary, storage.Volumes,
-                now, "Leitura concluída");
+                now, "Leitura concluída", cpuFrequencyMHz, gpuFrequencyMHz);
         }
+    }
+
+    public static int GetCpuFrequencyPriority(string sensorName)
+    {
+        if (string.IsNullOrWhiteSpace(sensorName)) return 0;
+        if (sensorName.Contains("core", StringComparison.OrdinalIgnoreCase))
+            return sensorName.Contains("average", StringComparison.OrdinalIgnoreCase) ? 2 : 3;
+        return sensorName.Contains("cpu", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+    }
+
+    private (double? CpuMHz, double? GpuMHz) ReadFrequencies()
+    {
+        double cpuTotal = 0;
+        var cpuCount = 0;
+        var cpuPriority = 0;
+        double? gpuMHz = null;
+        var gpuPriority = -1;
+
+        void VisitClockSensors(IHardware hardware)
+        {
+            foreach (var sensor in hardware.Sensors)
+            {
+                if (sensor.SensorType != SensorType.Clock || sensor.Value is not float value ||
+                    !float.IsFinite(value) || value is < 100 or > 10000)
+                    continue;
+
+                if (hardware.HardwareType == HardwareType.Cpu)
+                {
+                    var priority = GetCpuFrequencyPriority(sensor.Name);
+                    if (priority > cpuPriority)
+                    {
+                        cpuPriority = priority;
+                        cpuTotal = value;
+                        cpuCount = 1;
+                    }
+                    else if (priority > 0 && priority == cpuPriority)
+                    {
+                        cpuTotal += value;
+                        cpuCount++;
+                    }
+                }
+                else if (IsGpu(hardware.HardwareType))
+                {
+                    var priority = sensor.Name.Contains("core", StringComparison.OrdinalIgnoreCase) ? 3 :
+                        sensor.Name.Contains("graphics", StringComparison.OrdinalIgnoreCase) ? 2 : 1;
+                    if (priority > gpuPriority)
+                    {
+                        gpuMHz = value;
+                        gpuPriority = priority;
+                    }
+                }
+            }
+
+            foreach (var child in hardware.SubHardware)
+                VisitClockSensors(child);
+        }
+
+        foreach (var hardware in _computer.Hardware)
+            VisitClockSensors(hardware);
+
+        return (cpuCount > 0 ? cpuTotal / cpuCount : null, gpuMHz);
     }
 
     private void Visit(IHardware hardware,
