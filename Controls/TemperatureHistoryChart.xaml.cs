@@ -9,7 +9,7 @@ namespace RMMonitor.Controls;
 /// Displays temperature history only. MainWindow remains responsible for polling,
 /// retaining samples, filter interaction, and CSV export.
 /// </summary>
-public partial class TemperatureHistoryChart : UserControl
+public partial class TemperatureHistoryChart : System.Windows.Controls.UserControl
 {
     public static readonly DependencyProperty SamplesProperty = DependencyProperty.Register(
         nameof(Samples),
