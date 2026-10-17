@@ -30,8 +30,31 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Resources/Styles/DashboardStyles.xaml"/>
       </ResourceDictionary.MergedDictionaries>
+    <Storyboard x:Key="IntroStoryboard">
+      <DoubleAnimation Storyboard.TargetName="MainContent"
+                       Storyboard.TargetProperty="Opacity"
+                       From="0"
+                       To="1"
+                       Duration="0:0:0.65"/>
+      <DoubleAnimation Storyboard.TargetName="IntroTransform"
+                       Storyboard.TargetProperty="Y"
+                       From="18"
+                       To="0"
+                       Duration="0:0:0.65">
+        <DoubleAnimation.EasingFunction>
+          <CubicEase EasingMode="EaseOut"/>
+        </DoubleAnimation.EasingFunction>
+      </DoubleAnimation>
+      <DoubleAnimation Storyboard.TargetName="AmbientGlow"
+                       Storyboard.TargetProperty="Opacity"
+                       From="0.22"
+                       To="0.52"
+                       Duration="0:0:3"
+                       AutoReverse="True"
+                       RepeatBehavior="Forever"/>
+    </Storyboard>
     </ResourceDictionary>
-    <Storyboard</Window.Resources>
+  </Window.Resources>
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="42"/>
