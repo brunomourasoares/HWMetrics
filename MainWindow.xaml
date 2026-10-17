@@ -597,65 +597,7 @@
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Bottom"/>
-                    <Viewbox Grid.Column="1"
-                             Grid.RowSpan="5"
-                             Stretch="Fill"
-                             ClipToBounds="True">
-                      <Canvas Width="900"
-                              Height="136"
-                              ClipToBounds="True">
-                        <Line X1="0"
-                              Y1="8"
-                              X2="900"
-                              Y2="8"
-                              Stroke="{DynamicResource StrokeBrush}"
-                              StrokeThickness="1"
-                              StrokeDashArray="3 5"/>
-                        <Line X1="0"
-                              Y1="38"
-                              X2="900"
-                              Y2="38"
-                              Stroke="{DynamicResource StrokeBrush}"
-                              StrokeThickness="1"
-                              StrokeDashArray="3 5"/>
-                        <Line X1="0"
-                              Y1="68"
-                              X2="900"
-                              Y2="68"
-                              Stroke="{DynamicResource StrokeBrush}"
-                              StrokeThickness="1"
-                              StrokeDashArray="3 5"/>
-                        <Line X1="0"
-                              Y1="98"
-                              X2="900"
-                              Y2="98"
-                              Stroke="{DynamicResource StrokeBrush}"
-                              StrokeThickness="1"
-                              StrokeDashArray="3 5"/>
-                        <Line X1="0"
-                              Y1="128"
-                              X2="900"
-                              Y2="128"
-                              Stroke="{DynamicResource StrokeBrush}"
-                              StrokeThickness="1"
-                              StrokeDashArray="3 5"/>
-                        <Path x:Name="CpuUtilizationHistoryPath"
-                              Stroke="{DynamicResource AccentBrush}"
-                              StrokeThickness="2.5"
-                              StrokeLineJoin="Round"
-                              Fill="{x:Null}"/>
-                        <Path x:Name="GpuUtilizationHistoryPath"
-                              Stroke="{DynamicResource GpuGreenBrush}"
-                              StrokeThickness="2"
-                              StrokeLineJoin="Round"
-                              Fill="{x:Null}"/>
-                        <Path x:Name="MemoryUtilizationHistoryPath"
-                              Stroke="{DynamicResource PurpleBrush}"
-                              StrokeThickness="2"
-                              StrokeLineJoin="Round"
-                              Fill="{x:Null}"/>
-                      </Canvas>
-                    </Viewbox>
+                    <controls:UtilizationHistoryChart Grid.Column="1" Grid.RowSpan="5"/>
                   </Grid>
                   <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
