@@ -18,6 +18,15 @@ public sealed class TemperatureHistoryChartTests
         Assert.Equal(expectedType, property!.PropertyType);
     }
 
+    [Fact]
+    public void ChartDefaultsToEmptyHistoryWithCpuAndGpuVisible()
+    {
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<SensorSnapshot>>(
+            TemperatureHistoryChart.SamplesProperty.GetMetadata(typeof(TemperatureHistoryChart)).DefaultValue));
+        Assert.True((bool)TemperatureHistoryChart.ShowCpuProperty.GetMetadata(typeof(TemperatureHistoryChart)).DefaultValue);
+        Assert.True((bool)TemperatureHistoryChart.ShowGpuProperty.GetMetadata(typeof(TemperatureHistoryChart)).DefaultValue);
+    }
+
     [Theory]
     [InlineData(nameof(TemperatureHistoryChart.SamplesProperty))]
     [InlineData(nameof(TemperatureHistoryChart.ShowCpuProperty))]
