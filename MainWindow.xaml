@@ -850,6 +850,7 @@
                                Foreground="{DynamicResource PurpleBrush}"
                                Background="{DynamicResource PanelRaisedBrush}"
                                BorderThickness="0"/>
+                  <TextBlock x:Name="StorageVolumesText" Text="Storage volumes will appear here." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,6,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1"
                         Width="35"
@@ -930,9 +931,9 @@
           </UniformGrid>
           <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="1.35*"/>
+              <ColumnDefinition Width="1*"/>
               <ColumnDefinition Width="18"/>
-              <ColumnDefinition Width="0.85*"/>
+              <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
               <Grid.RowDefinitions>
@@ -1260,13 +1261,12 @@
             </Grid>
             <Grid Grid.Column="2">
               <Grid.RowDefinitions>
-                <RowDefinition Height="1.1*"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="16"/>
-                <RowDefinition Height="0.9*"/>
+                <RowDefinition Height="*"/>
               </Grid.RowDefinitions>
               <Border x:Name="CoolerCard"
                       Grid.Row="0"
-                      Height="{Binding ActualHeight, ElementName=TemperatureHistoryCard}"
                       Style="{StaticResource CardStyle}"
                       ClipToBounds="True">
                 <Grid>
@@ -1320,7 +1320,7 @@
               </Border>
               <Border x:Name="ThermalComponentsCard" Grid.Row="2" Style="{StaticResource CardStyle}" ClipToBounds="True">
                 <Grid>
-                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                   <StackPanel>
                     <TextBlock Text="Frequencies" FontSize="17" FontWeight="SemiBold"/>
                     <TextBlock Text="CPU and GPU clock history" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
@@ -1341,25 +1341,7 @@
                     <Path x:Name="GpuFrequencyLine" Stroke="{DynamicResource GpuGreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                   </Canvas>
                   <TextBlock Grid.Row="3" Text="60 seconds" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                  <StackPanel Grid.Row="4" Margin="0,10,0,0">
-                    <Grid>
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                      <StackPanel>
-                        <TextBlock Text="CPU temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock x:Name="CpuDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
-                      </StackPanel>
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="GPU temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock x:Name="GpuDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
-                      </StackPanel>
-                      <StackPanel Grid.Column="2">
-                        <TextBlock Text="Storage temp" FontSize="9" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock x:Name="StorageDetailTemp" Text="--°C" FontSize="11" FontWeight="SemiBold"/>
-                      </StackPanel>
-                    </Grid>
-                    <TextBlock x:Name="StorageVolumesText" Text="Storage volumes will appear here." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,6,0,0"/>
-                    <TextBlock Text="Fan and pump control will appear after protocol validation." TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" Margin="0,4,0,0"/>
-                  </StackPanel>
+                  
                 </Grid>
               </Border>
             </Grid>
