@@ -546,14 +546,14 @@ public partial class MainWindow : Window
     {
         _selectedStorageDriveName = volume.Name;
         // ProductModel identifies the physical disk, not the filesystem volume label.
-        StorageModelText.Text = string.IsNullOrWhiteSpace(volume.ProductModel)
+        DashboardMetrics.StorageModelText.Text = string.IsNullOrWhiteSpace(volume.ProductModel)
             ? T("Drive model unavailable")
             : volume.ProductModel;
-        StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
-        StorageCapacityText.Text =
+        DashboardMetrics.StorageUsedPercentText.Text = $"{volume.UsedPercent:0}%";
+        DashboardMetrics.StorageCapacityText.Text =
             $"{FormatCapacity(volume.UsedGiB)} / {FormatCapacity(volume.TotalGiB)} {T("total")} - " +
             $"{FormatCapacity(volume.FreeGiB)} {T("free")}";
-        AnimateProgress(StorageUsageBar, volume.UsedPercent);
+        AnimateProgress(DashboardMetrics.StorageUsageBar, volume.UsedPercent);
     }
 
     private static string FormatFrequency(double? frequencyMHz) =>
@@ -651,12 +651,12 @@ public partial class MainWindow : Window
         CpuFrequencyText.Text = FormatFrequency(s.CpuFrequencyMHz);
         GpuFrequencyText.Text = FormatFrequency(s.GpuFrequencyMHz);
         DrawFrequencyHistory();
-        CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
-        GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
-        StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
-        CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
+        DashboardMetrics.CpuModelText.Text = string.IsNullOrWhiteSpace(s.CpuModel) ? T("Processor model unavailable") : s.CpuModel;
+        DashboardMetrics.GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
+        DashboardMetrics.StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
+        DashboardMetrics.CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
         CoolerPreview.SetTemperature(s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--");
-        GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
+        DashboardMetrics.GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
         if (s.StorageVolumes.Count > 0)
         {
             // Select the Windows system volume on first render; subsequent reads keep the
@@ -694,27 +694,27 @@ public partial class MainWindow : Window
                 _storageDriveIndex = systemIndex >= 0 ? systemIndex : 0;
             }
             RenderStorageVolume(s.StorageVolumes[_storageDriveIndex]);
-            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
+            DashboardMetrics.StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else if (s.StorageUsedPercent.HasValue && s.StorageUsedGiB.HasValue && s.StorageTotalGiB.HasValue)
         {
             // Keep a safe fallback for snapshots with legacy aggregate storage data.
-            StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
-            StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total")}" +
+            DashboardMetrics.StorageUsedPercentText.Text = $"{s.StorageUsedPercent.Value:0}%";
+            DashboardMetrics.StorageCapacityText.Text = $"{FormatCapacity(s.StorageUsedGiB.Value)} / {FormatCapacity(s.StorageTotalGiB.Value)} {T("total")}" +
                 (s.StorageFreeGiB.HasValue ? $" - {FormatCapacity(s.StorageFreeGiB.Value)} {T("free")}" : string.Empty);
-            AnimateProgress(StorageUsageBar, s.StorageUsedPercent.Value);
-            StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
+            AnimateProgress(DashboardMetrics.StorageUsageBar, s.StorageUsedPercent.Value);
+            DashboardMetrics.StorageVolumesText.Text = Localizer.Get(s.StorageVolumesSummary);
         }
         else
         {
-            StorageUsedPercentText.Text = "N/D";
-            StorageCapacityText.Text = T("Storage capacity unavailable");
-            StorageUsageBar.Value = 0;
-            StorageVolumesText.Text = T("No local volumes detected");
+            DashboardMetrics.StorageUsedPercentText.Text = "N/D";
+            DashboardMetrics.StorageCapacityText.Text = T("Storage capacity unavailable");
+            DashboardMetrics.StorageUsageBar.Value = 0;
+            DashboardMetrics.StorageVolumesText.Text = T("No local volumes detected");
         }
 
-        CpuLoadText.Text = T("Utilization ") + Percent(s.CpuLoadPercent);
-        GpuLoadText.Text = T("Utilization ") + Percent(s.GpuLoadPercent);
+        DashboardMetrics.CpuLoadText.Text = T("Utilization ") + Percent(s.CpuLoadPercent);
+        DashboardMetrics.GpuLoadText.Text = T("Utilization ") + Percent(s.GpuLoadPercent);
 
         if (s.MemoryUsedGiB.HasValue && s.MemoryTotalGiB.HasValue && s.MemoryTotalGiB.Value > 0)
         {
@@ -722,15 +722,15 @@ public partial class MainWindow : Window
             var used = Math.Clamp(s.MemoryUsedGiB.Value, 0, total);
             var free = Math.Max(0, total - used);
             var pct = Math.Clamp(used / total * 100, 0, 100);
-            MemoryText.Text = $"{pct:0}%";
-                        MemoryPercentText.Text = string.Format(T("{0} used · {1} free of {2}"), FormatCapacity(used), FormatCapacity(free), FormatCapacity(total));
-            AnimateProgress(MemoryUsageBar, pct);
+            DashboardMetrics.MemoryText.Text = $"{pct:0}%";
+                        DashboardMetrics.MemoryPercentText.Text = string.Format(T("{0} used · {1} free of {2}"), FormatCapacity(used), FormatCapacity(free), FormatCapacity(total));
+            AnimateProgress(DashboardMetrics.MemoryUsageBar, pct);
         }
         else
         {
-            MemoryText.Text = "N/D";
-            MemoryPercentText.Text = T("Capacity unavailable");
-            AnimateProgress(MemoryUsageBar, 0);
+            DashboardMetrics.MemoryText.Text = "N/D";
+            DashboardMetrics.MemoryPercentText.Text = T("Capacity unavailable");
+            AnimateProgress(DashboardMetrics.MemoryUsageBar, 0);
         }
 
         _history.Enqueue(s);
