@@ -19,6 +19,20 @@ public sealed class HardwareSensorSelectionTests
     }
 
     [Theory]
+    [InlineData("CPU Core #1", 3)]
+    [InlineData("Core 0", 3)]
+    [InlineData("Core Average", 2)]
+    [InlineData("CPU Package", 1)]
+    [InlineData("CPU Total", 1)]
+    [InlineData("Power", 0)]
+    [InlineData("", 0)]
+    public void CpuFrequencyPriority_PrefersIndividualCoreClocks(string sensorName, int expectedPriority)
+    {
+        Assert.Equal(expectedPriority,
+            HardwareMonitoringService.GetCpuFrequencyPriority(sensorName));
+    }
+
+    [Theory]
     [InlineData(-1, false)]
     [InlineData(0, true)]
     [InlineData(42.5, true)]
