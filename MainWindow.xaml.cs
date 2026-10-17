@@ -785,75 +785,10 @@ public partial class MainWindow : Window
 
     private void UpdateUtilizationHistoryChart(SensorSnapshot current)
     {
-        bool showCpu = UtilizationCpuFilter.IsChecked == true;
-        bool showGpu = UtilizationGpuFilter.IsChecked == true;
-        bool showRam = UtilizationRamFilter.IsChecked == true;
-        CpuUtilizationHistoryPath.Visibility = showCpu ? Visibility.Visible : Visibility.Collapsed;
-        GpuUtilizationHistoryPath.Visibility = showGpu ? Visibility.Visible : Visibility.Collapsed;
-        MemoryUtilizationHistoryPath.Visibility = showRam ? Visibility.Visible : Visibility.Collapsed;
-        CpuUtilizationHistoryPath.Data = showCpu
-            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.CpuLoadPercent), _utilizationHistory.Count)
-            : Geometry.Empty;
-        GpuUtilizationHistoryPath.Data = showGpu
-            ? BuildUtilizationGeometry(_utilizationHistory.Select(point => point.GpuLoadPercent), _utilizationHistory.Count)
-            : Geometry.Empty;
-        MemoryUtilizationHistoryPath.Data = showRam
-            ? BuildUtilizationGeometry(_utilizationHistory.Select(point =>
-                point.MemoryUsedGiB.HasValue && point.MemoryTotalGiB is > 0
-                    ? (double?)(point.MemoryUsedGiB.Value / point.MemoryTotalGiB.Value * 100d) : null),
-                _utilizationHistory.Count)
-            : Geometry.Empty;
-        // The utilization card uses a fixed color legend in its footer, so no
-        // separate caption control is required here.
-    }
-
-    private static Geometry BuildUtilizationGeometry(IEnumerable<double?> source, int sampleCount) =>
-        BuildHistoryGeometry(source, sampleCount, static percent =>
-            128d - Math.Clamp(percent, 0d, 100d) * 1.2d);
-
-    private static Geometry BuildHistoryGeometry(
-        IEnumerable<double?> source,
-        int sampleCount,
-        Func<double, double> getY)
-    {
-        if (sampleCount == 0) return Geometry.Empty;
-
-        var geometry = new StreamGeometry();
-        using (var context = geometry.Open())
-        {
-            var index = 0;
-            var pointCount = 0;
-            Point firstPoint = default;
-            foreach (var value in source)
-            {
-                if (value is double number && double.IsFinite(number))
-                {
-                    var x = sampleCount <= 1 ? 0d : index * 900d / (sampleCount - 1);
-                    var point = new Point(x, getY(number));
-                    if (pointCount == 0)
-                    {
-                        firstPoint = point;
-                        context.BeginFigure(point, isFilled: false, isClosed: false);
-                    }
-                    else
-                    {
-                        context.LineTo(point, isStroked: true, isSmoothJoin: true);
-                    }
-
-                    pointCount++;
-                }
-
-                index++;
-            }
-
-            if (pointCount == 0) return Geometry.Empty;
-            if (pointCount == 1)
-                context.LineTo(new Point(Math.Min(900d, firstPoint.X + 2d), firstPoint.Y),
-                    isStroked: true, isSmoothJoin: true);
-        }
-
-        geometry.Freeze();
-        return geometry;
+        UtilizationHistoryChart.Samples = _utilizationHistory.ToArray();
+        UtilizationHistoryChart.ShowCpu = UtilizationCpuFilter.IsChecked == true;
+        UtilizationHistoryChart.ShowGpu = UtilizationGpuFilter.IsChecked == true;
+        UtilizationHistoryChart.ShowMemory = UtilizationRamFilter.IsChecked == true;
     }
 
     private static void AnimateProgress(ProgressBar bar, double target)
