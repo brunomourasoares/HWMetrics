@@ -674,30 +674,7 @@
                 </Grid>
               </Border>
               <Border x:Name="ThermalComponentsCard" Grid.Row="2" Style="{StaticResource CardStyle}" ClipToBounds="True">
-                <Grid>
-                  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                  <StackPanel>
-                    <TextBlock Text="Frequencies" FontSize="17" FontWeight="SemiBold"/>
-                    <TextBlock Text="CPU and GPU clock history" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-                  </StackPanel>
-                  <Grid Grid.Row="1" Margin="0,14,0,10">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <StackPanel>
-                      <TextBlock Text="CPU" FontSize="10" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"/>
-                      <TextBlock x:Name="CpuFrequencyText" Text="-- GHz" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1">
-                      <TextBlock Text="GPU" FontSize="10" Foreground="{DynamicResource GpuGreenBrush}" FontWeight="SemiBold"/>
-                      <TextBlock x:Name="GpuFrequencyText" Text="-- GHz" FontSize="20" FontWeight="Bold" Margin="0,2,0,0"/>
-                    </StackPanel>
-                  </Grid>
-                  <controls:FrequencyHistoryChart x:Name="FrequencyHistoryChart"
-                                                  Grid.Row="2"
-                                                  Height="92"
-                                                  ClipToBounds="True"/>
-                  <TextBlock Grid.Row="3" Text="60 seconds" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
-                  
-                </Grid>
+                <controls:FrequencyPanelControl x:Name="FrequencyPanel"/>
               </Border>
             </Grid>
           </Grid>
