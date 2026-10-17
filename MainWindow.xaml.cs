@@ -1220,8 +1220,34 @@ public partial class MainWindow : Window
         return builder.ToString();
     }
 
+    private static bool ScheduledTaskExists()
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = $"/Query /TN {QuoteWindowsCommandLineArgument(StartupTaskName)}",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            }
+        };
+
+        if (!process.Start())
+            throw new InvalidOperationException("Could not query the Windows Task Scheduler.");
+        process.WaitForExit();
+        return process.ExitCode == 0;
+    }
+
     private static void RunElevatedScheduledTaskCommand(bool enable)
     {
+        // Disabling startup is idempotent: if the task was already removed,
+        // continue to clean up legacy Run entries without requesting UAC.
+        if (!enable && !ScheduledTaskExists())
+            return;
+
         var executable = Environment.ProcessPath;
         if (enable && string.IsNullOrWhiteSpace(executable))
             throw new InvalidOperationException("Could not determine the current executable path.");
