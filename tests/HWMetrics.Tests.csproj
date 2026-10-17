@@ -22,6 +22,7 @@
     <Compile Include="LocalizerTests.cs" />
     <Compile Include="DashboardMetricsControlTests.cs" />
     <Compile Include="FrequencyHistoryChartTests.cs" />
+    <Compile Include="TemperatureHistoryChartTests.cs" />
     <ProjectReference Include="..\HWMetrics.csproj" />
   </ItemGroup>
 </Project>
