@@ -16,6 +16,15 @@ public sealed class FrequencyHistoryChartTests
     }
 
     [Fact]
+    public void SamplesDependencyPropertyDefaultsToEmptyHistory()
+    {
+        var metadata = FrequencyHistoryChart.SamplesProperty.GetMetadata(typeof(FrequencyHistoryChart));
+
+        var samples = Assert.IsAssignableFrom<IReadOnlyList<SensorSnapshot>>(metadata.DefaultValue);
+        Assert.Empty(samples);
+    }
+
+    [Fact]
     public void ExposesDependencyPropertyForSamplesBinding()
     {
         var field = typeof(FrequencyHistoryChart).GetField(nameof(FrequencyHistoryChart.SamplesProperty));
