@@ -1,4 +1,5 @@
 using System.Windows;
+using Point = System.Windows.Point;
 using System.Windows.Controls;
 using System.Windows.Media;
 using RMMonitor.Models;
