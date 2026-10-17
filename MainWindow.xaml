@@ -1337,8 +1337,8 @@
                     </StackPanel>
                   </Grid>
                   <Canvas x:Name="FrequencyChartCanvas" Grid.Row="2" Height="92" ClipToBounds="True" SizeChanged="FrequencyChartCanvas_SizeChanged">
-                    <Polyline x:Name="CpuFrequencyLine" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                    <Polyline x:Name="GpuFrequencyLine" Stroke="{DynamicResource GpuGreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Path x:Name="CpuFrequencyLine" Stroke="{DynamicResource AccentBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                    <Path x:Name="GpuFrequencyLine" Stroke="{DynamicResource GpuGreenBrush}" StrokeThickness="2" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                   </Canvas>
                   <TextBlock Grid.Row="3" Text="60 seconds" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"/>
                   <StackPanel Grid.Row="4" Margin="0,10,0,0">
