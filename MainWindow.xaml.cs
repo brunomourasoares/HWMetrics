@@ -655,11 +655,8 @@ public partial class MainWindow : Window
         GpuModelText.Text = string.IsNullOrWhiteSpace(s.GpuModel) ? T("Graphics model unavailable") : s.GpuModel;
         StorageModelText.Text = string.IsNullOrWhiteSpace(s.StorageModel) ? T("Drive model unavailable") : s.StorageModel;
         CpuTempText.Text = ShortTemp(s.CpuTemperatureC);
-        CpuDetailTemp.Text = FullTemp(s.CpuTemperatureC);
         CoolerPreview.SetTemperature(s.CpuTemperatureC.HasValue ? $"{s.CpuTemperatureC.Value:0}" : "--");
         GpuTempText.Text = ShortTemp(s.GpuTemperatureC);
-        GpuDetailTemp.Text = FullTemp(s.GpuTemperatureC);
-        StorageDetailTemp.Text = FullTemp(s.StorageTemperatureC);
         if (s.StorageVolumes.Count > 0)
         {
             // Select the Windows system volume on first render; subsequent reads keep the
