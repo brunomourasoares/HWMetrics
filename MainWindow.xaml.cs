@@ -589,14 +589,23 @@ public partial class MainWindow : Window
         PathFigure? cpuFigure = null;
         PathFigure? gpuFigure = null;
         var newest = samples.Length > 0 ? samples[^1].UpdatedAt : DateTime.MinValue;
+        DateTime? previousSampleAt = null;
 
         foreach (var sample in samples)
         {
+            // Break the line when the polling interval was missed; don't imply continuous telemetry.
+            if (previousSampleAt is DateTime previous && (sample.UpdatedAt - previous).TotalSeconds > 2.5)
+            {
+                cpuFigure = null;
+                gpuFigure = null;
+            }
+
             // Use a fixed 60-second window so the graph's horizontal scale is stable.
             var ageSeconds = Math.Clamp((newest - sample.UpdatedAt).TotalSeconds, 0, 60);
             var x = width * (1 - ageSeconds / 60d);
             AddFrequencyPoint(cpuGeometry, ref cpuFigure, sample.CpuFrequencyMHz, x, height, min, max);
             AddFrequencyPoint(gpuGeometry, ref gpuFigure, sample.GpuFrequencyMHz, x, height, min, max);
+            previousSampleAt = sample.UpdatedAt;
         }
 
         CpuFrequencyLine.Data = cpuGeometry;
