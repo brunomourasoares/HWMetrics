@@ -19,6 +19,16 @@ public sealed class UtilizationHistoryChartTests
         Assert.Equal(expectedType, property!.PropertyType);
     }
 
+    [Fact]
+    public void ChartDefaultsToEmptyHistoryWithAllSeriesVisible()
+    {
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<SensorSnapshot>>(
+            UtilizationHistoryChart.SamplesProperty.GetMetadata(typeof(UtilizationHistoryChart)).DefaultValue));
+        Assert.True((bool)UtilizationHistoryChart.ShowCpuProperty.GetMetadata(typeof(UtilizationHistoryChart)).DefaultValue);
+        Assert.True((bool)UtilizationHistoryChart.ShowGpuProperty.GetMetadata(typeof(UtilizationHistoryChart)).DefaultValue);
+        Assert.True((bool)UtilizationHistoryChart.ShowMemoryProperty.GetMetadata(typeof(UtilizationHistoryChart)).DefaultValue);
+    }
+
     [Theory]
     [InlineData(nameof(UtilizationHistoryChart.SamplesProperty))]
     [InlineData(nameof(UtilizationHistoryChart.ShowCpuProperty))]
