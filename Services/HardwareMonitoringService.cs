@@ -138,10 +138,19 @@ public sealed class HardwareMonitoringService : IDisposable
         }
     }
 
+    public static int GetCpuFrequencyPriority(string sensorName)
+    {
+        if (string.IsNullOrWhiteSpace(sensorName)) return 0;
+        if (sensorName.Contains("core", StringComparison.OrdinalIgnoreCase))
+            return sensorName.Contains("average", StringComparison.OrdinalIgnoreCase) ? 2 : 3;
+        return sensorName.Contains("cpu", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+    }
+
     private (double? CpuMHz, double? GpuMHz) ReadFrequencies()
     {
         double cpuTotal = 0;
         var cpuCount = 0;
+        var cpuPriority = 0;
         double? gpuMHz = null;
         var gpuPriority = -1;
 
@@ -155,8 +164,14 @@ public sealed class HardwareMonitoringService : IDisposable
 
                 if (hardware.HardwareType == HardwareType.Cpu)
                 {
-                    if (sensor.Name.Contains("core", StringComparison.OrdinalIgnoreCase) ||
-                        sensor.Name.Contains("cpu", StringComparison.OrdinalIgnoreCase))
+                    var priority = GetCpuFrequencyPriority(sensor.Name);
+                    if (priority > cpuPriority)
+                    {
+                        cpuPriority = priority;
+                        cpuTotal = value;
+                        cpuCount = 1;
+                    }
+                    else if (priority > 0 && priority == cpuPriority)
                     {
                         cpuTotal += value;
                         cpuCount++;
