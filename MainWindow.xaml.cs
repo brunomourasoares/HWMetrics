@@ -575,32 +575,61 @@ public partial class MainWindow : Window
             .Select(value => value!.Value).ToArray();
         if (validValues.Length == 0)
         {
-            CpuFrequencyLine.Points = new PointCollection();
-            GpuFrequencyLine.Points = new PointCollection();
+            CpuFrequencyLine.Data = Geometry.Empty;
+            GpuFrequencyLine.Data = Geometry.Empty;
             return;
         }
 
         var min = Math.Max(0, Math.Floor(validValues.Min() / 500d) * 500d);
         var max = Math.Ceiling(validValues.Max() / 500d) * 500d;
         if (max - min < 500) max = min + 500;
-        var cpuPoints = new PointCollection();
-        var gpuPoints = new PointCollection();
-        for (var i = 0; i < samples.Length; i++)
+
+        var cpuGeometry = new PathGeometry();
+        var gpuGeometry = new PathGeometry();
+        PathFigure? cpuFigure = null;
+        PathFigure? gpuFigure = null;
+        var newest = samples.Length > 0 ? samples[^1].UpdatedAt : DateTime.MinValue;
+
+        foreach (var sample in samples)
         {
-            var x = samples.Length <= 1 ? width : i * width / (samples.Length - 1d);
-            AddFrequencyPoint(cpuPoints, samples[i].CpuFrequencyMHz, x, height, min, max);
-            AddFrequencyPoint(gpuPoints, samples[i].GpuFrequencyMHz, x, height, min, max);
+            // Use a fixed 60-second window so the graph's horizontal scale is stable.
+            var ageSeconds = Math.Clamp((newest - sample.UpdatedAt).TotalSeconds, 0, 60);
+            var x = width * (1 - ageSeconds / 60d);
+            AddFrequencyPoint(cpuGeometry, ref cpuFigure, sample.CpuFrequencyMHz, x, height, min, max);
+            AddFrequencyPoint(gpuGeometry, ref gpuFigure, sample.GpuFrequencyMHz, x, height, min, max);
         }
-        CpuFrequencyLine.Points = cpuPoints;
-        GpuFrequencyLine.Points = gpuPoints;
+
+        CpuFrequencyLine.Data = cpuGeometry;
+        GpuFrequencyLine.Data = gpuGeometry;
     }
 
-    private static void AddFrequencyPoint(PointCollection points, double? value, double x, double height, double min, double max)
+    private static void AddFrequencyPoint(
+        PathGeometry geometry,
+        ref PathFigure? currentFigure,
+        double? value,
+        double x,
+        double height,
+        double min,
+        double max)
     {
         if (value is not double frequency || !double.IsFinite(frequency) || frequency < 100)
+        {
+            // Start a new path after a missing sample; never draw a false bridge across telemetry gaps.
+            currentFigure = null;
             return;
+        }
+
         var y = height - 4 - ((frequency - min) / (max - min)) * (height - 8);
-        points.Add(new Point(x, Math.Clamp(y, 2, height - 2)));
+        var point = new Point(x, Math.Clamp(y, 2, height - 2));
+        if (currentFigure is null)
+        {
+            currentFigure = new PathFigure { StartPoint = point, IsFilled = false, IsClosed = false };
+            geometry.Figures.Add(currentFigure);
+        }
+        else
+        {
+            currentFigure.Segments.Add(new LineSegment(point, isStroked: true));
+        }
     }
 
     private void Render(SensorSnapshot s)
