@@ -484,7 +484,7 @@
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Bottom"/>
-                    <controls:TemperatureHistoryChart Grid.Column="1" Grid.RowSpan="4"/>
+                    <controls:TemperatureHistoryChart x:Name="TemperatureHistoryChart" Grid.Column="1" Grid.RowSpan="4"/>
                   </Grid>
                   <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
@@ -597,7 +597,7 @@
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                FontSize="9"
                                VerticalAlignment="Bottom"/>
-                    <controls:UtilizationHistoryChart Grid.Column="1" Grid.RowSpan="5"/>
+                    <controls:UtilizationHistoryChart x:Name="UtilizationHistoryChart" Grid.Column="1" Grid.RowSpan="5"/>
                   </Grid>
                   <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
