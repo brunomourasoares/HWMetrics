@@ -7,7 +7,7 @@ namespace RMMonitor.Controls;
 /// Encapsulates the frequency panel presentation. Sensor polling and history retention
 /// remain in MainWindow; this control only exposes the displayed values and chart.
 /// </summary>
-public partial class FrequencyPanelControl : UserControl
+public partial class FrequencyPanelControl : System.Windows.Controls.UserControl
 {
     public FrequencyPanelControl()
     {
